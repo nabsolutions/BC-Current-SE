@@ -14,11 +14,6 @@
 
 set -euo pipefail  # Exit on error, unset variable, or failed pipe
 
-# Dump all environment variables for debugging
-echo "=== Environment Variables ==="
-env | sort
-echo "============================"
-
 # Script version
 SCRIPT_VERSION="2.1.1"
 
