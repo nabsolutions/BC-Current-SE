@@ -29,5 +29,5 @@ jobs:
       - name: Sync main from upstream
         run: |
           ./.github/scripts/update_main.sh
-          env:
-            BRANCH_PREFIX: 'se-'
+        env:
+          BRANCH_PREFIX: 'se-'
