@@ -17,11 +17,13 @@ This repository contains multible applications, structured as follows:
 
 | App Name                                         | Path                                                        |
 |--------------------------------------------------|-------------------------------------------------------------|
-| Application                                      | Application/Source/Application                              |
+| AMCBanking365Fundamentals                        | AMCBanking365Fundamentals/Source/AMCBanking365Fundamentals  |
 | API Reports - Finance                            | APIReportsFinance/Source/API Reports - Finance              |
 | APIV1                                            | APIV1/Source/_Exclude_APIV1_                                |
 | APIV2                                            | APIV2/Source/_Exclude_APIV2_                                |
+| Application                                      | Application/Source/Application                              |
 | Audit File Export                                | AuditFileExport/Source/Audit File Export                    |
+| Automatic Account Codes                          | AutomaticAccountCodes/Source/Automatic Account Codes        |
 | Bank Account Reconciliation With AI              | BankAccRecWithAI/Source/Bank Account Reconciliation With AI |
 | Bank Deposits                                    | BankDeposits/Source/_Exclude_Bank Deposits                  |
 | Base Application                                 | BaseApp/Source/Base Application                             |
@@ -29,7 +31,11 @@ This repository contains multible applications, structured as follows:
 | Client AddIns                                    | ClientAddIns/Source/_Exclude_ClientAddIns_                  |
 | Company Hub                                      | CompanyHub/Source/Company Hub                               |
 | Contoso Coffee Demo Dataset                      | ContosoCoffeeDemoDataset/Source/Contoso Coffee Demo Dataset |
+| Contoso Coffee Demo Dataset SE                   | ContosoCoffeeDemoDatasetSE/Source/Contoso Coffee Demo Dataset SE |
 | Create Product Information With Copilot          | CreateProductInformationWithCopilot/Source/Create Product Information With Copilot |
+| Data Archive                                     | DataArchive/app/Data Archive                                |
+| Data Correction FA                               | DataCorrectionFA/Source/Data Correction FA                  |
+| Data Search                                      | DataSearch/app/Data Search                                  |
 | Dynamics BC Excel Reports                        | ExcelReports/Source/Dynamics BC Excel Reports               |
 | E-Document Core                                  | EDocument Core/Source/E-Document Core                       |
 | E-Document Connector - Avalara                   | EDocumentConnectors/Avalara/Source/E-Document Connector - Avalara |
@@ -37,11 +43,13 @@ This repository contains multible applications, structured as follows:
 | E-Document Connector - Continia                  | EDocumentConnectors/Continia/Source/E-Document Connector - Continia |
 | E-Document Connector - Logiq                     | EDocumentConnectors/Logiq/Source/E-Document Connector - Logiq |
 | E-Document Connector - Pagero                    | EDocumentConnectors/Pagero/Source/E-Document Connector - Pagero |
+| E-Document Connector - SignUp                    | EDocumentConnectors/SignUp/Source/E-Document Connector - SignUp |
 | Email - Current User Connector                   | Email - Current User Connector/Source/Email - Current User Connector |
 | Email - Microsoft 365 Connector                  | Email - Microsoft 365 Connector/Source/Email - Microsoft 365 Connector |
 | Email - Outlook REST API                         | Email - Outlook REST API/Source/Email - Outlook REST API     |
 | Email - SMTP API                                 | Email - SMTP API/Source/Email - SMTP API                     |
 | Email - SMTP Connector                           | Email - SMTP Connector/Source/Email - SMTP Connector         |
+| Email Logging                                    | EmailLogging/Source/Email Logging                           |
 | Enforced Digital Vouchers                        | EnforcedDigitalVouchers/Source/Enforced Digital Vouchers     |
 | ESG Statistical Accounts Demo Tool               | ESGStatisticalAccountsDemoTool/Source/ESG Statistical Accounts Demo Tool |
 | Essential Business Headlines                     | EssentialBusinessHeadlines/Source/Essential Business Headlines |
@@ -53,6 +61,7 @@ This repository contains multible applications, structured as follows:
 | ExternalEvents                                   | ExternalEvents/Source/_Exclude_Business_Events_              |
 | Field Service Integration                        | FieldServiceIntegration/Source/Field Service Integration     |
 | Intrastat                                        | Intrastat/Source/Intrastat Core                             |
+| Intrastat SE                                     | IntrastatSE/Source/Intrastat SE                             |
 | Late Payment Prediction                          | LatePaymentPredictor/Source/Late Payment Prediction          |
 | Master Data Management                           | MasterDataManagement/Source/_Exclude_Master_Data_Management  |
 | MicrosoftUniversalPrint                          | MicrosoftUniversalPrint/Source/Universal Print Integration   |
@@ -70,6 +79,8 @@ This repository contains multible applications, structured as follows:
 | Send remittance advice by email                  | UKSendRemittanceAdvice/Source/Send remittance advice by email |
 | Send To Email Printer                            | SendToEmailPrinter/Source/Send To Email Printer              |
 | Service Declaration                              | ServiceDeclaration/Source/Service Declaration                |
+| Shopify                                          | Shopify/Source/Shopify                                      |
+| SIE                                              | SIE/Source/SIE                                              |
 | Simplified Bank Statement Import                 | SimplifiedBankStatementImport/Source/Simplified Bank Statement Import |
 | Statistical Accounts                             | StatisticalAccounts/Source/Statistical Accounts              |
 | Subscription Billing                             | SubscriptionBilling/Source/Subscription Billing              |
@@ -77,6 +88,7 @@ This repository contains multible applications, structured as follows:
 | Sustainability Contoso Coffee Demo Dataset        | SustainabilityContosoCoffeeDemoDataset/Source/Sustainability Contoso Coffee Demo Dataset |
 | System Application                               | System Application/Source/System Application                 |
 | VAT Group Management                             | VATGroupManagement/Source/VAT Group Management               |
+| WorldPay Payments Standard                       | WorldPayPaymentsStandard/Source/WorldPay Payments Standard   |
 
 
 The main apps are:
