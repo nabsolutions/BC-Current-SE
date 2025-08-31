@@ -1,0 +1,33 @@
+name: Sync main with latest upstream SE branch
+
+on:
+  schedule:
+    # Every night at 01:00 UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # we need full history
+
+      - name: Configure Git identity
+        run: |
+          git config user.name  "bc-se-bot"
+          git config user.email "bc-se-bot@users.noreply.github.com"
+
+      - name: Ensure script is executable
+        run: chmod +x .github/scripts/update_main.sh
+
+      - name: Sync main from upstream
+        run: |
+          ./.github/scripts/update_main.sh
+          env:
+            BRANCH_PREFIX: 'se-'
