@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This script keeps the *main* branch in this repo aligned with the highest-numbered
-# `w1-XX` branch in StefanMaron/MSDyn365BC.Code.History.
+# `w1-XX` branch in StefanMaron/MSDyn365BC.Sandbox.Code.History.
 # It creates ONE commit that contains the diff to the previous state,
 # while preserving the .github folder (so the workflow keeps working).
 #
@@ -17,7 +17,7 @@ set -euo pipefail  # Exit on error, unset variable, or failed pipe
 # Script version
 SCRIPT_VERSION="2.1.1"
 
-UPSTREAM_URL="https://github.com/StefanMaron/MSDyn365BC.Code.History.git"  # Upstream repo URL
+UPSTREAM_URL="https://github.com/StefanMaron/MSDyn365BC.Sandbox.Code.History.git"  # Upstream repo URL
 
 echo "🚀 Starting Business Central $BRANCH_PREFIX branch sync process (v${SCRIPT_VERSION})"
 echo "Upstream: $UPSTREAM_URL"
