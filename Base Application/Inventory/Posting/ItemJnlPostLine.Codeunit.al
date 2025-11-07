@@ -22,7 +22,6 @@ using Microsoft.Inventory.Setup;
 using Microsoft.Inventory.Tracking;
 using Microsoft.Projects.Project.Planning;
 using Microsoft.Sales.Document;
-using Microsoft.Sales.History;
 using Microsoft.Warehouse.Journal;
 
 codeunit 22 "Item Jnl.-Post Line"
@@ -144,8 +143,6 @@ codeunit 22 "Item Jnl.-Post Line"
         Text01: Label 'Checking for open entries.';
         Text029: Label '%1 %2 for %3 %4 is reserved for %5.';
         Text030: Label 'The quantity that you are trying to invoice is larger than the quantity in the item ledger with the entry number %1.';
-        Text031: Label 'You cannot invoice the item %1 with item tracking number %2 %3 in this purchase order before the associated sales order %4 has been invoiced.', Comment = '%2 = Lot No. %3 = Serial No. Both are tracking numbers.';
-        Text032: Label 'You cannot invoice item %1 in this purchase order before the associated sales order %2 has been invoiced.';
         Text033: Label 'Quantity must be -1, 0 or 1 when Serial No. is stated.';
         PostToGlLbl: Label 'Posting to G/L    #1#####', Comment = '%1 is an integer value';
 #pragma warning restore AA0074
@@ -1514,12 +1511,15 @@ codeunit 22 "Item Jnl.-Post Line"
     local procedure AssemblyReservationEntryMismatchWithItemJnlLine(var ReservEntry: Record "Reservation Entry"): Boolean
     var
         ReservEntry2: Record "Reservation Entry";
+        ItemRec: Record Item;
     begin
         ReservEntry2.SetLoadFields("Source Type", "Source Subtype");
         ReservEntry2.Get(ReservEntry."Entry No.", not ReservEntry.Positive);
-        if (ReservEntry2."Source Type" = Database::"Assembly Header") and (ReservEntry2."Source Subtype" = 1)
-             and (not ItemJnlLine."Assemble to Order") then
-            exit(true);
+        if ItemRec.Get(ReservEntry2."Item No.") then
+            if not (ItemRec."Assembly Policy" = ItemRec."Assembly Policy"::"Assemble-to-Stock") then
+                if (ReservEntry2."Source Type" = Database::"Assembly Header") and (ReservEntry2."Source Subtype" = 1)
+                      and (not ItemJnlLine."Assemble to Order") then
+                    exit(true);
     end;
 
     local procedure UpdateReservationEntryForNonInventoriableItem()
@@ -2533,6 +2533,7 @@ codeunit 22 "Item Jnl.-Post Line"
                     (ValueEntry."Entry Type" = ItemJnlLine."Value Entry Type"::"Direct Cost")
                 then begin
                     CalcPurchCorrShares(OverheadAmount, OverheadAmountACY, VarianceAmount, VarianceAmountACY);
+                    SetCostAmountAndCostAmountFCYOnSameCostPerUnit(ItemJnlLine, CostAmt, CostAmtACY);
                     OnAfterCalcPurchCorrShares(
                         ValueEntry, ItemJnlLine, OverheadAmount, OverheadAmountACY, VarianceAmount, VarianceAmountACY);
                 end;
@@ -3872,6 +3873,7 @@ codeunit 22 "Item Jnl.-Post Line"
             ItemJnlLine2 := TempSplitItemJnlLine;
             ItemJnlLine2."Line No." := JnlLineNo;
             TempSplitItemJnlLine.Delete();
+            OnSplitItemJnlLineOnAfterDeleteTempSplitItemJnlLine(ItemJnlLine2, CalledFromAdjustment);
             exit(true);
         end;
         if ItemJnlLine."Phys. Inventory" then
@@ -5425,44 +5427,6 @@ codeunit 22 "Item Jnl.-Post Line"
         end;
     end;
 
-    local procedure VerifyInvoicedQty(ItemLedgerEntry: Record "Item Ledger Entry"; ValueEntry: Record "Value Entry")
-    var
-        ItemLedgEntry2: Record "Item Ledger Entry";
-        ItemApplnEntry: Record "Item Application Entry";
-        SalesShipmentHeader: Record "Sales Shipment Header";
-        TotalInvoicedQty: Decimal;
-        IsHandled: Boolean;
-    begin
-        if not (ItemLedgerEntry."Drop Shipment" and (ItemLedgerEntry."Entry Type" = ItemLedgerEntry."Entry Type"::Purchase)) then
-            exit;
-
-        IsHandled := false;
-        OnBeforeVerifyInvoicedQty(ItemLedgerEntry, IsHandled, ValueEntry);
-        if IsHandled then
-            exit;
-
-        ItemApplnEntry.SetCurrentKey("Inbound Item Entry No.", "Item Ledger Entry No.", "Outbound Item Entry No.");
-        ItemApplnEntry.SetRange("Inbound Item Entry No.", ItemLedgerEntry."Entry No.");
-        ItemApplnEntry.SetFilter("Item Ledger Entry No.", '<>%1', ItemLedgerEntry."Entry No.");
-        if ItemApplnEntry.FindSet() then begin
-            repeat
-                ItemLedgEntry2.Get(ItemApplnEntry."Item Ledger Entry No.");
-                TotalInvoicedQty += ItemLedgEntry2."Invoiced Quantity";
-            until ItemApplnEntry.Next() = 0;
-            if ItemLedgerEntry."Invoiced Quantity" > Abs(TotalInvoicedQty) then begin
-                SalesShipmentHeader.Get(ItemLedgEntry2."Document No.");
-                IsHandled := false;
-                OnVerifyInvoicedQtyOnAfterGetSalesShipmentHeader(ItemLedgEntry2, IsHandled);
-                if IsHandled then
-                    exit;
-                if ItemLedgerEntry."Item Tracking" = ItemLedgerEntry."Item Tracking"::None then
-                    Error(Text032, ItemLedgerEntry."Item No.", SalesShipmentHeader."Order No.");
-                Error(
-                  Text031, ItemLedgerEntry."Item No.", ItemLedgerEntry."Lot No.", ItemLedgerEntry."Serial No.", SalesShipmentHeader."Order No.")
-            end;
-        end;
-    end;
-
     local procedure TransReserveFromJobPlanningLine(FromJobContractEntryNo: Integer; ToItemJnlLine: Record "Item Journal Line")
     var
         JobPlanningLine: Record "Job Planning Line";
@@ -6378,10 +6342,13 @@ codeunit 22 "Item Jnl.-Post Line"
     begin
     end;
 
+#if not CLEAN28
+    [Obsolete('This event is no longer used.', '28.0')]
     [IntegrationEvent(false, false)]
     local procedure OnBeforeVerifyInvoicedQty(ItemLedgerEntry: Record "Item Ledger Entry"; var IsHandled: Boolean; ValueEntry: Record "Value Entry")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeVerifyItemJnlLineAsembleToOrder(var ItemJournalLine: Record "Item Journal Line"; var IsHandled: Boolean)
@@ -7426,7 +7393,6 @@ codeunit 22 "Item Jnl.-Post Line"
 
         if Abs(ItemLedgEntry."Invoiced Quantity") > Abs(ItemLedgEntry.Quantity) then
             Error(Text030, ItemLedgEntry."Entry No.");
-        VerifyInvoicedQty(ItemLedgEntry, ValueEntry);
         ModifyEntry := true;
     end;
 
@@ -7508,6 +7474,37 @@ codeunit 22 "Item Jnl.-Post Line"
             if (ExistingExpirationDate = 0D) and (SumOfEntries > 0) then
                 SumOfEntries := 0;
         end;
+    end;
+
+    local procedure CheckCostPerUnitInValueEntry(ItemJournalLine: Record "Item Journal Line"): Boolean
+    var
+        OldValueEntry: Record "Value Entry";
+    begin
+        if ItemJournalLine."Source Currency Code" = '' then
+            exit;
+
+        if not (ItemJournalLine."Document Type" in [ItemJournalLine."Document Type"::"Purchase Credit Memo", ItemJournalLine."Document Type"::"Purchase Return Shipment"]) then
+            exit;
+
+        OldValueEntry.SetLoadFields("Cost per Unit", "Valued Quantity", "Discount Amount");
+        OldValueEntry.SetCurrentKey("Item Ledger Entry No.", "Entry Type", "Item Ledger Entry Type");
+        OldValueEntry.ReadIsolation(IsolationLevel::ReadUncommitted);
+        OldValueEntry.SetRange("Item Ledger Entry No.", ItemJournalLine."Applies-to Entry");
+        OldValueEntry.SetRange("Entry Type", OldValueEntry."Entry Type"::"Direct Cost");
+        OldValueEntry.SetRange("Item Ledger Entry Type", OldValueEntry."Item Ledger Entry Type"::Purchase);
+        if OldValueEntry.FindFirst() then
+            exit(OldValueEntry."Cost per Unit" = ItemJournalLine."Unit Cost");
+
+        exit(false);
+    end;
+
+    local procedure SetCostAmountAndCostAmountFCYOnSameCostPerUnit(ItemJournalLine: Record "Item Journal Line"; var CostAmt: Decimal; var CostAmtACY: Decimal)
+    begin
+        if not CheckCostPerUnitInValueEntry(ItemJournalLine) then
+            exit;
+
+        CostAmt := ItemJnlLine.Amount;
+        CostAmtACY := ItemJnlLine."Amount (ACY)";
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sequence No. Mgt.", 'OnPreviewableLedgerEntry', '', false, false)]
@@ -7592,10 +7589,13 @@ codeunit 22 "Item Jnl.-Post Line"
         GlobalItemTrackingSetup := ItemTrackingSetup;
     end;
 
+#if not CLEAN28
+    [Obsolete('This event is no longer used.', '28.0')]
     [IntegrationEvent(false, false)]
     local procedure OnVerifyInvoicedQtyOnAfterGetSalesShipmentHeader(ItemLedgEntry2: Record "Item Ledger Entry"; var IsHandled: Boolean)
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterGetAppliedFromValues(var ValueEntry: Record "Value Entry"; NegValueEntry: Record "Value Entry")
@@ -7828,6 +7828,11 @@ codeunit 22 "Item Jnl.-Post Line"
 
     [IntegrationEvent(false, false)]
     local procedure OnSplitItemJnlLineOnBeforePostItemJnlLine(var TempTrackingSpecification: Record "Tracking Specification"; var GlobalItemLedgEntry: Record "Item Ledger Entry")
+    begin
+    end;
+
+    [IntegrationEvent(false, false)]
+    local procedure OnSplitItemJnlLineOnAfterDeleteTempSplitItemJnlLine(ItemJournalLine: Record "Item Journal Line"; CalledFromAdjustment: Boolean)
     begin
     end;
 

@@ -7499,16 +7499,26 @@ codeunit 80 "Sales-Post"
     /// <param name="PostedSalesDocumentVariant">Return Variable: The posted document that was created from the specified sales header.</param>
     procedure GetPostedDocumentRecord(SalesHeader: Record "Sales Header"; var PostedSalesDocumentVariant: Variant)
     var
+        SalesShipmentHeader: Record "Sales Shipment Header";
         SalesInvHeader: Record "Sales Invoice Header";
         SalesCrMemoHeader: Record "Sales Cr.Memo Header";
+        ReturnReceiptHeader: Record "Return Receipt Header";
         IsHandled: Boolean;
     begin
         case SalesHeader."Document Type" of
             SalesHeader."Document Type"::Order:
-                if SalesHeader.Invoice then begin
-                    SalesInvHeader.Get(SalesHeader."Last Posting No.");
-                    SalesInvHeader.SetRecFilter();
-                    PostedSalesDocumentVariant := SalesInvHeader;
+                begin
+                    if (not SalesHeader.Invoice) and (SalesHeader.Ship) then begin
+                        SalesShipmentHeader.Get(SalesHeader."Last Shipping No.");
+                        SalesShipmentHeader.SetRecFilter();
+                        PostedSalesDocumentVariant := SalesShipmentHeader;
+                    end;
+
+                    if SalesHeader.Invoice then begin
+                        SalesInvHeader.Get(SalesHeader."Last Posting No.");
+                        SalesInvHeader.SetRecFilter();
+                        PostedSalesDocumentVariant := SalesInvHeader;
+                    end;
                 end;
             SalesHeader."Document Type"::Invoice:
                 begin
@@ -7530,13 +7540,21 @@ codeunit 80 "Sales-Post"
                     PostedSalesDocumentVariant := SalesCrMemoHeader;
                 end;
             SalesHeader."Document Type"::"Return Order":
-                if SalesHeader.Invoice then begin
-                    if SalesHeader."Last Posting No." = '' then
-                        SalesCrMemoHeader.Get(SalesHeader."No.")
-                    else
-                        SalesCrMemoHeader.Get(SalesHeader."Last Posting No.");
-                    SalesCrMemoHeader.SetRecFilter();
-                    PostedSalesDocumentVariant := SalesCrMemoHeader;
+                begin
+                    if (not SalesHeader.Invoice) and (SalesHeader.Receive) then begin
+                        ReturnReceiptHeader.Get(SalesHeader."Last Return Receipt No.");
+                        ReturnReceiptHeader.SetRecFilter();
+                        PostedSalesDocumentVariant := ReturnReceiptHeader;
+                    end;
+
+                    if SalesHeader.Invoice then begin
+                        if SalesHeader."Last Posting No." = '' then
+                            SalesCrMemoHeader.Get(SalesHeader."No.")
+                        else
+                            SalesCrMemoHeader.Get(SalesHeader."Last Posting No.");
+                        SalesCrMemoHeader.SetRecFilter();
+                        PostedSalesDocumentVariant := SalesCrMemoHeader;
+                    end;
                 end;
             else begin
                 IsHandled := false;
@@ -10217,6 +10235,7 @@ codeunit 80 "Sales-Post"
 
     local procedure SyncSurPlusItemTracking(SalesHeader: Record "Sales Header"; SalesLine: Record "Sales Line")
     var
+        Location2: Record Location;
         ReservEntry: Record "Reservation Entry";
         TempTrackingSpecification2: Record "Tracking Specification" temporary;
         TempWarehouseActivityLine: Record "Warehouse Activity Line" temporary;
@@ -10229,9 +10248,12 @@ codeunit 80 "Sales-Post"
         if not (SalesHeader."Document Type" in [SalesHeader."Document Type"::Invoice, SalesHeader."Document Type"::Order]) then
             exit;
 
-        GetLocation(SalesLine."Location Code");
-        if Location.IsEmpty() or not Location."Require Shipment" then
+        if (SalesLine."Location Code" = '') or
+           not Location2.Get(SalesLine."Location Code") or
+           not Location2."Require Shipment"
+        then
             exit;
+
         TempTrackingSpecification2.SetSourceFromSalesLine(SalesLine);
         QtyReservedForCurrLine := Abs(WarehouseAvailabilityMgt.CalcLineReservedQtyOnInvt(
             TempTrackingSpecification2."Source Type", TempTrackingSpecification2."Source Subtype", TempTrackingSpecification2."Source ID", TempTrackingSpecification2."Source Ref. No.",
@@ -10245,11 +10267,11 @@ codeunit 80 "Sales-Post"
                                  TempTrackingSpecification2."Source ID", TempTrackingSpecification2."Source Ref. No.", true);
         ReservEntry.SetSourceFilter('', TempTrackingSpecification2."Source Prod. Order Line");
         ReservEntry.SetRange("Reservation Status", ReservEntry."Reservation Status"::Surplus);
-        ReservEntry.CalcSums("Qty. to Handle (Base)");
-        SurplusQtyToHandle := Abs(ReservEntry."Qty. to Handle (Base)");
         if not ReservEntry.FindSet() then
             exit;
 
+        ReservEntry.CalcSums("Qty. to Handle (Base)");
+        SurplusQtyToHandle := Abs(ReservEntry."Qty. to Handle (Base)");
         if (QtyReservedForCurrLine + SurplusQtyToHandle) < SalesLine."Qty. to Ship (Base)" then
             exit;
 
