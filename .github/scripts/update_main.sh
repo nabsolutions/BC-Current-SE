@@ -63,15 +63,16 @@ echo ""
 echo "=== Step 2: Finding highest-numbered upstream branch (v${SCRIPT_VERSION}) ==="
 
 # List all remote-tracking w1-* branches from upstream, strip the prefix,
-# sort numerically by the number after w1-, and pick the highest one.
+# sort numerically by the number after w1-, exclude branches ending with "vNext", and pick the highest one.
 echo "Processing upstream branches to find the latest..."
 
 latest_upstream_branch=$(git for-each-ref --format='%(refname:short)' \
                          "refs/remotes/upstream/$BRANCH_PREFIX*" |
+                         grep -v 'vNext$' |
                          sort -t- -k2 -n | tail -1)
 
-echo "Debug: Found branches (sorted by version):"
-git for-each-ref --format='  %(refname:short)' "refs/remotes/upstream/$BRANCH_PREFIX*" | sort -t- -k2 -n || echo "  No branches found"
+echo "Debug: Found branches (sorted by version, excluding vNext):"
+git for-each-ref --format='  %(refname:short)' "refs/remotes/upstream/$BRANCH_PREFIX*" | grep -v 'vNext$' | sort -t- -k2 -n || echo "  No branches found"
 
 if [[ -z "$latest_upstream_branch" ]]; then
   echo "❌ ERROR: no $BRANCH_PREFIX branches found in upstream"
