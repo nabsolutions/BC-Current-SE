@@ -4,7 +4,9 @@ using Microsoft.Projects.RoleCenters;
 using Microsoft.Projects.Project.Archive;
 using Microsoft.Projects.Project.Job;
 using Microsoft.Projects.Project.Journal;
+#if not CLEAN25
 using Microsoft.Projects.Project.Pricing;
+#endif
 using Microsoft.Projects.Project.Ledger;
 using Microsoft.Projects.Project.Planning;
 using Microsoft.Projects.Project.Posting;
@@ -20,8 +22,10 @@ permissionset 448 "D365 JOBS, VIEW"
                   tabledata "Job Archive" = R,
                   tabledata "Job Cue" = R,
                   tabledata "Job Entry No." = R,
+#if not CLEAN25
                   tabledata "Job G/L Account Price" = R,
                   tabledata "Job Item Price" = R,
+#endif
                   tabledata "Job Journal Batch" = R,
                   tabledata "Job Journal Line" = R,
                   tabledata "Job Journal Quantity" = R,
@@ -34,7 +38,9 @@ permissionset 448 "D365 JOBS, VIEW"
                   tabledata "Job Posting Buffer" = R,
                   tabledata "Job Posting Group" = R,
                   tabledata "Job Register" = R,
+#if not CLEAN25
                   tabledata "Job Resource Price" = R,
+#endif
                   tabledata "Job Task" = R,
                   tabledata "Job Task Archive" = R,
                   tabledata "Job Task Dimension" = R,

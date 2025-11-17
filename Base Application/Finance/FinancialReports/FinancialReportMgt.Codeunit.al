@@ -28,13 +28,12 @@ codeunit 18 "Financial Report Mgt."
         DontShowAgainMsg: Label 'Don''t show again';
         TelemetryEventTxt: Label 'Financial Report Definition %1: %2', Comment = '%1 = event type, %2 = report', Locked = true;
         OpenFinancialReportsLbl: Label 'Open Financial Reports';
-        OpenWhereUsedLbl: Label 'Open Where-Used';
+        OpenRowDefinitionsLbl: Label 'Open Row Definitions';
         NotifyUpdateFinancialReportNameTxt: Label 'Notify about updating financial reports.';
         NotifyUpdateFinancialReportDescTxt: Label 'Notify that financial reports should be updated after someone creates or changes a G/L account.';
         UpdateFinancialReportMsg: Label 'You have created one or more G/L accounts and might need to update your financial reports. We recommend that you review your financial reports by choosing the Open Financial Reports action.';
         UpdateFinancialReportNotificationIdTok: Label 'cc02b894-bef8-4945-8042-f177422f8906', Locked = true;
-        UpdateRowDefinitionMsg: Label 'You have changed one or more G/L accounts and might need to update your financial report row definitions. We recommend that you review your row definitions by choosing the Open Where-Used action.';
-        UpdateRowDefGLAccNoKeyTok: Label 'GLAccountNo', Locked = true;
+        UpdateRowDefinitionMsg: Label 'You have changed one or more G/L accounts and might need to update your financial report row definitions. We recommend that you review your row definitions by choosing the Open Row Definitions action.';
 
     internal procedure LaunchEditRowsWarningNotification()
     var
@@ -402,7 +401,6 @@ codeunit 18 "Financial Report Mgt."
 
     internal procedure NotifyUpdateRowDefinition(var GLAccount: Record "G/L Account")
     var
-        AccScheduleLine: Record "Acc. Schedule Line";
         MyNotification: Record "My Notifications";
         NotificationLifecycleMgt: Codeunit "Notification Lifecycle Mgt.";
         UpdateRowDefinitionNotification: Notification;
@@ -414,87 +412,18 @@ codeunit 18 "Financial Report Mgt."
         if not MyNotification.IsEnabled(GetUpdateFinancialReportNotificationId()) then
             exit;
 
-        FilterAccScheduleLineByGLAccount(AccScheduleLine, GLAccount."No.");
-        if AccScheduleLine.IsEmpty() then
-            exit;
-
         UpdateRowDefinitionNotification.Id := GetUpdateFinancialReportNotificationId();
         UpdateRowDefinitionNotification.Message := UpdateRowDefinitionMsg;
         UpdateRowDefinitionNotification.AddAction(
-            OpenWhereUsedLbl, Codeunit::"Financial Report Mgt.", 'OpenWhereUsed');
+            OpenRowDefinitionsLbl, Codeunit::"Financial Report Mgt.", 'OpenRowDefinitions');
         UpdateRowDefinitionNotification.AddAction(
             DontShowAgainMsg, Codeunit::"Financial Report Mgt.", 'HideUpdateFinancialReportNotification');
-        UpdateRowDefinitionNotification.SetData(UpdateRowDefGLAccNoKeyTok, GLAccount."No.");
         NotificationLifecycleMgt.SendNotification(UpdateRowDefinitionNotification, GLAccount.RecordId);
     end;
 
-#if not CLEAN28
-    [Obsolete('This function has been replaced by OpenWhereUsed and will be removed in a future release.', '28.0')]
     procedure OpenRowDefinitions(UpdateFinancialReportNotification: Notification)
     begin
         Page.Run(Page::"Account Schedule Names");
-    end;
-#endif
-
-    procedure OpenWhereUsed(UpdateFinancialReportNotification: Notification)
-    var
-        GLAccount: Record "G/L Account";
-        TempGLAccWhereUsed: Record "G/L Account Where-Used" temporary;
-        GLAccNo: Text;
-    begin
-        if not UpdateFinancialReportNotification.HasData(UpdateRowDefGLAccNoKeyTok) then
-            exit;
-        GLAccNo := UpdateFinancialReportNotification.GetData(UpdateRowDefGLAccNoKeyTok);
-        if GLAccNo = '' then
-            exit;
-        if FindGLAccountWhereUsedInAccScheduleLine(CopyStr(GLAccNo, 1, MaxStrLen(GLAccount."No.")), TempGLAccWhereUsed) then
-            Page.RunModal(0, TempGLAccWhereUsed);
-    end;
-
-    procedure FindGLAccountWhereUsedInAccScheduleLine(GLAccNo: Code[20]; var TempGLAccWhereUsed: Record "G/L Account Where-Used" temporary): Boolean
-    var
-        AccScheduleLine: Record "Acc. Schedule Line";
-    begin
-        FilterAccScheduleLineByGLAccount(AccScheduleLine, GLAccNo);
-        if AccScheduleLine.FindSet() then begin
-            TempGLAccWhereUsed."Table ID" := Database::"Acc. Schedule Line";
-            TempGLAccWhereUsed."Table Name" := CopyStr(AccScheduleLine.TableCaption(), 1, MaxStrLen(TempGLAccWhereUsed."Table Name"));
-            TempGLAccWhereUsed."Field Name" := CopyStr(AccScheduleLine.FieldCaption(Totaling), 1, MaxStrLen(TempGLAccWhereUsed."Field Name"));
-            repeat
-                TempGLAccWhereUsed."Key 1" := AccScheduleLine."Schedule Name";
-                TempGLAccWhereUsed."Key 2" := Format(AccScheduleLine."Line No.");
-                TempGLAccWhereUsed.Line := CopyStr(
-                    StrSubstNo('%1=%2, %3=%4',
-                        AccScheduleLine.FieldCaption("Schedule Name"), AccScheduleLine."Schedule Name",
-                        AccScheduleLine.FieldCaption("Row No."), AccScheduleLine."Row No."),
-                    1, MaxStrLen(TempGLAccWhereUsed.Line));
-                TempGLAccWhereUsed."Entry No." += 1;
-                TempGLAccWhereUsed.Insert();
-            until AccScheduleLine.Next() = 0;
-            exit(true);
-        end;
-    end;
-
-    local procedure FilterAccScheduleLineByGLAccount(var AccScheduleLine: Record "Acc. Schedule Line"; GLAccNo: Code[20])
-    begin
-        AccScheduleLine.SetFilter("Totaling Type", '%1|%2', AccScheduleLine."Totaling Type"::"Posting Accounts", AccScheduleLine."Totaling Type"::"Total Accounts");
-        AccScheduleLine.SetRange(Totaling, GLAccNo);
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Calc. G/L Acc. Where-Used", OnShowExtensionPage, '', false, false)]
-    local procedure OnShowExtensionPage(GLAccountWhereUsed: Record "G/L Account Where-Used")
-    var
-        AccScheduleLine: Record "Acc. Schedule Line";
-        AccountSchedule: Page "Account Schedule";
-    begin
-        if GLAccountWhereUsed."Table ID" = Database::"Acc. Schedule Line" then begin
-            AccScheduleLine."Schedule Name" := CopyStr(GLAccountWhereUsed."Key 1", 1, MaxStrLen(AccScheduleLine."Schedule Name"));
-            if Evaluate(AccScheduleLine."Line No.", GLAccountWhereUsed."Key 2") then;
-            AccScheduleLine.Find();
-            AccountSchedule.SetAccSchedName(AccScheduleLine."Schedule Name");
-            AccountSchedule.SetRecord(AccScheduleLine);
-            AccountSchedule.Run();
-        end;
     end;
 
     procedure HideUpdateFinancialReportNotification(UpdateFinancialReportNotification: Notification)
@@ -522,41 +451,6 @@ codeunit 18 "Financial Report Mgt."
     procedure GetUpdateFinancialReportNotificationId(): Guid
     begin
         exit(UpdateFinancialReportNotificationIdTok);
-    end;
-
-    procedure SetAccScheduleFilter(FinancialReport: Record "Financial Report"; var AccountSchedule: Report "Account Schedule")
-    var
-        AccScheduleLine: Record "Acc. Schedule Line";
-    begin
-        CalcAccScheduleLineDateFilter(FinancialReport, AccScheduleLine);
-        AccountSchedule.SetFinancialReportName(FinancialReport.Name);
-        AccountSchedule.SetFilters(
-            AccScheduleLine.GetFilter("Date Filter"),
-            FinancialReport.GLBudgetFilter,
-            FinancialReport.CostBudgetFilter,
-            '',
-            FinancialReport.Dim1Filter,
-            FinancialReport.Dim2Filter,
-            FinancialReport.Dim3Filter,
-            FinancialReport.Dim4Filter,
-            FinancialReport.CashFlowFilter,
-            FinancialReport.GetEffectiveNegativeAmountFormat());
-    end;
-
-    procedure SetAccScheduleLineFilter(FinancialReport: Record "Financial Report"; var AccScheduleLine: Record "Acc. Schedule Line")
-    begin
-        AccScheduleLine.SetRange("Schedule Name", FinancialReport."Financial Report Row Group");
-        AccScheduleLine.SetFilter("Date Filter", FinancialReport.DateFilter);
-        AccScheduleLine.SetFilter("G/L Budget Filter", FinancialReport.GLBudgetFilter);
-        AccScheduleLine.SetFilter("Cost Budget Filter", FinancialReport.CostBudgetFilter);
-        AccScheduleLine.SetFilter("Business Unit Filter", '');
-        AccScheduleLine.SetFilter("Dimension 1 Filter", FinancialReport.Dim1Filter);
-        AccScheduleLine.SetFilter("Dimension 2 Filter", FinancialReport.Dim2Filter);
-        AccScheduleLine.SetFilter("Dimension 3 Filter", FinancialReport.Dim3Filter);
-        AccScheduleLine.SetFilter("Dimension 4 Filter", FinancialReport.Dim4Filter);
-        AccScheduleLine.SetFilter("Cash Flow Forecast Filter", FinancialReport.CashFlowFilter);
-        if FinancialReport.CostCenterFilter <> '' then
-            AccScheduleLine.SetFilter("Cost Center Filter", FinancialReport.CostCenterFilter);
     end;
 
     procedure CalcAccScheduleLineDateFilter(FinancialReport: Record "Financial Report"; var AccScheduleLine: Record "Acc. Schedule Line")
@@ -590,7 +484,7 @@ codeunit 18 "Financial Report Mgt."
             if TrySetAccScheduleLineDateFilter(FinancialReport.DateFilter, AccScheduleLine) then
                 exit;
 
-        AccSchedManagement.FindPeriod(AccScheduleLine, '', FinancialReport.GetEffectivePeriodType());
+        AccSchedManagement.FindPeriod(AccScheduleLine, '', FinancialReport.PeriodType);
     end;
 
     [TryFunction]

@@ -58,6 +58,7 @@ page 513 "Item Disc. Groups"
             group("Item &Disc. Groups")
             {
                 Caption = 'Item &Disc. Groups';
+#if not CLEAN25
                 action("Sales &Line Discounts")
                 {
                     ApplicationArea = Basic, Suite;
@@ -65,6 +66,9 @@ page 513 "Item Disc. Groups"
                     Image = SalesLineDisc;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View the sales line discounts that are available. These discount agreements can be for individual customers, for a group of customers, for all customers or for a campaign.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     var
@@ -76,6 +80,7 @@ page 513 "Item Disc. Groups"
                         Page.Run(Page::"Sales Line Discounts", SalesLineDiscount);
                     end;
                 }
+#endif
             }
             group(Discounts)
             {
@@ -110,9 +115,14 @@ page 513 "Item Disc. Groups"
             {
                 Caption = 'Prices & Discounts', Comment = 'Generated from the PromotedActionCategories property index 3.';
 
+#if not CLEAN25
                 actionref("Sales &Line Discounts_Promoted"; "Sales &Line Discounts")
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 actionref(SalesPriceListsDiscounts_Promoted; SalesPriceListsDiscounts)
                 {
                 }

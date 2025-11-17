@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
@@ -399,7 +399,6 @@ codeunit 1430 "Role Center Notification Mgt."
 
     procedure ShowNotifications(): Boolean
     var
-        EnvironmentInformation: Codeunit "Environment Information";
         DataMigrationMgt: Codeunit "Data Migration Mgt.";
         DataClassNotificationMgt: Codeunit "Data Class. Notification Mgt.";
         DataGeoNotification: Codeunit "Data Geo. Notification";
@@ -425,7 +424,6 @@ codeunit 1430 "Role Center Notification Mgt."
         ResultPaidSuspended := ShowPaidSuspendedNotification();
         ResultSandbox := ShowSandboxNotification();
 
-        EnvironmentInformation.ShowEarlyPreviewNotification();
         DataMigrationMgt.ShowDataMigrationRelatedGlobalNotifications();
         DataClassNotificationMgt.ShowNotifications();
         DataGeoNotification.ShowExistingAppsNotification();
@@ -701,6 +699,13 @@ codeunit 1430 "Role Center Notification Mgt."
               GetChangeToPremiumExpNotificationId(), ChangeToPremiumExpNotificationNameTok, ChangeToPremiumExpNotificationDescTok, false);
     end;
 
+#if not CLEAN25
+    [Obsolete('The procedure is not used and will be obsoleted', '25.0')]
+    procedure CompanyNotSelectedMessage(): Text
+    begin
+        exit('');
+    end;
+#endif
 
     procedure TrialNotificationMessage(): Text
     begin
@@ -787,3 +792,4 @@ codeunit 1430 "Role Center Notification Mgt."
     begin
     end;
 }
+

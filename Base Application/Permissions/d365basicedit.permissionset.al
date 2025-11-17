@@ -511,15 +511,21 @@ permissionset 208 "D365 Basic - Edit"
                   tabledata "Purch. Cr. Memo Entity Buffer" = IMD,
                   tabledata "Purch. Inv. Entity Aggregate" = IMD,
                   tabledata "Purch. Inv. Line Aggregate" = IMD,
+#if not CLEAN25
                   tabledata "Purch. Price Line Disc. Buff." = IMD,
+#endif
                   tabledata "Purchase Cue" = IMD,
                   tabledata "Purchase Discount Access" = im,
                   tabledata "Purchase Header" = im,
                   tabledata "Purchase Line" = im,
+#if not CLEAN25
                   tabledata "Purchase Line Discount" = im,
+#endif
                   tabledata "Purchase Order Entity Buffer" = IMD,
                   tabledata "Purchase Prepayment %" = im,
+#if not CLEAN25
                   tabledata "Purchase Price" = im,
+#endif
                   tabledata "Purchase Price Access" = im,
                   tabledata "Purchases & Payables Setup" = m,
                   tabledata "Query Metadata" = imd,
@@ -572,12 +578,18 @@ permissionset 208 "D365 Basic - Edit"
                   tabledata "Sales Invoice Header" = m,
                   tabledata "Sales Invoice Line Aggregate" = IMD,
                   tabledata "Sales Line" = im,
+#if not CLEAN25
                   tabledata "Sales Line Discount" = im,
+#endif
                   tabledata "Sales Order Entity Buffer" = IMD,
                   tabledata "Sales Prepayment %" = im,
+#if not CLEAN25
                   tabledata "Sales Price" = im,
+#endif
                   tabledata "Sales Price Access" = im,
+#if not CLEAN25
                   tabledata "Sales Price and Line Disc Buff" = IMD,
+#endif
                   tabledata "Sales Quote Entity Buffer" = IMD,
                   tabledata "Sales Shipment Buffer" = IMD,
                   tabledata "SB Owner Cue" = IMD,
@@ -587,8 +599,6 @@ permissionset 208 "D365 Basic - Edit"
                   tabledata "Sent Notification Entry" = imd,
                   tabledata "SEPA Direct Debit Mandate" = IMD,
                   tabledata "Service Connection" = IMD,
-                  tabledata "Sheet Definition Name" = IMD,
-                  tabledata "Sheet Definition Line" = IMD,
                   tabledata "Ship-to Address" = im,
                   tabledata "Shipment Method Translation" = IMD,
                   tabledata "Sorting Table" = IMD,

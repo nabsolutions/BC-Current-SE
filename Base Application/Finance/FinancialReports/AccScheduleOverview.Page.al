@@ -139,31 +139,6 @@ page 490 "Acc. Schedule Overview"
                         CurrentColumnNameOnAfterValidate();
                     end;
                 }
-                field(SheetDefinitionName; TempFinancialReport.SheetDefinition)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'Sheet Definition';
-                    Editable = (not ViewOnlyMode or (ViewLayout = "Financial Report View Layout"::"Show All"));
-                    Importance = Additional;
-                    TableRelation = "Sheet Definition Name";
-                    ToolTip = 'Specifies the name (code) of the sheet definition to be used for the report.';
-
-                    trigger OnAfterLookup(Selected: RecordRef)
-                    var
-                        SheetDefName: Record "Sheet Definition Name";
-                    begin
-                        SheetDefName := Selected;
-                        TempFinancialReport.SheetDefinition := SheetDefName.Name;
-                        if not ViewOnlyMode then
-                            SaveStateToFinancialReport();
-                    end;
-
-                    trigger OnValidate()
-                    begin
-                        if not ViewOnlyMode then
-                            SaveStateToFinancialReport();
-                    end;
-                }
                 field(UseAmtsInAddCurr; TempFinancialReport.UseAmountsInAddCurrency)
                 {
                     ApplicationArea = Suite;
@@ -179,73 +154,28 @@ page 490 "Acc. Schedule Overview"
                         CurrPage.Update();
                     end;
                 }
-#if not CLEAN28
                 field(NegativeAmountFormat; TempFinancialReport.NegativeAmountFormat)
                 {
                     ApplicationArea = Basic, Suite;
                     Caption = 'Negative Amount Format';
                     Importance = Additional;
                     ToolTip = 'Specifies how negative amounts are displayed on the financial report.';
-                    ObsoleteState = Pending;
-                    ObsoleteReason = 'This has been replaced by the NegativeAmountFormatDefault field.';
-                    ObsoleteTag = '28.0';
-                    Visible = not FinancialReportDefaultsEnabled;
 
                     trigger OnValidate()
                     begin
                         CurrPage.Update();
                     end;
                 }
-#endif
-                field(NegativeAmountFormatDefault; TempFinancialReport.NegativeAmountFormatDefault)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'Negative Amount Format';
-                    Importance = Additional;
-                    ToolTip = 'Specifies how negative amounts are displayed on the financial report.';
-#if not CLEAN28
-                    Visible = FinancialReportDefaultsEnabled;
-#endif
-
-                    trigger OnValidate()
-                    begin
-                        CurrPage.Update();
-                    end;
-                }
-#if not CLEAN28
                 field(PeriodType; TempFinancialReport.PeriodType)
                 {
                     ApplicationArea = Basic, Suite;
                     Caption = 'View by';
                     Importance = Promoted;
                     ToolTip = 'Specifies by which period amounts are displayed.';
-                    ObsoleteState = Pending;
-                    ObsoleteReason = 'This has been replaced by the PeriodTypeDefault field.';
-                    ObsoleteTag = '28.0';
-                    Visible = not FinancialReportDefaultsEnabled;
 
                     trigger OnValidate()
                     begin
                         AccSchedManagement.FindPeriod(Rec, '', TempFinancialReport.PeriodType);
-                        DateFilter := Rec.GetFilter("Date Filter");
-                        UpdateColumnCaptions();
-                        CurrPage.Update();
-                    end;
-                }
-#endif
-                field(PeriodTypeDefault; TempFinancialReport.PeriodTypeDefault)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'View by';
-                    Importance = Promoted;
-                    ToolTip = 'Specifies by which period amounts are displayed.';
-#if not CLEAN28
-                    Visible = FinancialReportDefaultsEnabled;
-#endif
-
-                    trigger OnValidate()
-                    begin
-                        AccSchedManagement.FindPeriod(Rec, '', TempFinancialReport.GetEffectivePeriodType());
                         DateFilter := Rec.GetFilter("Date Filter");
                         CurrPage.Update();
                     end;
@@ -347,19 +277,6 @@ page 490 "Acc. Schedule Overview"
                     begin
                         if TempFinancialReport."Excel Template Code" <> '' then
                             FinReportExcelTemplate.Get(TempFinancialReport.Name, TempFinancialReport."Excel Template Code");
-                    end;
-                }
-                field(LogoPositionDefault; TempFinancialReport.LogoPositionDefault)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'Logo Position';
-                    ToolTip = 'Specifies how your company logo is displayed on the financial report.';
-                    Visible = not ViewOnlyMode;
-
-                    trigger OnValidate()
-                    begin
-                        SaveStateToFinancialReport();
-                        CurrPage.Update();
                     end;
                 }
                 field(InternalDescription; TempFinancialReport."Internal Description")
@@ -906,16 +823,11 @@ page 490 "Acc. Schedule Overview"
                         AccSched.SetAccSchedName(TempFinancialReport."Financial Report Row Group");
                     if TempFinancialReport."Financial Report Column Group" <> '' then
                         AccSched.SetColumnLayoutName(TempFinancialReport."Financial Report Column Group");
-                    if TempFinancialReport.SheetDefinition <> '' then
-                        AccSched.SetSheetDefName(TempFinancialReport.SheetDefinition);
                     DateFilter2 := Rec.GetFilter("Date Filter");
                     GLBudgetFilter2 := Rec.GetFilter("G/L Budget Filter");
                     CostBudgetFilter2 := Rec.GetFilter("Cost Budget Filter");
                     BusUnitFilter := Rec.GetFilter("Business Unit Filter");
-                    AccSched.SetFilters(
-                        DateFilter2, GLBudgetFilter2, CostBudgetFilter2, BusUnitFilter,
-                        TempFinancialReport.Dim1Filter, TempFinancialReport.Dim2Filter, TempFinancialReport.Dim3Filter, TempFinancialReport.Dim4Filter, TempFinancialReport.CashFlowFilter,
-                        TempFinancialReport.GetEffectiveNegativeAmountFormat());
+                    AccSched.SetFilters(DateFilter2, GLBudgetFilter2, CostBudgetFilter2, BusUnitFilter, TempFinancialReport.Dim1Filter, TempFinancialReport.Dim2Filter, TempFinancialReport.Dim3Filter, TempFinancialReport.Dim4Filter, TempFinancialReport.CashFlowFilter, TempFinancialReport.NegativeAmountFormat);
                     AccSched.Run();
                 end;
             }
@@ -940,9 +852,8 @@ page 490 "Acc. Schedule Overview"
 
                 trigger OnAction()
                 begin
-                    AccSchedManagement.FindPeriod(Rec, '>=', TempFinancialReport.GetEffectivePeriodType());
+                    AccSchedManagement.FindPeriod(Rec, '>=', TempFinancialReport.PeriodType);
                     DateFilter := Rec.GetFilter("Date Filter");
-                    UpdateColumnCaptions();
                 end;
             }
             action(PreviousPeriod)
@@ -954,9 +865,8 @@ page 490 "Acc. Schedule Overview"
 
                 trigger OnAction()
                 begin
-                    AccSchedManagement.FindPeriod(Rec, '<=', TempFinancialReport.GetEffectivePeriodType());
+                    AccSchedManagement.FindPeriod(Rec, '<=', TempFinancialReport.PeriodType);
                     DateFilter := Rec.GetFilter("Date Filter");
-                    UpdateColumnCaptions();
                 end;
             }
             action(NextColumn)
@@ -1044,22 +954,6 @@ page 490 "Acc. Schedule Overview"
                     ColumnLayout.Run();
                 end;
             }
-            action(EditSheetDefinition)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Edit sheet definition';
-                Image = Edit;
-                ToolTip = 'Edit the sheet definition of this financial report.';
-
-                trigger OnAction()
-                var
-                    SheetDefLine: Record "Sheet Definition Line";
-                begin
-                    TempFinancialReport.TestField(SheetDefinition);
-                    SheetDefLine.SetRange(Name, TempFinancialReport.SheetDefinition);
-                    Page.Run(0, SheetDefLine);
-                end;
-            }
             action(EditIntroductoryClosingParagraph)
             {
                 ApplicationArea = Basic, Suite;
@@ -1126,21 +1020,6 @@ page 490 "Acc. Schedule Overview"
                     end;
                 }
             }
-            action(Schedules)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Schedules';
-                ToolTip = 'View or edit schedules for this financial report. This allows you to schedule the financial report to be exported or emailed on a regular basis. You can also customize the filters and recipients for each schedule.';
-                Image = CheckList;
-
-                trigger OnAction()
-                var
-                    FinancialReportSchedule: Record "Financial Report Schedule";
-                begin
-                    FinancialReportSchedule.SetRange("Financial Report Name", TempFinancialReport.Name);
-                    Page.Run(0, FinancialReportSchedule);
-                end;
-            }
 
             group(Excel)
             {
@@ -1161,9 +1040,7 @@ page 490 "Acc. Schedule Overview"
                             FinReportExcelTemplate: Record "Fin. Report Excel Template";
                             ExportAccSchedToExcel: Report "Export Acc. Sched. to Excel";
                         begin
-                            ExportAccSchedToExcel.SetOptions(
-                                Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency,
-                                TempFinancialReport.Name, TempFinancialReport.SheetDefinition);
+                            ExportAccSchedToExcel.SetOptions(Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency, TempFinancialReport.Name);
                             if TempFinancialReport."Excel Template Code" <> '' then begin
                                 FinReportExcelTemplate.Get(TempFinancialReport.Name, TempFinancialReport."Excel Template Code");
                                 ExportAccSchedToExcel.SetUseExistingTemplate(FinReportExcelTemplate);
@@ -1201,9 +1078,7 @@ page 490 "Acc. Schedule Overview"
                         var
                             ExportAccSchedToExcel: Report "Export Acc. Sched. to Excel";
                         begin
-                            ExportAccSchedToExcel.SetOptions(
-                                Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency,
-                                TempFinancialReport.Name, TempFinancialReport.SheetDefinition);
+                            ExportAccSchedToExcel.SetOptions(Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency, TempFinancialReport.Name);
                             ExportAccSchedToExcel.Run();
                         end;
                     }
@@ -1221,9 +1096,7 @@ page 490 "Acc. Schedule Overview"
                         var
                             ExportAccSchedToExcel: Report "Export Acc. Sched. to Excel";
                         begin
-                            ExportAccSchedToExcel.SetOptions(
-                                Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency,
-                                TempFinancialReport.Name, TempFinancialReport.SheetDefinition);
+                            ExportAccSchedToExcel.SetOptions(Rec, TempFinancialReport."Financial Report Column Group", TempFinancialReport.UseAmountsInAddCurrency, TempFinancialReport.Name);
                             ExportAccSchedToExcel.SetUpdateExistingWorksheet(true);
                             ExportAccSchedToExcel.Run();
                         end;
@@ -1321,16 +1194,10 @@ page 490 "Acc. Schedule Overview"
                 actionref(EditColumnDefinition_Promoted; EditColumnDefinition)
                 {
                 }
-                actionref(EditSheetDefinition_Promoted; EditSheetDefinition)
-                {
-                }
                 actionref(EditIntroductoryClosingParagraph_Promoted; EditIntroductoryClosingParagraph)
                 {
                 }
                 actionref(ExcelTemplates_Promoted; ExcelTemplates)
-                {
-                }
-                actionref(Schedules_Promoted; Schedules)
                 {
                 }
             }
@@ -1380,13 +1247,9 @@ page 490 "Acc. Schedule Overview"
     trigger OnOpenPage()
     begin
         Clear(Rec);
-        Clear(TempFinancialReport);
         ViewLayout := ViewLayout::"Show All";
         ReloadPage();
         LogUsageTelemetry();
-#if not CLEAN28
-        FinancialReportDefaultsEnabled := FeatureFinancialReportDef.IsDefaultsFeatureEnabled();
-#endif
     end;
 
     var
@@ -1398,11 +1261,6 @@ page 490 "Acc. Schedule Overview"
         MatrixMgt: Codeunit "Matrix Management";
         DimensionManagement: Codeunit DimensionManagement;
         FinReportMgt: Codeunit "Financial Report Mgt.";
-#if not CLEAN28
-#pragma warning disable AL0432
-        FeatureFinancialReportDef: Codeunit "Feature - Fin. Report Default";
-#pragma warning restore AL0432
-#endif
         // Filter set in this page
         DateFilter: Text;
         // Helper page state variables
@@ -1447,9 +1305,6 @@ page 490 "Acc. Schedule Overview"
         ColumnStyle14: Text;
         ColumnStyle15: Text;
         IntroductoryParagraph, ClosingParagraph : Text;
-#if not CLEAN28
-        FinancialReportDefaultsEnabled: Boolean;
-#endif
 
     protected var
         AnalysisView: Record "Analysis View";
@@ -1653,7 +1508,6 @@ page 490 "Acc. Schedule Overview"
     begin
         FinReportMgt.CalcAccScheduleLineDateFilter(TempFinancialReport, Rec);
         DateFilter := Rec.GetFilter("Date Filter");
-        UpdateColumnCaptions();
         CurrPage.Update();
     end;
 
@@ -1684,7 +1538,6 @@ page 490 "Acc. Schedule Overview"
         Field.SetRange(TableNo, Database::"Financial Report User Filters");
         Field.SetFilter("No.", '<>%1', FinancialReportUserFilters.FieldNo("User ID"));
         Field.SetFilter("No.", '<>%1 & <>%2 & < %3', FinancialReportUserFilters.FieldNo("User ID"), FinancialReportUserFilters.FieldNo("Financial Report Name"), 2000000000);
-        Field.SetFilter(ObsoleteState, '<>%1', Field.ObsoleteState::Removed);
         RecordRefUserFilters.GetTable(FinancialReportUserFilters);
         if Field.FindSet() then
             repeat
@@ -1729,12 +1582,7 @@ page 490 "Acc. Schedule Overview"
             // (Every change to FinancialReportTemp."Financial Report Column Group" must be kept in sync with CurrentColumnName)
             CurrentColumnName := NewCurrentColumnName;
 
-#if not CLEAN28
-            if not FeatureFinancialReportDef.IsDefaultsFeatureEnabled() then
-                FinancialReportToLoadTemp.PeriodType := ModifiedPeriodType
-            else
-#endif
-            FinancialReportToLoadTemp.PeriodTypeDefault := "Financial Report Period Type".FromInteger(ModifiedPeriodType.AsInteger());
+            FinancialReportToLoadTemp.PeriodType := ModifiedPeriodType;
             FinancialReportToLoadTemp.UseAmountsInAddCurrency := false;
             // (Every change to FinancialReportTemp.UseAmountsInAddCurrency must be kept in sync with UseAmtsInAddCurr)
             UseAmtsInAddCurr := false;
@@ -1977,15 +1825,10 @@ page 490 "Acc. Schedule Overview"
         PeriodTypeOpt: Option;
     begin
         TempColumnLayout := ColumnLayoutArr[ColumnNo];
-        AccSchedManagement.DrillDownFromOverviewPage(TempColumnLayout, Rec, TempFinancialReport.GetEffectivePeriodType().AsInteger());
-        PeriodTypeOpt := TempFinancialReport.GetEffectivePeriodType().AsInteger();
+        AccSchedManagement.DrillDownFromOverviewPage(TempColumnLayout, Rec, TempFinancialReport.PeriodType.AsInteger());
+        PeriodTypeOpt := TempFinancialReport.PeriodType.AsInteger();
         OnAfterDrillDown(ColumnNo, TempColumnLayout, PeriodTypeOpt);
-#if not CLEAN28
-        if not FeatureFinancialReportDef.IsDefaultsFeatureEnabled() then
-            TempFinancialReport.PeriodType := "Analysis Period Type".FromInteger(PeriodTypeOpt)
-        else
-#endif
-        TempFinancialReport.PeriodTypeDefault := "Financial Report Period Type".FromInteger(PeriodTypeOpt);
+        TempFinancialReport.PeriodType := "Analysis Period Type".FromInteger(PeriodTypeOpt);
     end;
 
     protected procedure UpdateColumnCaptions()
@@ -2118,7 +1961,6 @@ page 490 "Acc. Schedule Overview"
         RecordRefFinancialReportTemp.GetTable(TempFinancialReport);
         Field.SetRange(TableNo, Database::"Financial Report User Filters");
         Field.SetFilter("No.", '<>%1 & <>%2 & < %3', FinancialReportUserFilters.FieldNo("User ID"), FinancialReportUserFilters.FieldNo("Financial Report Name"), 2000000000);
-        Field.SetFilter(ObsoleteState, '<>%1', Field.ObsoleteState::Removed);
         FiltersAreDifferent := false;
         if Field.FindSet() then
             repeat
@@ -2157,7 +1999,6 @@ page 490 "Acc. Schedule Overview"
         // To determine whether changes were made, we load the original definition
         LoadFinancialReportFiltersOrDefault(TempFinancialReport.Name, TempOriginalFinancialReport);
         Field.SetRange(TableNo, Database::"Financial Report");
-        Field.SetFilter(ObsoleteState, '<>%1', Field.ObsoleteState::Removed);
         RecordRefOriginalFinancialReport.GetTable(TempOriginalFinancialReport);
         RecordRefFinancialReport.GetTable(TempFinancialReport);
         // And then we compare each field of the current `FinancialReportTemp`
@@ -2269,10 +2110,10 @@ page 490 "Acc. Schedule Overview"
     begin
         GLSetup.Get();
         AddCurrency := TempFinancialReport.UseAmountsInAddCurrency and (GLSetup."Additional Reporting Currency" <> '');
-        OnAfterFormatStr(ColumnLayoutArr, UseAmtsInAddCurr, ColumnNo, TempFinancialReport.GetEffectiveNegativeAmountFormat(), Result, IsHandled);
+        OnAfterFormatStr(ColumnLayoutArr, UseAmtsInAddCurr, ColumnNo, TempFinancialReport.NegativeAmountFormat, Result, IsHandled);
         if IsHandled then
             exit(Result);
-        exit(MatrixMgt.FormatRoundingFactor(ColumnLayoutArr[ColumnNo]."Rounding Factor", UseAmtsInAddCurr, TempFinancialReport.GetEffectiveNegativeAmountFormat()));
+        exit(MatrixMgt.FormatRoundingFactor(ColumnLayoutArr[ColumnNo]."Rounding Factor", UseAmtsInAddCurr, TempFinancialReport.NegativeAmountFormat));
     end;
 
     procedure RoundIfNotNone(Value: Decimal; RoundingFactor: Enum "Analysis Rounding Factor"): Decimal

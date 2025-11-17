@@ -5,10 +5,7 @@
 namespace Microsoft.Purchases.Vendor;
 
 using Microsoft.Foundation.Period;
-using Microsoft.Inventory.Item;
-using Microsoft.Purchases.History;
 using Microsoft.Purchases.Payables;
-using Microsoft.Purchase.Vendor;
 
 page 152 "Vendor Statistics"
 {
@@ -30,24 +27,6 @@ page 152 "Vendor Statistics"
                     ApplicationArea = Basic, Suite;
                     Importance = Additional;
                 }
-                field(DefaultVendorItemCount; CalculateDefaultSupplierItemCount())
-                {
-                    ApplicationArea = Basic, Suite;
-                    Importance = Additional;
-                    Caption = 'Default Supplier for Items';
-                    ToolTip = 'Specifies the number of items for which the vendor is the default supplier.';
-
-                    trigger OnDrillDown()
-                    var
-                        Item: Record Item;
-                    begin
-                        Item.SetRange("Vendor No.", Rec."No.");
-                        Item.SetRange(Blocked, false);
-                        Item.SetRange("Purchasing Blocked", false);
-                        Page.RunModal(0, Item);
-                    end;
-                }
-
                 field("Balance (LCY)"; Rec."Balance (LCY)")
                 {
                     ApplicationArea = Basic, Suite;
@@ -65,39 +44,21 @@ page 152 "Vendor Statistics"
                         VendLedgEntry.DrillDownOnEntries(DtldVendLedgEntry);
                     end;
                 }
-                group(Purchase)
+                field("Outstanding Orders (LCY)"; Rec."Outstanding Orders (LCY)")
                 {
-                    Caption = 'Purchase';
-                    field("Outstanding Orders (LCY)"; Rec."Outstanding Orders (LCY)")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        ToolTip = 'Specifies the sum of outstanding orders (in LCY) to this vendor.';
-                    }
-                    field("Amt. Rcd. Not Invoiced (LCY)"; Rec."Amt. Rcd. Not Invoiced (LCY)")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Amt. Rcd. Not Invd. (LCY)';
-                        ToolTip = 'Specifies the total invoice amount (in LCY) for the items you have received but not yet been invoiced for.';
-                    }
-                    field("Outstanding Invoices (LCY)"; Rec."Outstanding Invoices (LCY)")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        ToolTip = 'Specifies the sum of the vendor''s outstanding purchase invoices in LCY.';
-                    }
-                    field(DaysSinceLastPurchase; CalcDaysSinceLastPurchase())
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Days Since Last Purchase';
-                        ToolTip = 'Specifies the number of days since the last purchase was made from the vendor.';
-
-                        trigger OnDrillDown()
-                        var
-                            VendorLedgerEntry: Record "Vendor Ledger Entry";
-                        begin
-                            FilterVendorLedgerEntryToLastPurchase(VendorLedgerEntry);
-                            Page.RunModal(0, VendorLedgerEntry);
-                        end;
-                    }
+                    ApplicationArea = Basic, Suite;
+                    ToolTip = 'Specifies the sum of outstanding orders (in LCY) to this vendor.';
+                }
+                field("Amt. Rcd. Not Invoiced (LCY)"; Rec."Amt. Rcd. Not Invoiced (LCY)")
+                {
+                    ApplicationArea = Basic, Suite;
+                    Caption = 'Amt. Rcd. Not Invd. (LCY)';
+                    ToolTip = 'Specifies the total invoice amount (in LCY) for the items you have received but not yet been invoiced for.';
+                }
+                field("Outstanding Invoices (LCY)"; Rec."Outstanding Invoices (LCY)")
+                {
+                    ApplicationArea = Basic, Suite;
+                    ToolTip = 'Specifies the sum of the vendor''s outstanding purchase invoices in LCY.';
                 }
                 field(GetTotalAmountLCY; Rec.GetTotalAmountLCY())
                 {
@@ -110,7 +71,6 @@ page 152 "Vendor Statistics"
                 {
                     ApplicationArea = Basic, Suite;
                     CaptionClass = Format(StrSubstNo(OverdueAmountsLCYTxt, Format(CurrentDate)));
-                    ToolTip = 'Specifies the total amount (in LCY) that you owe the vendor for overdue invoices.';
 
                     trigger OnDrillDown()
                     var
@@ -229,18 +189,6 @@ page 152 "Vendor Statistics"
                             Caption = 'Pmt. Tolerances (LCY)';
                             ToolTip = 'Specifies the sum of payment tolerance from the vendor.';
                         }
-                        field(NumberOfPurchaseDocs1; NumberOfPurchaseDocs[1])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Purchase Docs.';
-                            ToolTip = 'Specifies the number of purchase documents for the vendor.';
-                        }
-                        field(NumberOfDistinctItemsPurchased1; NumberOfDistinctItemsPurchased[1])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Distinct Items Purchased';
-                            ToolTip = 'Specifies the number of distinct items purchased from the vendor.';
-                        }
                     }
                     group("This Year")
                     {
@@ -334,18 +282,6 @@ page 152 "Vendor Statistics"
                             AutoFormatType = 1;
                             Caption = 'Pmt. Tolerances (LCY)';
                             ToolTip = 'Specifies the sum of payment tolerance from the vendor.';
-                        }
-                        field(NumberOfPurchaseDocs2; NumberOfPurchaseDocs[2])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Purchase Docs.';
-                            ToolTip = 'Specifies the number of purchase documents for the vendor.';
-                        }
-                        field(NumberOfDistinctItemsPurchased2; NumberOfDistinctItemsPurchased[2])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Distinct Items Purchased';
-                            ToolTip = 'Specifies the number of distinct items purchased from the vendor.';
                         }
                     }
                     group("Last Year")
@@ -441,26 +377,15 @@ page 152 "Vendor Statistics"
                             Caption = 'Pmt. Tolerances (LCY)';
                             ToolTip = 'Specifies the sum of payment tolerance from the vendor.';
                         }
-                        field(NumberOfPurchaseDocs3; NumberOfPurchaseDocs[3])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Purchase Docs.';
-                            ToolTip = 'Specifies the number of purchase documents for the vendor.';
-                        }
-                        field(NumberOfDistinctItemsPurchased3; NumberOfDistinctItemsPurchased[3])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Distinct Items Purchased';
-                            ToolTip = 'Specifies the number of distinct items purchased from the vendor.';
-                        }
                     }
                     group("To Date")
                     {
-                        Caption = 'Lifetime (since)';
-                        field(Control82; Rec."First Transaction Date")
+                        Caption = 'To Date';
+                        field(Control82; PlaceholderTxt)
                         {
                             ApplicationArea = Basic, Suite;
                             ShowCaption = false;
+                            Visible = false;
                         }
                         field("VendPurchLCY[4]"; VendPurchLCY[4])
                         {
@@ -546,18 +471,6 @@ page 152 "Vendor Statistics"
                             Caption = 'Pmt. Tolerances (LCY)';
                             ToolTip = 'Specifies the sum of payment tolerance from the vendor.';
                         }
-                        field(NumberOfPurchaseDocs4; NumberOfPurchaseDocs[4])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Purchase Docs.';
-                            ToolTip = 'Specifies the number of purchase documents for the vendor.';
-                        }
-                        field(NumberOfDistinctItemsPurchased4; NumberOfDistinctItemsPurchased[4])
-                        {
-                            ApplicationArea = Basic, Suite;
-                            Caption = 'No. of Distinct Items Purchased';
-                            ToolTip = 'Specifies the number of distinct items purchased from the vendor.';
-                        }
                     }
                 }
             }
@@ -598,8 +511,6 @@ page 152 "Vendor Statistics"
             VendPaymentsLCY[i] := Rec."Payments (LCY)";
             VendRefundsLCY[i] := Rec."Refunds (LCY)";
             VendOtherAmountsLCY[i] := Rec."Other Amounts (LCY)";
-            NumberOfPurchaseDocs[i] := CalcNumberOfPurchaseInvoices(VendDateFilter[i]);
-            NumberOfDistinctItemsPurchased[i] := CalcNumberOfDistinctItemsPurchased(VendDateFilter[i]);
         end;
         Rec.SetRange("Date Filter", 0D, CurrentDate);
     end;
@@ -627,8 +538,6 @@ page 152 "Vendor Statistics"
         VendRefundsLCY: array[4] of Decimal;
         VendOtherAmountsLCY: array[4] of Decimal;
         InvAmountsLCY: array[4] of Decimal;
-        NumberOfPurchaseDocs: array[4] of Integer;
-        NumberOfDistinctItemsPurchased: array[4] of Integer;
         i: Integer;
 
     local procedure SetDateFilter()
@@ -636,64 +545,6 @@ page 152 "Vendor Statistics"
         Rec.SetRange("Date Filter", 0D, CurrentDate);
 
         OnAfterSetDateFilter(Rec);
-    end;
-
-    local procedure CalcDaysSinceLastPurchase(): Integer
-    var
-        VendorLedgerEntry: Record "Vendor Ledger Entry";
-    begin
-        VendorLedgerEntry.SetLoadFields("Posting Date");
-        VendorLedgerEntry.SetCurrentKey("Posting Date");
-        VendorLedgerEntry.SetRange("Vendor No.", Rec."No.");
-        VendorLedgerEntry.SetFilter("Purchase (LCY)", '<%1', 0);
-        VendorLedgerEntry.SetRange(Reversed, false);
-        if VendorLedgerEntry.FindLast() then
-            exit(CurrentDate - VendorLedgerEntry."Posting Date");
-        exit(0);
-    end;
-
-    local procedure FilterVendorLedgerEntryToLastPurchase(var VendorLedgerEntry: Record "Vendor Ledger Entry"): Boolean
-    begin
-        VendorLedgerEntry.SetCurrentKey("Posting Date");
-        VendorLedgerEntry.SetRange("Vendor No.", Rec."No.");
-        VendorLedgerEntry.SetFilter("Purchase (LCY)", '<%1', 0);
-        VendorLedgerEntry.SetRange(Reversed, false);
-        if VendorLedgerEntry.FindLast() then begin
-            VendorLedgerEntry.SetRecFilter();
-            exit(true);
-        end;
-    end;
-
-    local procedure CalcNumberOfPurchaseInvoices(DateFilter: Text): Integer
-    var
-        PurchInvHeader: Record "Purch. Inv. Header";
-    begin
-        PurchInvHeader.SetRange("Buy-From Vendor No.", Rec."No.");
-        PurchInvHeader.SetFilter("Posting Date", DateFilter);
-        exit(PurchInvHeader.Count());
-    end;
-
-    local procedure CalcNumberOfDistinctItemsPurchased(DateFilter: Text) Count: Integer
-    var
-        DistinctItemsPurchasedQuery: Query "Distinct Items Purchased";
-    begin
-        DistinctItemsPurchasedQuery.SetFilter(PostingDateFilter, DateFilter);
-        DistinctItemsPurchasedQuery.SetRange(VendorNoFilter, Rec."No.");
-
-        if DistinctItemsPurchasedQuery.Open() then
-            while DistinctItemsPurchasedQuery.Read() do
-                Count += 1;
-    end;
-
-    local procedure CalculateDefaultSupplierItemCount(): Integer
-    var
-        Item: Record Item;
-    begin
-        Item.ReadIsolation := IsolationLevel::ReadUncommitted;
-        Item.SetRange("Vendor No.", Rec."No.");
-        Item.SetRange(Blocked, false);
-        Item.SetRange("Purchasing Blocked", false);
-        exit(Item.Count());
     end;
 
     [IntegrationEvent(false, false)]

@@ -10,7 +10,9 @@ using Microsoft.Foundation.Enums;
 using Microsoft.Foundation.Period;
 using Microsoft.Pricing.Calculation;
 using Microsoft.Pricing.PriceList;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Resource;
 using System.Utilities;
 
@@ -270,6 +272,7 @@ page 9243 "Res. Group Capacity Matrix"
             {
                 Caption = '&Prices';
                 Image = Price;
+#if not CLEAN25
                 action(Costs)
                 {
                     ApplicationArea = Jobs;
@@ -280,6 +283,9 @@ page 9243 "Res. Group Capacity Matrix"
                     RunPageLink = Type = const("Group(Resource)"),
                                   Code = field("No.");
                     ToolTip = 'View or change detailed information about costs for the resource.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '19.0';
                 }
                 action(Prices)
                 {
@@ -291,7 +297,11 @@ page 9243 "Res. Group Capacity Matrix"
                     RunPageLink = Type = const("Group(Resource)"),
                                   Code = field("No.");
                     ToolTip = 'View or edit prices for the resource.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '19.0';
                 }
+#endif
                 action(PurchPriceLists)
                 {
                     ApplicationArea = Jobs;

@@ -66,8 +66,10 @@ table 23 Vendor
     Permissions = TableData "Vendor Ledger Entry" = r,
                   TableData "Price List Header" = rd,
                   TableData "Price List Line" = rd,
+#if not CLEAN25
                   TableData "Purchase Price" = rd,
                   TableData "Purchase Line Discount" = rd,
+#endif
                   TableData "Purchase Price Access" = rd,
                   TableData "Purchase Discount Access" = rd,
                   tabledata Language = r,
@@ -463,7 +465,6 @@ table 23 Vendor
         field(59; "Balance (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             CalcFormula = - sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" where("Vendor No." = field("No."),
                                                                                    "Initial Entry Global Dim. 1" = field("Global Dimension 1 Filter"),
                                                                                    "Initial Entry Global Dim. 2" = field("Global Dimension 2 Filter"),
@@ -1508,12 +1509,6 @@ table 23 Vendor
         field(7602; "Validate EU Vat Reg. No."; Boolean)
         {
             Caption = 'Validate EU VAT Reg. No.';
-        }
-        field(7603; "Copy Buy-from Add. to Qte From"; Enum "Contact Type")
-        {
-            AccessByPermission = TableData Contact = R;
-            Caption = 'Copy Buy-from Addr. to Qte From';
-            ToolTip = 'Specifies which vendor address is inserted on purchase quotes that you create for the vendor.';
         }
         field(8001; "Currency Id"; Guid)
         {
@@ -2867,16 +2862,20 @@ table 23 Vendor
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '16.0')]
     [Scope('OnPrem')]
     procedure ValidatePricesIncludingVATOnAfterGetVATPostingSetup(var VATPostingSetup: Record "VAT Posting Setup")
     begin
         OnValidatePricesIncludingVATOnAfterGetVATPostingSetup(VATPostingSetup);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '16.0')]
     [IntegrationEvent(false, false)]
     local procedure OnValidatePricesIncludingVATOnAfterGetVATPostingSetup(var VATPostingSetup: Record "VAT Posting Setup")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeValidateRegistrationNumber(var Vendor: Record Vendor; var IsHandled: Boolean)

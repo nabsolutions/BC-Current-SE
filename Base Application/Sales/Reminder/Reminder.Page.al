@@ -277,7 +277,7 @@ page 434 Reminder
                     ApplicationArea = Basic, Suite;
                     Caption = 'C&ustomer';
                     Image = Customer;
-                    RunObject = Page "Customer Card";
+                    RunObject = Page "Customer List";
                     RunPageLink = "No." = field("Customer No.");
                     ToolTip = 'Open the card of the customer that the reminder or finance charge applies to. ';
                 }

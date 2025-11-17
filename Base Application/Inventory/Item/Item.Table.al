@@ -95,7 +95,6 @@ table 27 Item
         field(2; "No. 2"; Code[20])
         {
             Caption = 'No. 2';
-            ToolTip = 'Specifies an alternative account number which can be used internally in the company.';
             OptimizeForTextSearch = true;
         }
         field(3; Description; Text[100])
@@ -459,7 +458,6 @@ table 27 Item
         field(32; "Vendor Item No."; Text[50])
         {
             Caption = 'Vendor Item No.';
-            ToolTip = 'Specifies the number that the vendor uses for this item.';
             OptimizeForTextSearch = true;
         }
         field(33; "Lead Time Calculation"; DateFormula)
@@ -496,7 +494,6 @@ table 27 Item
         field(37; "Alternative Item No."; Code[20])
         {
             Caption = 'Alternative Item No.';
-            ToolTip = 'Specifies another identifier for this item.';
             OptimizeForTextSearch = true;
             TableRelation = Item;
         }
@@ -2103,44 +2100,6 @@ table 27 Item
             Caption = 'Over-Receipt Code';
             TableRelation = "Over-Receipt Code";
         }
-        field(9110; "Qty. on Blanket Sales Order"; Decimal)
-        {
-            CalcFormula = sum("Sales Line"."Outstanding Qty. (Base)" where("Document Type" = const("Blanket Order"),
-                                                                            Type = const(Item),
-                                                                            "No." = field("No."),
-                                                                            "Shortcut Dimension 1 Code" = field("Global Dimension 1 Filter"),
-                                                                            "Shortcut Dimension 2 Code" = field("Global Dimension 2 Filter"),
-                                                                            "Location Code" = field("Location Filter"),
-                                                                            "Drop Shipment" = field("Drop Shipment Filter"),
-                                                                            "Variant Code" = field("Variant Filter"),
-                                                                            "Shipment Date" = field("Date Filter"),
-                                                                            "Unit of Measure Code" = field("Unit of Measure Filter")));
-            Caption = 'Qty. on Blanket Sales Order';
-            ToolTip = 'Specifies how many units of the item are allocated to blanket sales orders, meaning listed on outstanding blanket sales order lines.';
-            DecimalPlaces = 0 : 5;
-            Editable = false;
-            FieldClass = FlowField;
-            AutoFormatType = 0;
-        }
-        field(9210; "Qty. on Blanket Purch. Order"; Decimal)
-        {
-            CalcFormula = sum("Purchase Line"."Outstanding Qty. (Base)" where("Document Type" = const("Blanket Order"),
-                                                                            Type = const(Item),
-                                                                            "No." = field("No."),
-                                                                            "Shortcut Dimension 1 Code" = field("Global Dimension 1 Filter"),
-                                                                            "Shortcut Dimension 2 Code" = field("Global Dimension 2 Filter"),
-                                                                            "Location Code" = field("Location Filter"),
-                                                                            "Drop Shipment" = field("Drop Shipment Filter"),
-                                                                            "Variant Code" = field("Variant Filter"),
-                                                                            "Expected Receipt Date" = field("Date Filter"),
-                                                                            "Unit of Measure Code" = field("Unit of Measure Filter")));
-            Caption = 'Qty. on Blanket Purch. Order';
-            ToolTip = 'Specifies how many units of the item are allocated to blanket purchase orders, meaning listed on outstanding blanket purchase order lines.';
-            DecimalPlaces = 0 : 5;
-            Editable = false;
-            FieldClass = FlowField;
-            AutoFormatType = 0;
-        }
         field(99000752; "Single-Level Material Cost"; Decimal)
         {
             AutoFormatType = 2;
@@ -2383,7 +2342,6 @@ table 27 Item
         field(99008500; "Common Item No."; Code[20])
         {
             Caption = 'Common Item No.';
-            ToolTip = 'Specifies the unique common item number that the intercompany partners agree upon.';
             OptimizeForTextSearch = true;
         }
     }
@@ -3130,9 +3088,45 @@ table 27 Item
         exit(CannotDeleteItemWithExistingDocumentLinesErr);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckBOMComponents() in codeunit CheckBOMComponent', '25.0')]
+    procedure CheckBOM(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckBOMComponent: Codeunit "Check BOM Component";
+    begin
+        CheckBOMComponent.CheckBOMComponents(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckPurchLine() in codeunit CheckPurchDocumentLine', '25.0')]
+    procedure CheckPurchLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckPurchDocumentLine: Codeunit "Check Purchase Document Line";
+    begin
+        CheckPurchDocumentLine.CheckPurchaseLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckSalesLine() in codeunit CheckSalesDocumentLine', '25.0')]
+    procedure CheckSalesLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckSalesDocumentLine: Codeunit "Check Sales Document Line";
+    begin
+        CheckSalesDocumentLine.CheckSalesLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckPlanningCompLine() in codeunit CheckPlanningComponent', '25.0')]
+    procedure CheckPlanningCompLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckPlanningComponent: Codeunit "Check Planning Component";
+    begin
+        CheckPlanningComponent.CheckPlanningComponents(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
     procedure CheckTransLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
     var
@@ -3141,7 +3135,25 @@ table 27 Item
         CheckTransferDocument.CheckTransferLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckServiceLine() in codeunit CheckServiceDocument', '25.0')]
+    procedure CheckServLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckServiceDocument: Codeunit Microsoft.Service.Document."Check Service Document";
+    begin
+        CheckServiceDocument.CheckServiceLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckServiceContractLine() in codeunit CheckServiceDocument', '25.0')]
+    procedure CheckServContractLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckServiceDocument: Codeunit Microsoft.Service.Document."Check Service Document";
+    begin
+        CheckServiceDocument.CheckServiceContractLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
     procedure CheckUpdateFieldsForNonInventoriableItem()
     var
@@ -3188,6 +3200,15 @@ table 27 Item
         end;
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckJobPlanningLines() in codeunit CheckJobPlanningLine', '25.0')]
+    procedure CheckJobPlanningLine(CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    var
+        CheckJobPlanningLine: Codeunit "Check Job Planning Line";
+    begin
+        CheckJobPlanningLine.CheckJobPlanningLines(Rec, CurrentFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+#endif
 
     procedure CalcVAT(): Decimal
     begin
@@ -3860,11 +3881,6 @@ table 27 Item
         OnCalcRelOrderReceiptQty(Rec, Result);
     end;
 
-    procedure CalcQtyOnServiceOrder() Result: Decimal
-    begin
-        OnCalcQtyOnServiceOrder(Rec, Result);
-    end;
-
     [IntegrationEvent(false, false)]
     local procedure OnAfterCheckDocuments(var Item: Record Item; var xItem: Record Item; var CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
     begin
@@ -4108,18 +4124,174 @@ table 27 Item
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckPurchLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckPurchLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Replace by same event in codeunit CheckPurchDocumentLine', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckPurchLine(Item: Record Item; CurrFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckSalesLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckSalesLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Replace by same event in codeunit CheckSalesDocumentLine', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckSalesLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckServLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckServLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Moved to codeunit CheckServiceDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckServLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckServContractLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckServContractLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Moved to codeunit CheckServiceDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckServContractLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckProdOrderLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckProdOrderLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Moved to codeunit CheckProdOrderDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckProdOrderLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckProdOrderCompLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckProdOrderCompLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
 
+    [Obsolete('Moved to codeunit CheckProdOrderDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckProdOrderCompLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckBOM(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckBOM(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckBOMComponent', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckBOM(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckProdBOMLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckProdBOMLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckProdOrderDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckProdBOMLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckPlanningCompLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckPlanningCompLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckPlanningComponent', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckPlanningCompLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckJobPlanningLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckJobPlanningLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckJobPlanningLine', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckJobPlanningLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckAsmHeader(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckAsmHeader(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckAssemblyDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckAsmHeader(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckAsmLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckAsmLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckAssemblyDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckAsmLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnBeforeCheckTransLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+        OnBeforeCheckTransLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+    end;
+
+    [Obsolete('Moved to codeunit CheckTransferDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCheckTransLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeCheckReqLine(Item: Record Item; CurrentFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text; var IsHandled: Boolean)
@@ -4131,6 +4303,18 @@ table 27 Item
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnCheckPurchLineOnAfterPurchLineSetFilters(Item: Record Item; var PurchaseLine: Record "Purchase Line"; CurrFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    begin
+        OnCheckPurchLineOnAfterPurchLineSetFilters(Item, PurchaseLine, CurrFieldNo, CheckFieldNo, CheckFieldCaption);
+    end;
+
+    [Obsolete('Moved to codeunit CheckPurchaseDocument', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnCheckPurchLineOnAfterPurchLineSetFilters(Item: Record Item; var PurchaseLine: Record "Purchase Line"; CurrFieldNo: Integer; CheckFieldNo: Integer; CheckFieldCaption: Text)
+    begin
+    end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeIsVariantMandatory(ItemNo: Code[20]; var IsHandled: Boolean; var Result: Boolean);
@@ -4249,11 +4433,6 @@ table 27 Item
 
     [IntegrationEvent(false, false)]
     local procedure OnCalcRelOrderReceiptQty(var Item: Record Item; var Result: Decimal)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnCalcQtyOnServiceOrder(var Item: Record Item; var Result: Decimal)
     begin
     end;
 

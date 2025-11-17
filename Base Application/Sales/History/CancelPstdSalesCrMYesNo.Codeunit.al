@@ -26,7 +26,6 @@ codeunit 1334 "Cancel PstdSalesCrM (Yes/No)"
         SalesInvHeader: Record "Sales Invoice Header";
         CancelledDocument: Record "Cancelled Document";
         CancelPostedSalesCrMemo: Codeunit "Cancel Posted Sales Cr. Memo";
-        PageManagement: Codeunit "Page Management";
         IsHandled: Boolean;
     begin
         CancelPostedSalesCrMemo.TestCorrectCrMemoIsAllowed(SalesCrMemoHeader);
@@ -38,7 +37,7 @@ codeunit 1334 "Cancel PstdSalesCrM (Yes/No)"
                     IsHandled := false;
                     OnCancelInvoiceOnBeforePostedSalesInvoice(SalesInvHeader, IsHandled);
                     if not IsHandled then
-                        PageManagement.PageRun(SalesInvHeader);
+                        PAGE.Run(PAGE::"Posted Sales Invoice", SalesInvHeader);
                     exit(true);
                 end;
 

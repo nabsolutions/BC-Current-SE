@@ -435,8 +435,7 @@ codeunit 1806 "Excel Data Migrator"
         ConfigPackageTable.CalcFields("Table Name", "Table Caption");
 
         if not TryOpenExcel(TempExcelBuffer, FileName, ConfigPackageTable."Table Name") then
-            if not TryOpenExcel(TempExcelBuffer, FileName, ConfigPackageTable."Table Caption") then
-                TryOpenExcel(TempExcelBuffer, FileName, CopyStr(Format(ConfigPackageTable."Table ID") + ' ' + ConfigPackageTable."Table Name", 1, 250));
+            TryOpenExcel(TempExcelBuffer, FileName, ConfigPackageTable."Table Caption");
     end;
 
     [TryFunction]

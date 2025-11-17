@@ -5,8 +5,6 @@ using System.Globalization;
 
 codeunit 3003 DotNet_DateTime
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

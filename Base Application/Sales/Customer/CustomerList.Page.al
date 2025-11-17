@@ -264,6 +264,19 @@ page 22 "Customer List"
                 SubPageLink = "No." = field("No.");
                 Visible = CRMIsCoupledToRecord and CRMIntegrationEnabled;
             }
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = All;
+                Visible = false;
+                Caption = 'Attachments';
+                SubPageLink = "Table ID" = const(Database::Customer),
+                              "No." = field("No.");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = All;
@@ -739,6 +752,7 @@ page 22 "Customer List"
                     RunPageLink = Code = field("Invoice Disc. Code");
                     ToolTip = 'Set up different discounts that are applied to invoices for the customer. An invoice discount is automatically granted to the customer when the total on a sales invoice exceeds a certain amount.';
                 }
+#if not CLEAN25
                 action(Sales_Prices)
                 {
                     ApplicationArea = Basic, Suite;
@@ -746,6 +760,9 @@ page 22 "Customer List"
                     Image = Price;
                     ToolTip = 'View or set up different prices for items that you sell to the customer. An item price is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
                     Visible = not ExtendedPriceEnabled;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     begin
@@ -759,12 +776,16 @@ page 22 "Customer List"
                     Image = LineDiscount;
                     ToolTip = 'View or set up different discounts for items that you sell to the customer. An item discount is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
                     Visible = not ExtendedPriceEnabled;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     begin
                         ShowLineDiscounts();
                     end;
                 }
+#endif
                 action("Prepa&yment Percentages")
                 {
                     ApplicationArea = Prepayments;
@@ -1011,6 +1032,7 @@ page 22 "Customer List"
                         PriceUXManagement.ShowPriceListLines(PriceSource, Enum::"Price Amount Type"::Discount);
                     end;
                 }
+#if not CLEAN25
                 action(PriceListsDiscounts)
                 {
                     ApplicationArea = Basic, Suite;
@@ -1018,6 +1040,9 @@ page 22 "Customer List"
                     Image = LineDiscount;
                     Visible = false;
                     ToolTip = 'View or set up different discounts for products that you sell to the customer. A product line discount is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Action PriceLists shows all sales price lists with prices and discounts';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     var
@@ -1035,6 +1060,9 @@ page 22 "Customer List"
                     Scope = Repeater;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View or set up different prices for items that you sell to the selected customer. An item price is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
@@ -1049,12 +1077,16 @@ page 22 "Customer List"
                     Scope = Repeater;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View or set up different discounts for items that you sell to the customer. An item discount is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
                         ShowLineDiscounts();
                     end;
                 }
+#endif
             }
             group("Request Approval")
             {
@@ -1511,12 +1543,22 @@ page 22 "Customer List"
             {
                 Caption = 'Prices & Discounts', Comment = 'Generated from the PromotedActionCategories property index 8.';
 
+#if not CLEAN25
                 actionref(Prices_Prices_Promoted; Prices_Prices)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
+#if not CLEAN25
                 actionref(Prices_LineDiscounts_Promoted; Prices_LineDiscounts)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 actionref(PriceLists_Promoted; PriceLists)
                 {
                 }
@@ -1544,10 +1586,15 @@ page 22 "Customer List"
                 actionref("Customer - Order Summary_Promoted"; "Customer - Order Summary")
                 {
                 }
+#if not CLEAN25
                 actionref("Customer - Sales List_Promoted"; "Customer - Sales List")
                 {
                     Visible = false;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Action is being demoted based on overall low usage.';
+                    ObsoleteTag = '21.0';
                 }
+#endif
             }
             group(Category_Synchronize)
             {
@@ -1687,6 +1734,8 @@ page 22 "Customer List"
         EnabledApprovalWorkflowsExist := WorkflowManagement.EnabledWorkflowExist(DATABASE::Customer, EventFilter);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     local procedure ShowLineDiscounts()
     var
         SalesLineDiscount: Record "Sales Line Discount";
@@ -1697,6 +1746,7 @@ page 22 "Customer List"
         Page.Run(Page::"Sales Line Discounts", SalesLineDiscount);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     local procedure ShowPrices()
     var
         SalesPrice: Record "Sales Price";
@@ -1706,6 +1756,7 @@ page 22 "Customer List"
         SalesPrice.SetRange("Sales Code", Rec."No.");
         Page.Run(Page::"Sales Prices", SalesPrice);
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     [Scope('OnPrem')]
@@ -1718,3 +1769,4 @@ page 22 "Customer List"
     begin
     end;
 }
+

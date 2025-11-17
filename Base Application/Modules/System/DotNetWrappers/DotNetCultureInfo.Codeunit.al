@@ -5,9 +5,6 @@ using System.DateTime;
 
 codeunit 3002 DotNet_CultureInfo
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
-
     var
         DotNetCultureInfo: DotNet CultureInfo;
 

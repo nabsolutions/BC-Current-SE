@@ -1,3 +1,4 @@
+#if not CLEAN25
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -14,6 +15,9 @@ page 1347 "Sales Pr. & Line Disc. Part"
     PageType = ListPart;
     SourceTable = "Sales Price and Line Disc Buff";
     SourceTableTemporary = true;
+    ObsoleteState = Pending;
+    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+    ObsoleteTag = '16.0';
 
     layout
     {
@@ -378,3 +382,4 @@ page 1347 "Sales Pr. & Line Disc. Part"
         Rec.UpdatePriceIncludesVatAndPrices(Item, IncludesVat);
     end;
 }
+#endif

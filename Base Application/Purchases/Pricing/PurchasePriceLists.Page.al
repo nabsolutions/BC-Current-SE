@@ -5,9 +5,11 @@
 namespace Microsoft.Purchases.Pricing;
 
 using Microsoft.Pricing.Asset;
+#if not CLEAN25
+using Microsoft.Pricing.Calculation;
+#endif
 using Microsoft.Pricing.PriceList;
 using Microsoft.Pricing.Source;
-using Microsoft.Pricing.Calculation;
 
 page 7017 "Purchase Price Lists"
 {
@@ -124,12 +126,14 @@ page 7017 "Purchase Price Lists"
         }
     }
 
+#if not CLEAN25
     trigger OnInit()
     var
         FeaturePriceCalculation: Codeunit "Feature - Price Calculation";
     begin
         FeaturePriceCalculation.FailIfFeatureDisabled();
     end;
+#endif
 
     trigger OnAfterGetRecord()
     begin

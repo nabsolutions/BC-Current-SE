@@ -4,9 +4,6 @@ using System;
 
 codeunit 3008 DotNet_NormalizationForm
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
-
     var
         DotNetNormalizationForm: DotNet NormalizationForm;
 

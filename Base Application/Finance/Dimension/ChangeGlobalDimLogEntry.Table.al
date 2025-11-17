@@ -58,7 +58,7 @@ table 483 "Change Global Dim. Log Entry"
                   TableData "Job WIP G/L Entry" = rm,
                   TableData "Employee Ledger Entry" = rm,
                   TableData "Detailed Employee Ledger Entry" = rm,
-#if not CLEAN28
+#if not CLEAN26
                   TableData Microsoft.Manufacturing.Document."Production Order" = rm,
                   TableData Microsoft.Manufacturing.Document."Prod. Order Line" = rm,
                   TableData Microsoft.Manufacturing.Document."Prod. Order Component" = rm,
@@ -80,7 +80,7 @@ table 483 "Change Global Dim. Log Entry"
                   TableData "Ins. Coverage Ledger Entry" = rm,
                   TableData "Value Entry" = rm,
                   TableData Microsoft.Manufacturing.Capacity."Capacity Ledger Entry" = rm,
-#if not CLEAN28
+#if not CLEAN25
                   TableData Microsoft.Service.Document."Service Header" = rm,
                   TableData Microsoft.Service.Document."Service Line" = rm,
                   TableData Microsoft.Service.Document."Service Item Line" = rm,
@@ -127,7 +127,6 @@ table 483 "Change Global Dim. Log Entry"
         }
         field(5; Progress; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Progress';
             ExtendedDatatype = Ratio;
         }
@@ -564,3 +563,4 @@ table 483 "Change Global Dim. Log Entry"
     begin
     end;
 }
+

@@ -1162,7 +1162,10 @@ codeunit 134159 "Test Price Calculation - V16"
         VerifyJobSources(Job, PurchaseLinePrice, 0, 0, 0);
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T050_ApplyDiscountSalesLineCalculateDiscIfAllowLineDiscFalseV15()
     var
         Customer: Record Customer;
@@ -1217,6 +1220,8 @@ codeunit 134159 "Test Price Calculation - V16"
         SalesLine.TestField("Allow Line Disc.", false);
         SalesLine.TestField("Line Discount %", ExpectedDiscount);
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T051_ApplyDiscountSalesLineCalculateDiscIfAllowLineDiscFalseV16()
@@ -5609,72 +5614,6 @@ codeunit 134159 "Test Price Calculation - V16"
         // [THEN] Check Amount Type Field value saved after chnge the value
     end;
 
-    [Test]
-    procedure JobsLinkedPurchaseOrderFullyReceivedIsIgnoredInPlanningWorksheet()
-    var
-        Item: Record Item;
-        Job: Record Job;
-        JobPlanningLine: Record "Job Planning Line";
-        JobTask: Record "Job Task";
-        PurchaseHeader: Record "Purchase Header";
-        PurchaseLine: Record "Purchase Line";
-        ReqWkshTemplate: Record "Req. Wksh. Template";
-        RequisitionLine: Record "Requisition Line";
-        RequisitionWkshName: Record "Requisition Wksh. Name";
-        Quantity: Decimal;
-    begin
-        // [SCENARIO 592371] Project Planning Line does not show Requisition Line when linked Purchase Order is fully received but not invoiced.
-        Initialize();
-
-        // [GIVEN] Create a Job and Job Task.
-        LibraryJob.CreateJob(Job);
-        LibraryJob.CreateJobTask(Job, JobTask);
-
-        // [GIVEN] Create an item with "Reordering Policy" = "Lot-for-Lot"
-        LibraryInventory.CreateItem(Item);
-        Item.Validate("Reordering Policy", Item."Reordering Policy"::"Lot-for-Lot");
-        Item.Modify(true);
-
-        // [GIVEN] Store a random quantity.
-        Quantity := LibraryRandom.RandIntInRange(1, 10);
-
-        // [GIVEN] Create a job planning line with "Line Type" = "Budget", "Type" = "Item", linked to the Job Task and an Item.
-        LibraryJob.CreateJobPlanningLine(JobPlanningLine."Line Type"::Budget, JobPlanningLine.Type::Item, JobTask, JobPlanningLine);
-        JobPlanningLine.Validate("No.", Item."No.");
-        JobPlanningLine.Validate(Quantity, Quantity);
-        JobPlanningLine.Modify(true);
-
-        // [GIVEN] Create a Purchase Header.
-        LibraryPurchase.CreatePurchHeader(PurchaseHeader, PurchaseHeader."Document Type"::Order, LibraryPurchase.CreateVendorNo());
-
-        // [GIVEN] Create a Purchase Line with the Item, linked to the Job, Job Task and Job Planning Line.
-        LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, Item."No.", Quantity);
-        PurchaseLine.Validate("Job No.", Job."No.");
-        PurchaseLine.Validate("Job Task No.", JobTask."Job Task No.");
-        PurchaseLine.Validate("Job Planning Line No.", JobPlanningLine."Line No.");
-        PurchaseLine.Modify(true);
-
-        // [GIVEN] Validate Qty. to Receive = Quantity.
-        PurchaseLine.Validate("Qty. to Receive", PurchaseLine.Quantity);
-        PurchaseLine.Modify(true);
-
-        // [GIVEN] Post the Purchase Order.
-        LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, false);
-
-        // [WHEN] Calculate the plan for Requisition Worksheet.
-        ReqWkshTemplate.SetRange(Type, ReqWkshTemplate.Type::"Req.");
-        ReqWkshTemplate.SetRange(Recurring, false);
-        ReqWkshTemplate.FindFirst();
-        LibraryPlanning.CreateRequisitionWkshName(RequisitionWkshName, ReqWkshTemplate.Name);
-        LibraryPlanning.CalculatePlanForReqWksh(Item, ReqWkshTemplate.Name, RequisitionWkshName.Name, WorkDate() - LibraryRandom.RandIntInRange(365, 365), WorkDate());
-
-        // [THEN] Requisition Line for the Item should not be created.
-        RequisitionLine.SetRange("Worksheet Template Name", RequisitionWkshName."Worksheet Template Name");
-        RequisitionLine.SetRange("Journal Batch Name", RequisitionWkshName.Name);
-        RequisitionLine.SetRange("No.", Item."No.");
-        Assert.RecordIsEmpty(RequisitionLine);
-    end;
-
     local procedure Initialize()
     var
         LibraryERMCountryData: Codeunit "Library - ERM Country Data";
@@ -5868,6 +5807,7 @@ codeunit 134159 "Test Price Calculation - V16"
         PriceListLine.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateCustomerItemDiscount(var SalesLineDiscount: Record "Sales Line Discount"; CustomerCode: Code[20]; Item: Record Item; Discount: Decimal)
     begin
         LibraryERM.CreateLineDiscForCustomer(
@@ -5876,6 +5816,7 @@ codeunit 134159 "Test Price Calculation - V16"
         SalesLineDiscount.Validate("Line Discount %", Discount);
         SalesLineDiscount.Modify(true);
     end;
+#endif
 
     local procedure CreateDiscountLine(var PriceListLine: Record "Price List Line"; Customer: Record Customer; Item: Record Item)
     begin

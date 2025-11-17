@@ -727,6 +727,7 @@ codeunit 139182 "CRM Coupling Test"
         CRMCouplingRecord.OK().Invoke();
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('SetCouplingRecordPageHandler,SyncStartedNotificationHandler,RecallNotificationHandler')]
     [Scope('OnPrem')]
@@ -835,6 +836,7 @@ codeunit 139182 "CRM Coupling Test"
         IntegrationSynchJob.Inserted := 1;
         LibraryCRMIntegration.VerifySyncJob(JobQueueEntryID, IntegrationTableMapping, IntegrationSynchJob);
     end;
+#endif
 
     [Test]
     procedure CoupleInactivePriceListHeaderWithCRMPriceLevel()

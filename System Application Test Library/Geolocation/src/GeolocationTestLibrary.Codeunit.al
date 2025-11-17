@@ -5,8 +5,8 @@
 
 namespace System.TestLibraries.Device;
 
-using System;
 using System.Device;
+using System;
 
 codeunit 135028 "Geolocation Test Library"
 {

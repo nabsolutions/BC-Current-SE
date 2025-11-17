@@ -15,13 +15,17 @@ codeunit 137305 "SCM Warehouse Reports"
         Assert: Codeunit Assert;
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryAssembly: Codeunit "Library - Assembly";
+#if not CLEAN25
         LibraryCosting: Codeunit "Library - Costing";
+#endif
         LibraryWarehouse: Codeunit "Library - Warehouse";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryManufacturing: Codeunit "Library - Manufacturing";
         LibraryReportDataset: Codeunit "Library - Report Dataset";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
+#if not CLEAN25
         LibraryPriceCalculation: Codeunit "Library - Price Calculation";
+#endif
         LibraryPurchase: Codeunit "Library - Purchase";
         LibrarySales: Codeunit "Library - Sales";
         LibraryUtility: Codeunit "Library - Utility";
@@ -1111,6 +1115,7 @@ codeunit 137305 "SCM Warehouse Reports"
         WarehouseEmployee.Delete(true);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('PriceListRequestPageHandler')]
     [Scope('OnPrem')]
@@ -1136,6 +1141,7 @@ codeunit 137305 "SCM Warehouse Reports"
         LibraryReportDataset.LoadDataSetFile();
         VerifyReportData('No_Item', SalesPrice."Item No.", 'MinimumQty_SalesPrices', SalesPrice."Minimum Quantity");
     end;
+#endif
 
     [Test]
     [HandlerFunctions('WhereUsedListRequestPageHandler')]
@@ -2884,6 +2890,7 @@ codeunit 137305 "SCM Warehouse Reports"
         PostedDocumentNo := LibrarySales.PostSalesDocument(SalesHeader, true, false);
     end;
 
+#if not CLEAN25
     local procedure CreateItemWithSalesPrice(var SalesPrice: Record "Sales Price")
     var
         Item: Record Item;
@@ -2894,6 +2901,7 @@ codeunit 137305 "SCM Warehouse Reports"
         SalesPrice.Validate("Unit Price", LibraryRandom.RandDec(100, 2));
         SalesPrice.Modify(true);
     end;
+#endif
 
     local procedure CreateLocation(var Location: Record Location; var WarehouseEmployee: Record "Warehouse Employee"; BinMandatory: Boolean)
     begin
@@ -3528,6 +3536,7 @@ codeunit 137305 "SCM Warehouse Reports"
         Reply := true;
     end;
 
+#if not CLEAN25
     [RequestPageHandler]
     [Scope('OnPrem')]
     procedure PriceListRequestPageHandler(var PriceList: TestRequestPage "Price List")
@@ -3542,6 +3551,7 @@ codeunit 137305 "SCM Warehouse Reports"
         PriceList.SalesType.SetValue(SalesType);
         PriceList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [MessageHandler]
     [Scope('OnPrem')]

@@ -27,10 +27,12 @@ codeunit 136305 "Job Journal"
         LibrarySetupStorage: Codeunit "Library - Setup Storage";
         LibraryMarketing: Codeunit "Library - Marketing";
         LibraryPriceCalculation: Codeunit "Library - Price Calculation";
+#if not CLEAN25
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
         FieldCodeError: Label '%1 cannot be specified when %2 is %3.';
         TestForBlankValuesPassed: Label 'It was expected a known failure for ''%1'', since it contains invalid blank field values.';
         RecordNotFound: Label 'DB:RecordNotFound';
+#endif
         JobPlanningLineError: Label '%1 must not be %2 in Project Planning Line Project No.=''%3'',Project Task No.=''%4'',Line No.=''%5''.', Comment = '%1: Field Caption;%2: Project Planning Type Value;%3:Project No; %4 Project Task No;%5: Line No';
         Initialized: Boolean;
         NoSeriesCode: Code[20];
@@ -224,6 +226,7 @@ codeunit 136305 "Job Journal"
           JobJournalLine.FieldCaption("Unit of Measure Code"));
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure UnitCostFactorOnJobGLJournalLine()
@@ -265,6 +268,7 @@ codeunit 136305 "Job Journal"
         GenJournalBatch.Get(GenJournalLine."Journal Template Name", GenJournalLine."Journal Batch Name");
         GenJournalBatch.Delete(true);
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -301,6 +305,7 @@ codeunit 136305 "Job Journal"
         DeleteJobJournalTemplate(JobJournalLine."Journal Template Name");
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure JobItemPriceCreation()
@@ -450,6 +455,7 @@ codeunit 136305 "Job Journal"
         // [THEN] Verify that the creation failed
         Assert.VerifyFailure(RecordNotFound, StrSubstNo(TestForBlankValuesPassed, JobItemPrice.TableCaption()));
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -505,6 +511,7 @@ codeunit 136305 "Job Journal"
         VerifyPostingGroupOnJobLedgerEntry(DocumentNo, JobTask."Job No.", JobPlanningLine."No.");
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure JobResourcePricesWithTypeResource()
@@ -720,6 +727,7 @@ codeunit 136305 "Job Journal"
           JobResourcePrice."Job No.", JobResourcePrice."Job Task No.", JobResourcePrice.Type::"Group(Resource)", JobResourcePrice.Code,
           JobResourcePrice."Work Type Code", JobResourcePrice."Currency Code");
     end;
+#endif
 
     [Test]
     [HandlerFunctions('JobJournalTemplateListPageHandler')]
@@ -761,6 +769,7 @@ codeunit 136305 "Job Journal"
         ChangeItemQuantityAndVerifyNoStockWarning(JobJournalLine);
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure JobResourcePricesWithBlankTypeGroupResource()
@@ -1262,6 +1271,7 @@ codeunit 136305 "Job Journal"
           JobGLAccountPrice."Line Discount %",
           Round(-JobPlanningLine.Quantity * JobGLAccountPrice."Unit Price" * JobGLAccountPrice."Line Discount %" / 100));
     end;
+#endif
 
     [Test]
     [HandlerFunctions('JobTransferToSalesInvoiceRequestPageHandler,MessageHandler')]
@@ -1541,6 +1551,7 @@ codeunit 136305 "Job Journal"
         VerifyDifferentCostsInJobLedgerEntry(GenJournalLine, Amount);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('JobJournalTemplateListPageHandler,JobCalcRemainingUsageRequestPageHandler,MessageHandler')]
     [Scope('OnPrem')]
@@ -1626,6 +1637,7 @@ codeunit 136305 "Job Journal"
         // Tear Down: Delete the Job Journal Template created.
         DeleteJobJournalTemplate(JobJournalBatch."Journal Template Name");
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -2733,7 +2745,6 @@ codeunit 136305 "Job Journal"
     begin
         // [SCENARIO 445152] The Unit Cost (LCY) gets updated incorrectly in case of a posting involving a Job in a different currency than the local one and different exchange rates.
         Initialize();
-        LibraryPriceCalculation.DisableExtendedPriceCalculation();
 
         // [GIVEN] Create Currency code and exchange rates for 2days. and save unit cost in variable
         CurrencyCode := SetupCurrencyWithExchRates();
@@ -2760,7 +2771,7 @@ codeunit 136305 "Job Journal"
         // [THEN] Validate the posting date for changing the Exch. rate on Job Journal line.
         JobJournalLine.Validate("Posting Date", WorkDate() + 1);
         JobJournalLine.Modify();
-        JobJournalLine."Unit Cost (LCY)" := Round(JobJournalLine."Unit Cost (LCY)", 0.01);
+        JobJournalLine."Unit Cost (LCY)" := Round(JobJournalLine."Unit Cost (LCY)", 0.001);
 
         // [VERIFY] Verify Unit Cost (LCY) after changing the posting date. Unit Cost will update Correctly.
         JobJournalLine.TestField("Unit Cost (LCY)", Resource."Unit Cost");
@@ -2995,6 +3006,7 @@ codeunit 136305 "Job Journal"
         NoSeriesCode := '';
     end;
 
+#if not CLEAN25
     local procedure CreateAndUpdateJobGLAccountPrice(var JobGLAccountPrice: Record "Job G/L Account Price"; JobTask: Record "Job Task")
     begin
         LibraryJob.CreateJobGLAccountPrice(
@@ -3003,6 +3015,7 @@ codeunit 136305 "Job Journal"
         JobGLAccountPrice.Validate("Line Discount %", LibraryRandom.RandDec(5, 2));
         JobGLAccountPrice.Modify(true);
     end;
+#endif
 
     local procedure CreateAndUpdateJobJournalBatch(var GenJournalBatch: Record "Gen. Journal Batch")
     begin
@@ -3110,11 +3123,12 @@ codeunit 136305 "Job Journal"
         ItemJournalLine.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateItemWithTwoUnitOfMeasures(var ItemUnitOfMeasure: Record "Item Unit of Measure")
     begin
         LibraryInventory.CreateItemUnitOfMeasureCode(ItemUnitOfMeasure, CreateItem(), 1 + LibraryUtility.GenerateRandomFraction());
     end;
-
+#endif
     local procedure CreateCustomerInvoiceDiscount(var CustInvoiceDisc: Record "Cust. Invoice Disc.")
     begin
         CustInvoiceDisc.Init();
@@ -3152,6 +3166,7 @@ codeunit 136305 "Job Journal"
         exit(Resource."No.");
     end;
 
+#if not CLEAN25
     local procedure CreateJobItemPrice(var JobItemPrice: Record "Job Item Price")
     var
         Item: Record Item;
@@ -3171,6 +3186,7 @@ codeunit 136305 "Job Journal"
         JobItemPrice.Validate("Unit Price", UnitPrice);
         JobItemPrice.Modify(true);
     end;
+#endif
 
     local procedure CreateJobGLJournalLine(var GenJournalLine: Record "Gen. Journal Line"; GenJournalBatch: Record "Gen. Journal Batch"; BalAccountType: Enum "Gen. Journal Account Type"; AccountNo: Code[20]; BalAccountNo: Code[20]; JobNo: Code[20]; JobTaskNo: Code[20]; CurrencyCode: Code[10])
     begin
@@ -3384,6 +3400,7 @@ codeunit 136305 "Job Journal"
         ResourceUnitOfMeasure.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateJobResourcePrice(var JobResourcePrice: Record "Job Resource Price"; Type: Option; No: Code[20])
     var
         JobTask: Record "Job Task";
@@ -3391,6 +3408,7 @@ codeunit 136305 "Job Journal"
         CreateJobWithJobTask(JobTask);
         LibraryJob.CreateJobResourcePrice(JobResourcePrice, JobTask."Job No.", JobTask."Job Task No.", Type, No, '', '');  // Blank value is for Work Type Code and Currency Code.
     end;
+#endif
 
     local procedure MockReservationEntry(JobJournalLine: Record "Job Journal Line")
     var
@@ -3481,6 +3499,7 @@ codeunit 136305 "Job Journal"
         SalesLine.FindFirst();
     end;
 
+#if not CLEAN25
     local procedure ModifyJobItemPriceForUnitPrice(var JobItemPrice: Record "Job Item Price"; UnitPrice: Decimal)
     begin
         JobItemPrice.Validate("Unit Price", UnitPrice);
@@ -3504,6 +3523,7 @@ codeunit 136305 "Job Journal"
         JobResourcePrice.Validate("Unit Cost Factor", UnitCostFactor);
         JobResourcePrice.Modify(true);
     end;
+#endif
 
     local procedure PostGeneralJournalLine(GenJournalLine: Record "Gen. Journal Line")
     begin
@@ -3555,6 +3575,7 @@ codeunit 136305 "Job Journal"
         PurchasesPayablesSetup.Modify();
     end;
 
+#if not CLEAN25
     local procedure UpdateJobPlanningLine(var JobPlanningLine: Record "Job Planning Line"; JobTask: Record "Job Task"; AccountNo: Code[20])
     var
         GenProductPostingGroup: Record "Gen. Product Posting Group";
@@ -3574,7 +3595,7 @@ codeunit 136305 "Job Journal"
         JobGLAccountPrice.Validate("Line Discount %", LibraryRandom.RandDec(10, 2));  // Taking Random value for Line Discount Percent.
         JobGLAccountPrice.Modify(true);
     end;
-
+#endif
     local procedure UpdateQuantityAndDiscountOnPlanningLine(JobPlanningLine: Record "Job Planning Line"; LineDiscountAmount: Decimal)
     begin
         JobPlanningLine.Validate(Quantity, -JobPlanningLine.Quantity);
@@ -3592,6 +3613,7 @@ codeunit 136305 "Job Journal"
         SourceCodeSetup.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure UpdateUnitCostFactorOnJobGLAccountPrice(var JobGLAccountPrice: Record "Job G/L Account Price")
     begin
         JobGLAccountPrice.Validate("Unit Cost Factor", LibraryRandom.RandDec(10, 2));  // Taking Random value for Unit Cost Factor.
@@ -3618,7 +3640,7 @@ codeunit 136305 "Job Journal"
         JobJournalLine.Validate("Unit Cost", UnitCost);
         JobJournalLine.Modify(true);
     end;
-
+#endif
     local procedure UpdateContactInfo(var Contact: Record Contact; PhoneNo: Text[30]; MobilePhoneNo: Text[30]; Email: Text[80])
     begin
         Contact.Validate("Phone No.", PhoneNo);
@@ -3698,13 +3720,14 @@ codeunit 136305 "Job Journal"
         GLEntry.TestField(Amount, Amount);
     end;
 
+#if not CLEAN25
     local procedure VerifyJobGLJournalLine(GenJournalLine: Record "Gen. Journal Line"; JobUnitCost: Decimal; JobUnitPrice: Decimal)
     begin
         GenJournalLine.Get(GenJournalLine."Journal Template Name", GenJournalLine."Journal Batch Name", GenJournalLine."Line No.");
         GenJournalLine.TestField("Job Unit Cost", JobUnitCost);
         GenJournalLine.TestField("Job Unit Price", JobUnitPrice);
     end;
-
+#endif
     local procedure VerifyJobJournalLine(JobJournalLine: Record "Job Journal Line"; Resource: Record Resource; UnitOfMeasureCode: Code[10]; QtyPerUnitOfMeasure: Decimal)
     begin
         JobJournalLine.TestField("Unit Cost (LCY)", Resource."Unit Cost" * QtyPerUnitOfMeasure);

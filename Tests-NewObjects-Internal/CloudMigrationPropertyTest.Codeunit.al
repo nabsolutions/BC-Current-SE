@@ -451,8 +451,6 @@ codeunit 135160 "Cloud Migration Property Test"
         ListOfTablesToMigrate.Add(Database::"Service Shipment Line");
         ListOfTablesToMigrate.Add(Database::"Service Status Priority Setup");
         ListOfTablesToMigrate.Add(Database::"Service Zone");
-        ListOfTablesToMigrate.Add(Database::"Sheet Definition Line");
-        ListOfTablesToMigrate.Add(Database::"Sheet Definition Name");
         ListOfTablesToMigrate.Add(Database::"Shipment Method Translation");
         ListOfTablesToMigrate.Add(Database::"Shipment Method");
         ListOfTablesToMigrate.Add(Database::"Shipping Agent Services");
@@ -716,7 +714,9 @@ codeunit 135160 "Cloud Migration Property Test"
         ListOfTablesToMigrate.Add(1304); // Database::"Sales Price and Line Disc Buff"
         ListOfTablesToMigrate.Add(7023); // Database::"Sales Price Worksheet"
         ListOfTablesToMigrate.Add(7002); // Database::"Sales Price"
+#if CLEAN25
         ListOfTablesToMigrate.Add(6418); // Database::"FS Connection Setup"
+#endif
 #endif
         // AL Costing
         ListOfTablesToMigrate.Add(103405); // Database::"Required Input Data");
@@ -1141,12 +1141,12 @@ codeunit 135160 "Cloud Migration Property Test"
         ListOfTablesToMigrate.Add(Database::"Finance Charge Text");
         ListOfTablesToMigrate.Add(Database::"Finance Cue");
         ListOfTablesToMigrate.Add(Database::"Financial Report");
-        ListOfTablesToMigrate.Add(Database::"Financial Report Export Log");
-        ListOfTablesToMigrate.Add(Database::"Financial Report Recipient");
-        ListOfTablesToMigrate.Add(Database::"Financial Report Schedule");
         ListOfTablesToMigrate.Add(Database::"Financial Report User Filters");
         ListOfTablesToMigrate.Add(Database::"Fin. Report Excel Template");
         ListOfTablesToMigrate.Add(Database::"Fixed Asset");
+#if not CLEAN25
+        ListOfTablesToMigrate.Add(Database::"FS Connection Setup");
+#endif
         ListOfTablesToMigrate.Add(Database::"G/L - Item Ledger Relation");
         ListOfTablesToMigrate.Add(Database::"G/L Acc. Balance Buffer");
         ListOfTablesToMigrate.Add(Database::"G/L Acc. Balance/Budget Buffer");

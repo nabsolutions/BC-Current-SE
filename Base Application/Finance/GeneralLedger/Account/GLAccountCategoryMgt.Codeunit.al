@@ -19,10 +19,8 @@ codeunit 570 "G/L Account Category Mgt."
     var
         BalanceColumnNameTxt: Label 'M-BALANCE', Comment = 'Max 10 char';
         BalanceColumnDescTxt: Label 'Balance', Comment = 'Max 10 char';
-        BalanceColumnInternalDescTxt: Label 'Single-column layout showing balance-at-date using ledger net amounts. Useful for point-in-time balances, financial position, reconciliations, and snapshot reporting of assets, liabilities, or equity.', MaxLength = 250;
         NetChangeColumnNameTxt: Label 'M-NETCHANG', Comment = 'Max 10 char';
         NetChangeColumnDescTxt: Label 'Net Change', Comment = 'Max 10 char';
-        NetChangeColumnInternalDescTxt: Label 'Single-column layout showing period net change from ledger entries (Net Amount). Useful for reporting activity, income statement movements, variance analysis, and tracking transaction-driven account changes.', MaxLength = 250;
         BalanceSheetCodeTxt: Label 'M-BALANCE', Comment = 'Max 10 char';
         BalanceSheetDescTxt: Label 'Balance Sheet', Comment = 'Max 80 chars';
         IncomeStmdCodeTxt: Label 'M-INCOME', Comment = 'Max 10 chars';
@@ -74,7 +72,6 @@ codeunit 570 "G/L Account Category Mgt."
         JobSalesContraTxt: Label 'Job Sales Contra';
         OverwriteConfirmationQst: Label 'How do you want to generate standard financial reports?';
         GenerateAccountSchedulesOptionsTxt: Label 'Keep existing financial reports with their row definitions and create new ones.,Overwrite existing financial reports and row defintions.';
-        GeneratedFromGLAccountCategoriesPageTxt: Label 'Generated from G/L Account Categories.';
         CreateAccountScheduleForBalanceSheet: Boolean;
         CreateAccountScheduleForIncomeStatement: Boolean;
         CreateAccountScheduleForCashFlowStatement: Boolean;
@@ -222,79 +219,60 @@ codeunit 570 "G/L Account Category Mgt."
     procedure InitializeStandardAccountSchedules()
     var
         GeneralLedgerSetup: Record "General Ledger Setup";
+        BalanceSheetRowGroupCode: Code[10];
+        IncomeStatementRowGroupCode: Code[10];
+        CashFlowRowGroupCode: Code[10];
+        RetainedEarningsRowGroupCode: Code[10];
     begin
         if not GeneralLedgerSetup.Get() then
             exit;
 
-        if GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column" = '' then
-            GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column" := BalanceColumnNameTxt;
-        if GeneralLedgerSetup."Fin. Rep. Net Change Column" = '' then
-            GeneralLedgerSetup."Fin. Rep. Net Change Column" := NetChangeColumnNameTxt;
+        AddColumnLayout(BalanceColumnNameTxt, BalanceColumnDescTxt, true);
+        AddColumnLayout(NetChangeColumnNameTxt, NetChangeColumnDescTxt, false);
 
-        if GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row" = '' then
-            GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row" := BalanceSheetCodeTxt;
-        if GeneralLedgerSetup."Fin. Rep. Income Stmt. Row" = '' then
-            GeneralLedgerSetup."Fin. Rep. Income Stmt. Row" := IncomeStmdCodeTxt;
-        if GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row" = '' then
-            GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row" := CashFlowCodeTxt;
-        if GeneralLedgerSetup."Fin. Rep. Retained Earn. Row" = '' then
-            GeneralLedgerSetup."Fin. Rep. Retained Earn. Row" := RetainedEarnCodeTxt;
+        BalanceSheetRowGroupCode := BalanceSheetCodeTxt;
+        IncomeStatementRowGroupCode := IncomeStmdCodeTxt;
+        CashFlowRowGroupCode := CashFlowCodeTxt;
+        RetainedEarningsRowGroupCode := RetainedEarnCodeTxt;
 
         if ForceCreateAccountSchedule then begin
-            GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column" := CreateUniqueColumnLayoutName(GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column");
-            GeneralLedgerSetup."Fin. Rep. Net Change Column" := CreateUniqueColumnLayoutName(GeneralLedgerSetup."Fin. Rep. Net Change Column");
-
-            GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row" := CreateUniqueAccSchedName(GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row");
-            GeneralLedgerSetup."Fin. Rep. Income Stmt. Row" := CreateUniqueAccSchedName(GeneralLedgerSetup."Fin. Rep. Income Stmt. Row");
-            GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row" := CreateUniqueAccSchedName(GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row");
-            GeneralLedgerSetup."Fin. Rep. Retained Earn. Row" := CreateUniqueAccSchedName(GeneralLedgerSetup."Fin. Rep. Retained Earn. Row");
+            BalanceSheetRowGroupCode := CreateUniqueAccSchedName(BalanceSheetCodeTxt);
+            IncomeStatementRowGroupCode := CreateUniqueAccSchedName(IncomeStmdCodeTxt);
+            CashFlowRowGroupCode := CreateUniqueAccSchedName(CashFlowCodeTxt);
+            RetainedEarningsRowGroupCode := CreateUniqueAccSchedName(RetainedEarnCodeTxt);
         end;
 
         if (GeneralLedgerSetup."Fin. Rep. for Balance Sheet" = '') or ForceCreateAccountSchedule then begin
-            if GeneralLedgerSetup."Fin. Rep. for Balance Sheet" = '' then
-                GeneralLedgerSetup."Fin. Rep. for Balance Sheet" := CreateUniqueFinancialReportName(BalanceSheetCodeTxt)
-            else
-                GeneralLedgerSetup."Fin. Rep. for Balance Sheet" := CreateUniqueFinancialReportName(GeneralLedgerSetup."Fin. Rep. for Balance Sheet");
+            GeneralLedgerSetup."Fin. Rep. for Balance Sheet" := CreateUniqueFinancialReportName(BalanceSheetCodeTxt);
             CreateAccountScheduleForBalanceSheet := true;
         end;
 
         if (GeneralLedgerSetup."Fin. Rep. for Income Stmt." = '') or ForceCreateAccountSchedule then begin
-            if GeneralLedgerSetup."Fin. Rep. for Income Stmt." = '' then
-                GeneralLedgerSetup."Fin. Rep. for Income Stmt." := CreateUniqueFinancialReportName(IncomeStmdCodeTxt)
-            else
-                GeneralLedgerSetup."Fin. Rep. for Income Stmt." := CreateUniqueFinancialReportName(GeneralLedgerSetup."Fin. Rep. for Income Stmt.");
+            GeneralLedgerSetup."Fin. Rep. for Income Stmt." := CreateUniqueFinancialReportName(IncomeStmdCodeTxt);
             CreateAccountScheduleForIncomeStatement := true;
         end;
 
         if (GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt" = '') or ForceCreateAccountSchedule then begin
-            if GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt" = '' then
-                GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt" := CreateUniqueFinancialReportName(CashFlowCodeTxt)
-            else
-                GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt" := CreateUniqueFinancialReportName(GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt");
+            GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt" := CreateUniqueFinancialReportName(CashFlowCodeTxt);
             CreateAccountScheduleForCashFlowStatement := true;
         end;
 
         if (GeneralLedgerSetup."Fin. Rep. for Retained Earn." = '') or ForceCreateAccountSchedule then begin
-            if GeneralLedgerSetup."Fin. Rep. for Retained Earn." = '' then
-                GeneralLedgerSetup."Fin. Rep. for Retained Earn." := CreateUniqueFinancialReportName(RetainedEarnCodeTxt)
-            else
-                GeneralLedgerSetup."Fin. Rep. for Retained Earn." := CreateUniqueFinancialReportName(GeneralLedgerSetup."Fin. Rep. for Retained Earn.");
+            GeneralLedgerSetup."Fin. Rep. for Retained Earn." := CreateUniqueFinancialReportName(RetainedEarnCodeTxt);
             CreateAccountScheduleForRetainedEarnings := true;
         end;
 
         GeneralLedgerSetup.Modify();
-        AddColumnLayout(GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column", BalanceColumnDescTxt, true, StrSubstNo('%1 %2', GeneratedFromGLAccountCategoriesPageTxt, BalanceColumnInternalDescTxt));
-        AddColumnLayout(GeneralLedgerSetup."Fin. Rep. Net Change Column", NetChangeColumnDescTxt, false, StrSubstNo('%1 %2', GeneratedFromGLAccountCategoriesPageTxt, NetChangeColumnInternalDescTxt));
 
-        AddAccountSchedule(GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row", BalanceSheetDescTxt);
-        AddAccountSchedule(GeneralLedgerSetup."Fin. Rep. Income Stmt. Row", IncomeStmdDescTxt);
-        AddAccountSchedule(GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row", CashFlowDescTxt);
-        AddAccountSchedule(GeneralLedgerSetup."Fin. Rep. Retained Earn. Row", RetainedEarnDescTxt);
+        AddAccountSchedule(BalanceSheetRowGroupCode, BalanceSheetDescTxt);
+        AddAccountSchedule(IncomeStatementRowGroupCode, IncomeStmdDescTxt);
+        AddAccountSchedule(CashFlowRowGroupCode, CashFlowDescTxt);
+        AddAccountSchedule(RetainedEarningsRowGroupCode, RetainedEarnDescTxt);
 
-        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Balance Sheet", BalanceSheetDescTxt, GeneralLedgerSetup."Fin. Rep. Bal. Sheet Row", GeneralLedgerSetup."Fin. Rep. Bal. Sheet Column");
-        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Income Stmt.", IncomeStmdDescTxt, GeneralLedgerSetup."Fin. Rep. Income Stmt. Row", GeneralLedgerSetup."Fin. Rep. Net Change Column");
-        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt", CashFlowDescTxt, GeneralLedgerSetup."Fin. Rep. Cash Flow Stmt. Row", GeneralLedgerSetup."Fin. Rep. Net Change Column");
-        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Retained Earn.", RetainedEarnDescTxt, GeneralLedgerSetup."Fin. Rep. Retained Earn. Row", GeneralLedgerSetup."Fin. Rep. Net Change Column");
+        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Balance Sheet", BalanceSheetDescTxt, BalanceSheetRowGroupCode, BalanceColumnNameTxt);
+        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Income Stmt.", IncomeStmdDescTxt, IncomeStatementRowGroupCode, NetChangeColumnNameTxt);
+        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Cash Flow Stmt", CashFlowDescTxt, CashFlowRowGroupCode, NetChangeColumnNameTxt);
+        AddFinancialReport(GeneralLedgerSetup."Fin. Rep. for Retained Earn.", RetainedEarnDescTxt, RetainedEarningsRowGroupCode, NetChangeColumnNameTxt);
     end;
 
     local procedure AddFinancialReport(Name: Code[10]; Description: Text[80]; RowGroupCode: Code[10]; ColumnGroupCode: Code[10])
@@ -302,43 +280,30 @@ codeunit 570 "G/L Account Category Mgt."
         FinancialReport: Record "Financial Report";
     begin
         if FinancialReport.Get(Name) then
-            UpdateFinancialReport(FinancialReport, RowGroupCode, ColumnGroupCode)
-        else begin
-            FinancialReport.Init();
-            FinancialReport.Name := Name;
-            FinancialReport.Description := Description;
-            FinancialReport."Internal Description" := GeneratedFromGLAccountCategoriesPageTxt;
-            FinancialReport."Financial Report Row Group" := RowGroupCode;
-            FinancialReport."Financial Report Column Group" := ColumnGroupCode;
-            FinancialReport.Insert();
-        end;
-    end;
-
-    local procedure UpdateFinancialReport(var FinancialReport: Record "Financial Report"; RowGroupCode: Code[10]; ColumnGroupCode: Code[10])
-    begin
-        if ForceCreateAccountSchedule then
-            if (FinancialReport."Financial Report Row Group" <> RowGroupCode) or (FinancialReport."Financial Report Column Group" <> ColumnGroupCode) then begin
-                FinancialReport."Internal Description" := GeneratedFromGLAccountCategoriesPageTxt;
-                FinancialReport."Financial Report Row Group" := RowGroupCode;
-                FinancialReport."Financial Report Column Group" := ColumnGroupCode;
-                FinancialReport.Modify();
-            end;
+            exit;
+        FinancialReport.Init();
+        FinancialReport.Name := Name;
+        FinancialReport.Description := Description;
+        FinancialReport."Financial Report Row Group" := RowGroupCode;
+        FinancialReport."Financial Report Column Group" := ColumnGroupCode;
+        FinancialReport.Insert();
     end;
 
     local procedure AddAccountSchedule(NewName: Code[10]; NewDescription: Text[80])
     var
         AccScheduleName: Record "Acc. Schedule Name";
+        InternalDescriptionLbl: Label 'Generated from the G/L Account Categories page.', MaxLength = 250;
     begin
         if AccScheduleName.Get(NewName) then
             exit;
         AccScheduleName.Init();
         AccScheduleName.Name := NewName;
         AccScheduleName.Description := NewDescription;
-        AccScheduleName."Internal Description" := GeneratedFromGLAccountCategoriesPageTxt;
+        AccScheduleName."Internal Description" := InternalDescriptionLbl;
         AccScheduleName.Insert();
     end;
 
-    local procedure AddColumnLayout(NewName: Code[10]; NewDescription: Text[80]; IsBalance: Boolean; NewInternalDescription: Text[250])
+    local procedure AddColumnLayout(NewName: Code[10]; NewDescription: Text[80]; IsBalance: Boolean)
     var
         ColumnLayoutName: Record "Column Layout Name";
         ColumnLayout: Record "Column Layout";
@@ -348,7 +313,6 @@ codeunit 570 "G/L Account Category Mgt."
         ColumnLayoutName.Init();
         ColumnLayoutName.Name := NewName;
         ColumnLayoutName.Description := NewDescription;
-        ColumnLayoutName."Internal Description" := NewInternalDescription;
         ColumnLayoutName.Insert();
 
         ColumnLayout.Init();
@@ -415,17 +379,6 @@ codeunit 570 "G/L Account Category Mgt."
     begin
         i := 0;
         while AccScheduleName.Get(SuggestedName) and (i < 1000) do
-            SuggestedName := GenerateNextName(SuggestedName, i);
-        exit(SuggestedName);
-    end;
-
-    local procedure CreateUniqueColumnLayoutName(SuggestedName: Code[10]): Code[10]
-    var
-        ColumnLayoutName: Record "Column Layout Name";
-        i: Integer;
-    begin
-        i := 0;
-        while ColumnLayoutName.Get(SuggestedName) and (i < 1000) do
             SuggestedName := GenerateNextName(SuggestedName, i);
         exit(SuggestedName);
     end;

@@ -1,7 +1,12 @@
+#if not CLEAN25
+#pragma warning disable AS0072
 codeunit 134167 "Copy Price Data Test"
 {
     Subtype = Test;
     TestPermissions = Disabled;
+    ObsoleteReason = 'Not Used.';
+    ObsoleteState = Pending;
+    ObsoleteTag = '23.0';
 
     trigger OnRun()
     begin
@@ -1903,6 +1908,16 @@ codeunit 134167 "Copy Price Data Test"
     end;
 
     [Test]
+    procedure T110_TestFeatureKeyMatches()
+    var
+        FeatureDataUpdateStatus: Record "Feature Data Update Status";
+        FeatureDataUpdateMgt: Codeunit "Feature Data Update Mgt.";
+    begin
+        FeatureDataUpdateStatus."Feature Key" := 'SalesPrices';
+        Assert.IsTrue(FeatureDataUpdateMgt.FeatureKeyMatches(FeatureDataUpdateStatus, Enum::"Feature To Update"::SalesPrices), 'SalesPrices');
+    end;
+
+    [Test]
     procedure T111_UseDefaultPriceListsOnPageChangesDescription()
     var
         FeatureDataUpdateStatus: Record "Feature Data Update Status";
@@ -2231,3 +2246,4 @@ codeunit 134167 "Copy Price Data Test"
         LibraryVariableStorage.Enqueue(DataUpgradeOverview."No. of Records".AsInteger());
     end;
 }
+#endif

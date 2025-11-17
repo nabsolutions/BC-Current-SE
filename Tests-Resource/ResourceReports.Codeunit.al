@@ -19,7 +19,9 @@ codeunit 136902 "Resource Reports"
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         isInitialized: Boolean;
         TextErr: Label 'Recurring Method must be specified.';
+#if not CLEAN25
         ValidationErr: Label '%1 must be %2 .';
+#endif
 
     local procedure Initialize()
     var
@@ -306,6 +308,7 @@ codeunit 136902 "Resource Reports"
         VerifyResource(Resource);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('ResourcePriceListReportHandler')]
     [Scope('OnPrem')]
@@ -377,6 +380,7 @@ codeunit 136902 "Resource Reports"
           Currency."Unit-Amount Rounding Precision",
           StrSubstNo(ValidationErr, Resource.FieldCaption("Unit Price"), ActualUnitPrice));
     end;
+#endif
 
     local procedure AttachResourceGlobalDimensions(var Resource: Record Resource)
     var
@@ -392,7 +396,7 @@ codeunit 136902 "Resource Reports"
         Resource.Validate("Global Dimension 2 Code", DimensionValue.Code);
         Resource.Modify(true);
     end;
-
+#if not CLEAN25
     local procedure CreateCurrencyExchangeRate(var CurrencyExchangeRate: Record "Currency Exchange Rate"; CurrencyCode: Code[10])
     begin
         // Create Currency Exchange Rate with Exchange Rate Amount, Relational Exch. Rate Amount as Random values.
@@ -407,7 +411,7 @@ codeunit 136902 "Resource Reports"
         CurrencyExchangeRate.Validate("Relational Adjmt Exch Rate Amt", CurrencyExchangeRate."Relational Exch. Rate Amount");
         CurrencyExchangeRate.Modify(true);
     end;
-
+#endif
     local procedure CreateResource(var Resource: Record Resource)
     var
         VATPostingSetup: Record "VAT Posting Setup";
@@ -445,6 +449,7 @@ codeunit 136902 "Resource Reports"
         ResJournalLine.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateResourcePrice(var ResourcePrice: Record "Resource Price"; ResourceNo: Code[20]; WorkTypeCode: Code[10])
     begin
         LibraryResource.CreateResourcePrice(ResourcePrice, ResourcePrice.Type, ResourceNo, WorkTypeCode, '');
@@ -453,6 +458,7 @@ codeunit 136902 "Resource Reports"
         ResourcePrice.Validate("Unit Price", LibraryRandom.RandDec(100, 2));
         ResourcePrice.Modify(true);
     end;
+#endif
 
     local procedure InputResourceGroupOnResource(var Resource: Record Resource)
     var
@@ -477,6 +483,7 @@ codeunit 136902 "Resource Reports"
         ResourceJournalTest.Run();
     end;
 
+#if not CLEAN25
     local procedure RunResourcePriceListReport(No: Code[20]; CurrencyCode: Code[10])
     var
         Resource: Record Resource;
@@ -489,6 +496,7 @@ codeunit 136902 "Resource Reports"
         ResourcePriceList.InitializeRequest(CurrencyCode);
         ResourcePriceList.Run();
     end;
+#endif
 
     local procedure ModifyUnitOfMeasureOnWorkType(WorkType: Record "Work Type"; UnitOfMeasureCode: Code[10])
     begin
@@ -564,6 +572,7 @@ codeunit 136902 "Resource Reports"
         LibraryReportDataset.AssertCurrentRowValueEquals('TotalPrice_ResJnlLine', ResJournalLine."Total Price");
     end;
 
+#if not CLEAN25
     local procedure VerifyResourcePriceList(ResourcePrice: Record "Resource Price"; ResourceUnitPrice: Decimal)
     begin
         LibraryReportDataset.LoadDataSetFile();
@@ -577,6 +586,7 @@ codeunit 136902 "Resource Reports"
         Assert.IsTrue(LibraryReportDataset.GetNextRow(), 'find element with the work type code');
         LibraryReportDataset.AssertCurrentRowValueEquals('UnitPrice_ResPrice', ResourcePrice."Unit Price");
     end;
+#endif
 
     local procedure VerifyResourceRegister(ResourceNo: Code[20])
     var
@@ -677,12 +687,14 @@ codeunit 136902 "Resource Reports"
         ResourceList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
 
+#if not CLEAN25
     [RequestPageHandler]
     [Scope('OnPrem')]
     procedure ResourcePriceListReportHandler(var ResourcePriceList: TestRequestPage "Resource - Price List")
     begin
         ResourcePriceList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [RequestPageHandler]
     [Scope('OnPrem')]

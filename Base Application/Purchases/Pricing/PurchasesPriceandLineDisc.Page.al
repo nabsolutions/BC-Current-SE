@@ -1,3 +1,4 @@
+#if not CLEAN25
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13,6 +14,9 @@ page 1346 "Purchases Price and Line Disc."
     PageType = ListPart;
     SourceTable = "Purch. Price Line Disc. Buff.";
     SourceTableTemporary = true;
+    ObsoleteState = Pending;
+    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+    ObsoleteTag = '16.0';
 
     layout
     {
@@ -85,3 +89,4 @@ page 1346 "Purchases Price and Line Disc."
         Rec.LoadDataForItem(Item);
     end;
 }
+#endif

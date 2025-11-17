@@ -29,7 +29,6 @@ using Microsoft.Sales.Customer;
 using Microsoft.Sales.Document;
 using Microsoft.Warehouse.Journal;
 using Microsoft.Warehouse.Structure;
-using System.Automation;
 using System.Security.AccessControl;
 
 table 246 "Requisition Line"
@@ -38,7 +37,7 @@ table 246 "Requisition Line"
     DataCaptionFields = "Journal Batch Name", "Line No.";
     DrillDownPageID = "Requisition Lines";
     LookupPageID = "Requisition Lines";
-#if not CLEAN28
+#if not CLEAN27
     Permissions = TableData Microsoft.Manufacturing.Routing."Routing Header" = r,
                   TableData Microsoft.Manufacturing.ProductionBOM."Production BOM Header" = r;
 #endif
@@ -94,14 +93,10 @@ table 246 "Requisition Line"
             trigger OnValidate()
             var
                 ShouldValidateUnitofMeasureCode: Boolean;
-                IsHandled: Boolean;
             begin
                 CheckActionMessageNew();
                 ReqLineReserve.VerifyChange(Rec, xRec);
-                IsHandled := false;
-                OnValidateNoOnBeforeDeleteRelations(Rec, xRec, IsHandled);
-                if not IsHandled then
-                    DeleteRelations();
+                DeleteRelations();
 
                 if "No." = '' then begin
                     CreateDimFromDefaultDim();
@@ -234,10 +229,7 @@ table 246 "Requisition Line"
                         if "Order Date" = 0D then
                             Validate("Order Date", WorkDate());
 
-                        IsHandled := false;
-                        OnValidateVendorNoOnBeforeValidateCurrencyCode(Rec, Vend, IsHandled);
-                        if not IsHandled then
-                            Validate("Currency Code", Vend."Currency Code");
+                        Validate("Currency Code", Vend."Currency Code");
                         if ("Planning Line Origin" <> "Planning Line Origin"::Planning) or ("Price Calculation Method" = "Price Calculation Method"::" ") then
                             "Price Calculation Method" := Vend.GetPriceCalculationMethod();
                         ValidateItemDescriptionAndQuantity(Vend);
@@ -259,7 +251,6 @@ table 246 "Requisition Line"
                 GetLocationCode();
                 OnValidateVendorNoOnAfterGetLocationCode(Rec);
                 GetDefaultBinCode();
-                OnValidateVendorNoOnAfterGetDefaultBinCode(Rec);
 
                 "Order Address Code" := '';
 
@@ -1407,22 +1398,12 @@ table 246 "Requisition Line"
 
     trigger OnDelete()
     var
-        RequisitionWkshName: Record "Requisition Wksh. Name";
-        RequisitionLine: Record "Requisition Line";
         IsHandled: Boolean;
     begin
         IsHandled := false;
         OnBeforeOnDelete(Rec, IsHandled);
         if IsHandled then
             exit;
-
-        // Lines are deleted 1 by 1, this actually check if this is the last line in the Requisition Worksheet Name.
-        RequisitionLine.SetRange("Worksheet Template Name", "Worksheet Template Name");
-        RequisitionLine.SetRange("Journal Batch Name", "Journal Batch Name");
-        RequisitionLine.SetFilter("Line No.", '<>%1', "Line No.");
-        if RequisitionLine.IsEmpty() then
-            if RequisitionWkshName.Get(Rec."Worksheet Template Name", Rec."Journal Batch Name") then
-                ApprovalsMgmt.PreventDeletingRecordWithOpenApprovalEntry(RequisitionWkshName);
 
         ReqLine.Reset();
         ReqLine.Get("Worksheet Template Name", "Journal Batch Name", "Line No.");
@@ -1454,8 +1435,6 @@ table 246 "Requisition Line"
         ReqWkshTemplate.Get("Worksheet Template Name");
         ReqWkshName.Get("Worksheet Template Name", "Journal Batch Name");
 
-        ApprovalsMgmt.PreventInsertRecIfOpenApprovalEntryExist(ReqWkshName);
-
         Rec.ValidateShortcutDimCode(1, "Shortcut Dimension 1 Code");
         Rec.ValidateShortcutDimCode(2, "Shortcut Dimension 2 Code");
 
@@ -1464,13 +1443,11 @@ table 246 "Requisition Line"
 
     trigger OnModify()
     begin
-        CheckOpenApprovalEntryExistForCurrentUser();
         ReqLineReserve.VerifyChange(Rec, xRec);
     end;
 
     trigger OnRename()
     begin
-        ApprovalsMgmt.OnRenameRecordInApprovalRequest(xRec.RecordId(), RecordId());
         Error(Text004, TableCaption);
     end;
 
@@ -1487,7 +1464,6 @@ table 246 "Requisition Line"
         GetPlanningParameters: Codeunit "Planning-Get Parameters";
         WMSManagement: Codeunit "WMS Management";
         ConfirmManagement: Codeunit System.Utilities."Confirm Management";
-        ApprovalsMgmt: Codeunit "Approvals Mgmt.";
         BlockReservation: Boolean;
         DoNotUpdateOrderReceiptDate: Boolean;
 
@@ -2767,9 +2743,6 @@ table 246 "Requisition Line"
         Level := 1;
         "Action Message" := ReqLine."Action Message"::New;
         "User ID" := CopyStr(UserId(), 1, MaxStrLen("User ID"));
-        "Drop Shipment" := UnplannedDemand."Drop Shipment";
-
-        UpdateSalesOrderDetailForDropShipment();
 
         UpdateDim();
 
@@ -3336,25 +3309,6 @@ table 246 "Requisition Line"
         end;
     end;
 
-    local procedure UpdateSalesOrderDetailForDropShipment()
-    var
-        SalesLine: Record "Sales Line";
-    begin
-        if Rec."Demand Type" <> Database::"Sales Line" then
-            exit;
-
-        if not Rec."Drop Shipment" then
-            exit;
-
-        SalesLine.SetLoadFields("Sell-to Customer No.");
-        if not SalesLine.Get(Rec."Demand Subtype", Rec."Demand Order No.", Rec."Demand Line No.") then
-            exit;
-
-        Rec."Sales Order No." := SalesLine."Document No.";
-        Rec."Sales Order Line No." := SalesLine."Line No.";
-        Rec."Sell-to Customer No." := SalesLine."Sell-to Customer No.";
-    end;
-
     procedure ReserveBindingOrder(TrackingSpecification: Record "Tracking Specification"; SourceDescription: Text[100]; ExpectedDate: Date; ReservQty: Decimal; ReservQtyBase: Decimal; UpdateReserve: Boolean)
     begin
         OnReserveBindingOrder(Rec, TrackingSpecification, SourceDescription, ExpectedDate, ReservQty, ReservQtyBase, UpdateReserve);
@@ -3409,19 +3363,6 @@ table 246 "Requisition Line"
     procedure SetDoNotUpdateOrderReceiptDate(NewUpdateOrderReceiptDate: Boolean)
     begin
         DoNotUpdateOrderReceiptDate := NewUpdateOrderReceiptDate;
-    end;
-
-    local procedure CheckOpenApprovalEntryExistForCurrentUser()
-    var
-        RequisitionWkshName: Record "Requisition Wksh. Name";
-    begin
-        if RequisitionWkshName.Get("Worksheet Template Name", "Journal Batch Name") then
-            ApprovalsMgmt.PreventModifyRecIfOpenApprovalEntryExistForCurrentUser(RequisitionWkshName);
-    end;
-
-    procedure CheckRequisitionWkshLineRestriction()
-    begin
-        OnCheckRequisitionWkshLinePostRestrictions();
     end;
 
     [IntegrationEvent(false, false)]
@@ -4061,26 +4002,6 @@ table 246 "Requisition Line"
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeUpdateItemReferenceDescription(var RequisitionLine: Record "Requisition Line"; var IsHandled: Boolean)
-    begin
-    end;
-
-    [IntegrationEvent(true, false)]
-    local procedure OnCheckRequisitionWkshLinePostRestrictions()
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnValidateNoOnBeforeDeleteRelations(var RequisitionLine: Record "Requisition Line"; xRequisitionLine: Record "Requisition Line"; var IsHandled: Boolean)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnValidateVendorNoOnBeforeValidateCurrencyCode(var RequisitionLine: Record "Requisition Line"; Vendor: Record Vendor; var IsHandled: Boolean)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnValidateVendorNoOnAfterGetDefaultBinCode(var RequisitionLine: Record "Requisition Line");
     begin
     end;
 }

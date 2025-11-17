@@ -41,11 +41,6 @@ page 680 "Report Inbox"
                     ApplicationArea = Basic, Suite;
                     ToolTip = 'Specifies the object ID of the report.';
                 }
-                field(Description; Rec.Description)
-                {
-                    ApplicationArea = Basic, Suite;
-                    ToolTip = 'Specifies the description of the report.';
-                }
                 field("Created Date-Time"; Rec."Created Date-Time")
                 {
                     ApplicationArea = Basic, Suite;

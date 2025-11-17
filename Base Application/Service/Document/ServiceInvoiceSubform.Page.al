@@ -413,6 +413,7 @@ page 5934 "Service Invoice Subform"
                         Rec.PickPrice();
                     end;
                 }
+#if not CLEAN25
                 action("Get Li&ne Discount")
                 {
                     AccessByPermission = TableData "Sales Line Discount" = R;
@@ -422,12 +423,16 @@ page 5934 "Service Invoice Subform"
                     Image = LineDiscount;
                     ToolTip = 'Insert the best possible discount in the Line Discount field according to any special discounts that you have set up.';
                     Visible = not ExtendedPriceEnabled;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
                         Rec.PickDiscount();
                     end;
                 }
+#endif
                 action(GetLineDiscount)
                 {
                     AccessByPermission = TableData "Sales Discount Access" = R;

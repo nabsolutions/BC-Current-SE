@@ -5,9 +5,9 @@
 
 namespace System.Agents;
 
-using System.Environment.Configuration;
 using System.Reflection;
 using System.Security.AccessControl;
+using System.Environment.Configuration;
 
 codeunit 4321 Agent
 {
@@ -103,9 +103,9 @@ codeunit 4321 Agent
     [Scope('OnPrem')]
     procedure SetInstructions(AgentUserSecurityID: Guid; Instructions: SecretText)
     var
-        AgentUtilities: Codeunit "Agent Utilities";
+        AgentImpl: Codeunit "Agent Impl.";
     begin
-        AgentUtilities.SetInstructions(AgentUserSecurityID, Instructions);
+        AgentImpl.SetInstructions(AgentUserSecurityID, Instructions);
     end;
 
     /// <summary>

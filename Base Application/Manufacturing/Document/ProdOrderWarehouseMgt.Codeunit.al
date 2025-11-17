@@ -735,6 +735,9 @@ codeunit 5996 "Prod. Order Warehouse Mgt."
         if ProdOrderComponent.Find('-') then
             repeat
                 ProdOrderComponent.CalcFields("Pick Qty. (Base)");
+#if not CLEAN26
+                sender.RunOnCalcCrossDockToProdOrderComponentOnBeforeInsertCrossDockLine(ProdOrderComponent);
+#endif
                 OnCalcCrossDockToProdOrderComponentOnBeforeInsertCrossDockLine(ProdOrderComponent);
                 sender.InsertCrossDockOpp(
                     WhseCrossDockOpportunity,

@@ -22,7 +22,6 @@ using Microsoft.Integration.Dataverse;
 using Microsoft.Pricing.Calculation;
 using Microsoft.Pricing.PriceList;
 using Microsoft.Pricing.Source;
-using Microsoft.Purchases.Document;
 using Microsoft.Sales.Customer;
 using Microsoft.Sales.Document;
 using Microsoft.Sales.Pricing;
@@ -873,6 +872,7 @@ page 5050 "Contact Card"
                         PriceUXManagement.ShowPriceListLines(PriceSource, Enum::"Price Amount Type"::Discount);
                     end;
                 }
+#if not CLEAN25
                 action(PriceListsDiscounts)
                 {
                     ApplicationArea = Basic, Suite;
@@ -880,6 +880,9 @@ page 5050 "Contact Card"
                     Image = LineDiscount;
                     Visible = false;
                     ToolTip = 'View or set up different discounts for products that you sell to the customer. A product line discount is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Action PriceLists shows all sales price lists with prices and discounts';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     var
@@ -890,6 +893,7 @@ page 5050 "Contact Card"
                         PriceUXManagement.ShowPriceLists(Rec, PriceType::Sale, AmountType::Discount);
                     end;
                 }
+#endif
             }
             group(Tasks)
             {
@@ -945,16 +949,6 @@ page 5050 "Contact Card"
                     RunPageLink = "Sell-to Contact No." = field("No.");
                     RunPageView = sorting("Document Type", "Sell-to Contact No.");
                     ToolTip = 'View sales quotes that exist for the contact.';
-                }
-                action(PurchaseQuotes)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'Purchase Quotes';
-                    Image = Quote;
-                    RunObject = Page "Purchase Quotes";
-                    RunPageLink = "Buy-from Contact No." = field("No.");
-                    RunPageView = sorting("Document Type", "Buy-from Contact No.");
-                    ToolTip = 'View purchase quotes that exist for the contact.';
                 }
             }
             group(History)
@@ -1291,18 +1285,6 @@ page 5050 "Contact Card"
                     Rec.CreateSalesQuoteFromContact();
                 end;
             }
-            action(NewPurchaseQuote)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Create Purchase Quote';
-                Image = Quote;
-                ToolTip = 'Create a new purchase quote for the vendor.';
-
-                trigger OnAction()
-                begin
-                    Rec.CreatePurchaseQuoteFromContact();
-                end;
-            }
         }
         area(reporting)
         {
@@ -1359,9 +1341,6 @@ page 5050 "Contact Card"
                 actionref(NewSalesQuote_Promoted; NewSalesQuote)
                 {
                 }
-                actionref(NewPurchaseQuote_Promoted; NewPurchaseQuote)
-                {
-                }
                 actionref("Apply Template_Promoted"; "Apply Template")
                 {
                 }
@@ -1400,9 +1379,6 @@ page 5050 "Contact Card"
                 {
                 }
                 actionref(SalesQuotes_Promoted; SalesQuotes)
-                {
-                }
-                actionref(PurchaseQuotes_Promoted; PurchaseQuotes)
                 {
                 }
             }

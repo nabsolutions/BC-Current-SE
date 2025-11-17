@@ -307,7 +307,7 @@ page 1156 "Company Detail"
 #if not CLEAN26
                     group(Legacy)
                     {
-                        Caption = 'Legacy reports (will be removed)';
+                        Caption = 'Legacy';
                         Image = Excel;
                         ObsoleteReason = 'These reports have been deprecated and will be removed in a future release.';
                         ObsoleteState = Pending;
@@ -319,7 +319,7 @@ page 1156 "Company Detail"
                             Caption = 'Balance Sheet';
                             Image = Excel;
                             RunObject = Codeunit "Run Template Balance Sheet";
-                            ToolTip = 'Open a spreadsheet that shows your company''s assets, liabilities, and equity. This report is deprecated and will be removed in a future release.';
+                            ToolTip = 'Open a spreadsheet that shows your company''s assets, liabilities, and equity.';
                             ObsoleteReason = 'This report is deprecated and will be removed in a future release.';
                             ObsoleteState = Pending;
                             ObsoleteTag = '26.0';
@@ -330,7 +330,7 @@ page 1156 "Company Detail"
                             Caption = 'Income Statement';
                             Image = Excel;
                             RunObject = Codeunit "Run Template Income Stmt.";
-                            ToolTip = 'Open a spreadsheet that shows your company''s income and expenses. This report is deprecated and will be removed in a future release.';
+                            ToolTip = 'Open a spreadsheet that shows your company''s income and expenses.';
                             ObsoleteReason = 'This report is deprecated and will be removed in a future release.';
                             ObsoleteState = Pending;
                             ObsoleteTag = '26.0';
@@ -341,7 +341,7 @@ page 1156 "Company Detail"
                             Caption = 'Cash Flow Statement';
                             Image = Excel;
                             RunObject = Codeunit "Run Template CashFlow Stmt.";
-                            ToolTip = 'Open a spreadsheet that shows how changes in balance sheet accounts and income affect the company''s cash holdings. This report is deprecated and will be removed in a future release.';
+                            ToolTip = 'Open a spreadsheet that shows how changes in balance sheet accounts and income affect the company''s cash holdings.';
                             ObsoleteReason = 'This report is deprecated and will be removed in a future release.';
                             ObsoleteState = Pending;
                             ObsoleteTag = '26.0';
@@ -352,11 +352,52 @@ page 1156 "Company Detail"
                             Caption = 'Retained Earnings Statement';
                             Image = Excel;
                             RunObject = Codeunit "Run Template Retained Earn.";
-                            ToolTip = 'Open a spreadsheet that shows your company''s changes in retained earnings based on net income from the other financial statements. This report is deprecated and will be removed in a future release.';
+                            ToolTip = 'Open a spreadsheet that shows your company''s changes in retained earnings based on net income from the other financial statements.';
                             ObsoleteReason = 'This report is deprecated and will be removed in a future release.';
                             ObsoleteState = Pending;
                             ObsoleteTag = '26.0';
                         }
+#if not CLEAN25
+                        action(ExcelTemplateTrialBalance)
+                        {
+                            ApplicationArea = All;
+                            Caption = 'Trial Balance';
+                            Image = Excel;
+                            RunObject = Codeunit "Run Template Trial Balance";
+                            ToolTip = 'Open a spreadsheet that shows a summary trial balance by account.';
+#pragma warning disable AS0072
+                            ObsoleteReason = 'Functionality replaced by "EXR Trial Balance Excel". Extend this report object with Excel layout instead.';
+                            ObsoleteState = Pending;
+                            ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                        }
+                        action(ExcelTemplateAgedAccPay)
+                        {
+                            ApplicationArea = All;
+                            Caption = 'Aged Accounts Payable';
+                            Image = Excel;
+                            RunObject = Codeunit "Run Template Aged Acc. Pay.";
+                            ToolTip = 'Open a spreadsheet that shows a list of aged remaining balances for each vendor by period.';
+#pragma warning disable AS0072
+                            ObsoleteReason = 'Functionality replaced by "EXR Aged Acc Payable Excel". Extend this report object with Excel layout instead.';
+                            ObsoleteState = Pending;
+                            ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                        }
+                        action(ExcelTemplateAgedAccRec)
+                        {
+                            ApplicationArea = All;
+                            Caption = 'Aged Accounts Receivable';
+                            Image = Excel;
+                            RunObject = Codeunit "Run Template Aged Acc. Rec.";
+                            ToolTip = 'Open a spreadsheet that shows when customer payments are due or overdue by period.';
+#pragma warning disable AS0072
+                            ObsoleteReason = 'Functionality replaced by "EXR Aged Acc Receivable Excel". Extend this report object with Excel layout instead.';
+                            ObsoleteState = Pending;
+                            ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                        }
+#endif
                     }
 #endif
                 }
@@ -418,6 +459,32 @@ page 1156 "Company Detail"
                     ObsoleteState = Pending;
                     ObsoleteTag = '26.0';
                 }
+#if not CLEAN25
+                actionref(ExcelTemplateTrialBalance_Promoted; ExcelTemplateTrialBalance)
+                {
+#pragma warning disable AS0072
+                    ObsoleteReason = 'Functionality replaced by "EXR Trial Balance Excel". Extend this report object with Excel layout instead.';
+                    ObsoleteState = Pending;
+                    ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                }
+                actionref(ExcelTemplateAgedAccPay_Promoted; ExcelTemplateAgedAccPay)
+                {
+#pragma warning disable AS0072
+                    ObsoleteReason = 'Functionality replaced by "EXR Aged Acc Payable Excel". Extend this report object with Excel layout instead.';
+                    ObsoleteState = Pending;
+                    ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                }
+                actionref(ExcelTemplateAgedAccRec_Promoted; ExcelTemplateAgedAccRec)
+                {
+#pragma warning disable AS0072
+                    ObsoleteReason = 'Functionality replaced by "EXR Aged Acc Receivable Excel". Extend this report object with Excel layout instead.';
+                    ObsoleteState = Pending;
+                    ObsoleteTag = '25.0';
+#pragma warning restore AS0072
+                }
+#endif
             }
 #endif
         }
@@ -547,3 +614,4 @@ page 1156 "Company Detail"
         // This event is called when an accountant goes to their client and enables us to capture telemetry for this action.
     end;
 }
+

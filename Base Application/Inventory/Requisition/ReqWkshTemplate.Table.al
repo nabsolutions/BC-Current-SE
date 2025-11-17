@@ -67,7 +67,6 @@ table 244 "Req. Wksh. Template"
         field(99000750; Type; Enum "Req. Worksheet Template Type")
         {
             Caption = 'Type';
-            ToolTip = 'Specifies the type of the requisition worksheet template.';
         }
     }
 

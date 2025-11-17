@@ -7,9 +7,7 @@ namespace Microsoft.RoleCenters;
 using Microsoft.Projects.TimeSheet;
 using System;
 using System.Environment.Configuration;
-#if not CLEAN28
 using System.Feedback;
-#endif
 using System.Telemetry;
 
 page 9042 "Team Member Activities"
@@ -135,16 +133,22 @@ page 9042 "Team Member Activities"
                     end;
                 }
             }
-#if not CLEAN28
             usercontrol(SATAsyncLoader; SatisfactionSurveyAsync)
             {
                 ApplicationArea = Basic, Suite;
-                Visible = false;
-                ObsoleteReason = 'The Satisfaction Survey feature will be removed in a future release.';
-                ObsoleteState = Pending;
-                ObsoleteTag = '28.0';
+                trigger ResponseReceived(Status: Integer; Response: Text)
+                var
+                    SatisfactionSurveyMgt: Codeunit "Satisfaction Survey Mgt.";
+                begin
+                    SatisfactionSurveyMgt.TryShowSurvey(Status, Response);
+                end;
+
+                trigger ControlAddInReady();
+                begin
+                    IsAddInReady := true;
+                    CheckIfSurveyEnabled();
+                end;
             }
-#endif
         }
     }
 
@@ -175,6 +179,31 @@ page 9042 "Team Member Activities"
         [WithEvents]
         PageNotifier: DotNet PageNotifier;
         ShowTimeSheetsToApprove: Boolean;
+        IsAddInReady: Boolean;
+        IsPageReady: Boolean;
         UserFilterOption: Option Owner,Approver;
+
+    trigger PageNotifier::PageReady()
+    begin
+        IsPageReady := true;
+        CheckIfSurveyEnabled();
+    end;
+
+    local procedure CheckIfSurveyEnabled()
+    var
+        SatisfactionSurveyMgt: Codeunit "Satisfaction Survey Mgt.";
+        CheckUrl: Text;
+    begin
+        if not IsAddInReady then
+            exit;
+        if not IsPageReady then
+            exit;
+        if not SatisfactionSurveyMgt.DeactivateSurvey() then
+            exit;
+        if not SatisfactionSurveyMgt.TryGetCheckUrl(CheckUrl) then
+            exit;
+
+        CurrPage.SATAsyncLoader.SendRequest(CheckUrl, SatisfactionSurveyMgt.GetRequestTimeoutAsync());
+    end;
 }
 

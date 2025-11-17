@@ -4,8 +4,6 @@
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Inventory.Document;
 
-using Microsoft.Inventory.Comment;
-
 page 6566 "Invt. Shipments"
 {
     ApplicationArea = Basic, Suite;
@@ -84,25 +82,6 @@ page 6566 "Invt. Shipments"
 
     actions
     {
-        area(navigation)
-        {
-            group("Shipment")
-            {
-                Caption = 'Shipment';
-                Image = Shipment;
-
-                action("Comments")
-                {
-                    ApplicationArea = Comments;
-                    Caption = 'Comments';
-                    Image = ViewComments;
-                    ToolTip = 'View or edit comments.';
-                    RunObject = Page "Inventory Comment Sheet";
-                    RunPageLink = "Document Type" = const("Inventory Shipment"),
-                                  "No." = field("No.");
-                }
-            }
-        }
     }
 }
 

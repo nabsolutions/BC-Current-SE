@@ -91,7 +91,7 @@ page 31 "Item List"
                 }
                 field(InventoryField; Rec.Inventory)
                 {
-                    ApplicationArea = Basic, Suite;
+                    ApplicationArea = Invoicing, Basic, Suite;
                     HideValue = IsNonInventoriable;
                     ToolTip = 'Specifies how many units, such as pieces, boxes, or cans, of the item are in inventory.';
                 }
@@ -120,7 +120,7 @@ page 31 "Item List"
                 }
                 field("Base Unit of Measure"; Rec."Base Unit of Measure")
                 {
-                    ApplicationArea = Basic, Suite;
+                    ApplicationArea = Invoicing, Basic, Suite;
                     ToolTip = 'Specifies the base unit used to measure the item, such as piece, box, or pallet. The base unit of measure also serves as the conversion basis for alternate units of measure.';
                 }
                 field("Shelf No."; Rec."Shelf No.")
@@ -171,7 +171,7 @@ page 31 "Item List"
                 }
                 field("Unit Price"; Rec."Unit Price")
                 {
-                    ApplicationArea = Basic, Suite;
+                    ApplicationArea = Invoicing, Basic, Suite;
                     ToolTip = 'Specifies the price for one unit of the item, in LCY.';
                 }
                 field("Inventory Posting Group"; Rec."Inventory Posting Group")
@@ -206,21 +206,7 @@ page 31 "Item List"
                 field("Vendor Item No."; Rec."Vendor Item No.")
                 {
                     ApplicationArea = Basic, Suite;
-                    Visible = false;
-                }
-                field("No. 2"; Rec."No. 2")
-                {
-                    ApplicationArea = Basic, Suite;
-                    Visible = false;
-                }
-                field("Common Item No."; Rec."Common Item No.")
-                {
-                    ApplicationArea = Basic, Suite;
-                    Visible = false;
-                }
-                field("Alternative Item No."; Rec."Alternative Item No.")
-                {
-                    ApplicationArea = Basic, Suite;
+                    ToolTip = 'Specifies the number that the vendor uses for this item.';
                     Visible = false;
                 }
                 field("Tariff No."; Rec."Tariff No.")
@@ -399,6 +385,18 @@ page 31 "Item List"
                               "Serial No. Filter" = field("Serial No. Filter");
                 Visible = false;
             }
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = All;
+                Visible = false;
+                Caption = 'Attachments';
+                SubPageLink = "Table ID" = const(Database::Item), "No." = field("No.");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = All;
@@ -511,6 +509,7 @@ page 31 "Item List"
             group(PricesandDiscounts)
             {
                 Caption = 'Sales Prices & Discounts';
+#if not CLEAN25
                 action(Prices_Prices)
                 {
                     ApplicationArea = Basic, Suite;
@@ -519,6 +518,9 @@ page 31 "Item List"
                     Scope = Repeater;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'Set up sales prices for the selected item. An item price is automatically used on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
@@ -533,6 +535,9 @@ page 31 "Item List"
                     Scope = Repeater;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'Set up sales discounts for the selected item. An item discount is automatically granted on invoice lines when the specified criteria are met, such as customer, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
@@ -546,6 +551,9 @@ page 31 "Item List"
                     Image = PriceWorksheet;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View the sales prices and line discounts that you grant for this item when certain criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     var
@@ -564,7 +572,11 @@ page 31 "Item List"
                     Visible = not IsOnPhone and not ExtendedPriceEnabled;
                     RunObject = Page "Sales Price Worksheet";
                     ToolTip = 'Change to the unit price for the item or specify how you want to enter changes in the price agreement for one customer, a group of customers, or all customers.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 action(SalesPriceLists)
                 {
                     AccessByPermission = TableData "Sales Price Access" = R;
@@ -605,6 +617,7 @@ page 31 "Item List"
             group(PurchPricesandDiscounts)
             {
                 Caption = 'Purchase Prices & Discounts';
+#if not CLEAN25
                 action("Set Special Prices")
                 {
                     ApplicationArea = Suite;
@@ -615,6 +628,9 @@ page 31 "Item List"
                     RunPageLink = "Item No." = field("No.");
                     RunPageView = sorting("Item No.");
                     ToolTip = 'Set up purchase prices for the item. An item price is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
                 action("Set Special Discounts")
                 {
@@ -625,6 +641,9 @@ page 31 "Item List"
                     RunObject = Page "Purchase Line Discounts";
                     RunPageLink = "Item No." = field("No.");
                     ToolTip = 'Set up purchase discounts for the item. An item discount is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
                 action(PurchPricesDiscountsOverview)
                 {
@@ -633,6 +652,9 @@ page 31 "Item List"
                     Image = PriceWorksheet;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View the purchase prices and line discounts that you grant for this item when certain criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     var
@@ -642,6 +664,7 @@ page 31 "Item List"
                         PurchasesPriceAndLineDisc.RunModal();
                     end;
                 }
+#endif
                 action(PurchPriceLists)
                 {
                     AccessByPermission = TableData "Purchase Price Access" = R;
@@ -1078,6 +1101,7 @@ page 31 "Item List"
                     RunObject = Report "Item Substitutions";
                     ToolTip = 'View substitute items that are set up to be sold instead of the items in the filter. A detailed overview also includes description, unit cost, quantity on hand, base unit of measure, information about interchangeability and additional conditions.';
                 }
+#if not CLEAN25
                 action("Price List")
                 {
                     ApplicationArea = Basic, Suite;
@@ -1086,7 +1110,11 @@ page 31 "Item List"
                     Visible = not ExtendedPriceEnabled;
                     RunObject = Report "Price List";
                     ToolTip = 'View, print, or save a list of your items and their prices, for example, to send to customers. You can create the list for specific customers, campaigns, currencies, or other criteria.';
+                    ObsoleteState = Pending;
+                    ObsoleteTag = '19.0';
+                    ObsoleteReason = 'Replaced by the Item Price List report';
                 }
+#endif
                 action("Item Price List")
                 {
                     ApplicationArea = Basic, Suite;
@@ -1827,6 +1855,7 @@ page 31 "Item List"
             {
                 Caption = 'S&ales';
                 Image = Sales;
+#if not CLEAN25
                 action(Sales_Prices)
                 {
                     ApplicationArea = Suite;
@@ -1834,6 +1863,9 @@ page 31 "Item List"
                     Caption = 'Sales Prices';
                     Image = Price;
                     ToolTip = 'View or set up sales prices for the item. An item price is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     begin
@@ -1847,12 +1879,16 @@ page 31 "Item List"
                     Caption = 'Sales Discounts';
                     Image = LineDiscount;
                     ToolTip = 'View or set up sales discounts for the item. An item discount is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
 
                     trigger OnAction()
                     begin
                         ShowLineDiscounts();
                     end;
                 }
+#endif
                 action("Prepa&yment Percentages")
                 {
                     ApplicationArea = Prepayments;
@@ -1899,6 +1935,7 @@ page 31 "Item List"
                     RunPageView = sorting("Item No.");
                     ToolTip = 'View the list of vendors who can supply the item, and at which lead time.';
                 }
+#if not CLEAN25
                 action(Prices)
                 {
                     ApplicationArea = Advanced;
@@ -1909,6 +1946,9 @@ page 31 "Item List"
                     RunPageLink = "Item No." = field("No.");
                     RunPageView = sorting("Item No.");
                     ToolTip = 'View or set up purchase prices for the item. An item price is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
                 }
                 action("Line Discounts")
                 {
@@ -1920,7 +1960,11 @@ page 31 "Item List"
                     RunPageLink = "Item No." = field("No.");
                     RunPageView = sorting("Item No.");
                     ToolTip = 'View or set up purchase discounts for the item. An item discount is automatically granted on invoice lines when the specified criteria are met, such as vendor, quantity, or ending date.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '18.0';
                 }
+#endif
                 action(Action125)
                 {
                     ApplicationArea = Prepayments;
@@ -2088,40 +2132,75 @@ page 31 "Item List"
             {
                 Caption = 'Prices & Discounts', Comment = 'Generated from the PromotedActionCategories property index 5.';
 
+#if not CLEAN25
                 actionref(Prices_Prices_Promoted; Prices_Prices)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 actionref(SalesPriceLists_Promoted; SalesPriceLists)
                 {
                 }
                 actionref(PurchPriceLists_Promoted; PurchPriceLists)
                 {
                 }
+#if not CLEAN25
                 actionref(PricesDiscountsOverview_Promoted; PricesDiscountsOverview)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
+#if not CLEAN25
                 actionref(Prices_LineDiscounts_Promoted; Prices_LineDiscounts)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
+#if not CLEAN25
                 actionref(PurchPricesDiscountsOverview_Promoted; PurchPricesDiscountsOverview)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 actionref(SalesPriceListsDiscounts_Promoted; SalesPriceListsDiscounts)
                 {
                 }
                 actionref(PurchPriceListsDiscounts_Promoted; PurchPriceListsDiscounts)
                 {
                 }
+#if not CLEAN25
                 actionref("Set Special Prices_Promoted"; "Set Special Prices")
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
+#if not CLEAN25
                 actionref("Sales Price Worksheet_Promoted"; "Sales Price Worksheet")
                 {
                     Visible = false;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
+#if not CLEAN25
                 actionref("Set Special Discounts_Promoted"; "Set Special Discounts")
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
             }
             group(Category_Category8)
             {
@@ -2153,9 +2232,14 @@ page 31 "Item List"
                 actionref("Inventory by Location_Promoted"; "Inventory by Location")
                 {
                 }
+#if not CLEAN25
                 actionref("Price List_Promoted"; "Price List")
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the Item Price List report';
+                    ObsoleteTag = '19.0';
                 }
+#endif
                 actionref("Item Price List_Promoted"; "Item Price List")
                 {
                 }
@@ -2458,6 +2542,8 @@ page 31 "Item List"
         NarrowFilterNotification.Send();
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     local procedure ShowLineDiscounts()
     var
         SalesLineDiscount: Record "Sales Line Discount";
@@ -2468,6 +2554,7 @@ page 31 "Item List"
         Page.Run(Page::"Sales Line Discounts", SalesLineDiscount);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     local procedure ShowPrices()
     var
         SalesPrice: Record "Sales Price";
@@ -2476,6 +2563,7 @@ page 31 "Item List"
         SalesPrice.SetRange("Item No.", Rec."No.");
         Page.Run(Page::"Sales Prices", SalesPrice);
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnSelectActiveItemsForTransferAfterSetFilters(var Item: Record Item)
@@ -2487,3 +2575,4 @@ page 31 "Item List"
     begin
     end;
 }
+

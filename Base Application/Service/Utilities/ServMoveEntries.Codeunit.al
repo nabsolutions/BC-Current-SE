@@ -30,6 +30,9 @@ codeunit 6492 "Serv. Move Entries"
         ServiceItem: Record "Service Item";
         ServiceItemComponent: Record "Service Item Component";
         ServContract: Record "Service Contract Header";
+#if not CLEAN25
+        MoveEntries: Codeunit MoveEntries;
+#endif
         CannotDeleteLedgerEntriesInFiscalYearErr: Label 'You cannot delete %1 %2 because it has ledger entries in a fiscal year that has not been closed yet.', Comment = '%1 - table caption, %2 - customer number';
         CannotDeleteOpenLedgerEntriesErr: Label 'You cannot delete %1 %2 because there are one or more open ledger entries.', Comment = '%1 - table caption, %2 - customer number';
         CannotDeletePrepaidContractEntriesErr: Label 'You cannot delete %1 because prepaid contract entries exist in %2.', Comment = '%1 - table caption, %2 - contract number';
@@ -258,6 +261,9 @@ codeunit 6492 "Serv. Move Entries"
         NewServiceItemNo: Code[20];
     begin
         OnBeforeMoveServiceItemLedgerEntries(ServiceItem, NewServiceItemNo);
+#if not CLEAN25
+        MoveEntries.RunOnBeforeMoveServiceItemLedgerEntries(ServiceItem, NewServiceItemNo);
+#endif
         ServiceLedgerEntry.LockTable();
 
         ResultDescription := CheckIfServiceItemCanBeDeleted(ServiceLedgerEntry, ServiceItem."No.");
@@ -271,6 +277,9 @@ codeunit 6492 "Serv. Move Entries"
         WarrantyLedgerEntry.ModifyAll("Service Item No. (Serviced)", NewServiceItemNo);
 
         OnAfterMoveServiceItemLedgerEntries(ServiceItem);
+#if not CLEAN25
+        MoveEntries.RunOnAfterMoveServiceItemLedgerEntries(ServiceItem);
+#endif
     end;
 
     procedure MoveServContractLedgerEntries(ServiceContractHeader: Record "Service Contract Header")
@@ -278,6 +287,9 @@ codeunit 6492 "Serv. Move Entries"
         NewContractNo: Code[20];
     begin
         OnBeforeMoveServContractLedgerEntries(ServiceContractHeader, NewContractNo);
+#if not CLEAN25
+        MoveEntries.RunOnBeforeMoveServContractLedgerEntries(ServiceContractHeader, NewContractNo);
+#endif
 
         if ServiceContractHeader.Prepaid then begin
             ServiceLedgerEntry.Reset();
@@ -340,6 +352,9 @@ codeunit 6492 "Serv. Move Entries"
         WarrantyLedgerEntry.ModifyAll("Service Contract No.", NewContractNo);
 
         OnAfterMoveServContractLedgerEntries(ServiceContractHeader);
+#if not CLEAN25
+        MoveEntries.RunOnAfterMoveServContractLedgerEntries(ServiceContractHeader);
+#endif
     end;
 
     procedure MoveServiceCostLedgerEntries(ServiceCost: Record "Service Cost")
@@ -347,6 +362,9 @@ codeunit 6492 "Serv. Move Entries"
         NewCostCode: Code[10];
     begin
         OnBeforeMoveServiceCostLedgerEntries(ServiceCost, NewCostCode);
+#if not CLEAN25
+        MoveEntries.RunOnBeforeMoveServiceCostLedgerEntries(ServiceCost, NewCostCode);
+#endif
 
         ServiceLedgerEntry.Reset();
         ServiceLedgerEntry.SetRange(Type, ServiceLedgerEntry.Type::"Service Cost");
@@ -375,6 +393,9 @@ codeunit 6492 "Serv. Move Entries"
         WarrantyLedgerEntry.ModifyAll("No.", NewCostCode);
 
         OnAfterMoveServiceCostLedgerEntries(ServiceCost);
+#if not CLEAN25
+        MoveEntries.RunOnAfterMoveServiceCostLedgerEntries(ServiceCost);
+#endif
     end;
 
     [IntegrationEvent(false, false)]

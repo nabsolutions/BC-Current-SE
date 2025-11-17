@@ -6,8 +6,8 @@
 namespace System.Integration.Word;
 
 using System.Globalization;
-using System.Reflection;
 using System.Telemetry;
+using System.Reflection;
 
 /// <summary>
 /// Wizard to create a Word template.

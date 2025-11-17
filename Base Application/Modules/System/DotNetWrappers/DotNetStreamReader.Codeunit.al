@@ -5,8 +5,6 @@ using System.Text;
 
 codeunit 3027 DotNet_StreamReader
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

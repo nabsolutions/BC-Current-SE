@@ -48,6 +48,9 @@ codeunit 99000868 "Prod. Order Comp. Invt.Profile"
         InventoryProfile.IsSupply := InventoryProfile."Untracked Quantity" < 0;
 
         OnAfterTransferInventoryProfileFromProdOrderComponent(InventoryProfile, ProdOrderComponent);
+#if not CLEAN25
+        InventoryProfile.RunOnAfterTransferFromComponent(InventoryProfile, ProdOrderComponent);
+#endif
     end;
 
     [IntegrationEvent(false, false)]
@@ -112,11 +115,17 @@ codeunit 99000868 "Prod. Order Comp. Invt.Profile"
     var
         ProdOrderComp: Record "Prod. Order Component";
         ReqLine: Record "Requisition Line";
+#if not CLEAN25
+        InventoryProfileOffsetting: Codeunit "Inventory Profile Offsetting";
+#endif
         IsHandled: Boolean;
         ShouldProcess: Boolean;
     begin
         IsHandled := false;
         OnBeforeTransProdOrderCompToProfile(InventoryProfile, Item, IsHandled);
+#if not CLEAN25
+        InventoryProfileOffsetting.RunOnBeforeTransProdOrderCompToProfile(InventoryProfile, Item, IsHandled);
+#endif
         if IsHandled then
             exit;
 
@@ -124,6 +133,9 @@ codeunit 99000868 "Prod. Order Comp. Invt.Profile"
             repeat
                 ShouldProcess := ProdOrderComp."Due Date" <> 0D;
                 OnTransProdOrderCompToProfileOnBeforeProcessLine(ProdOrderComp, ShouldProcess);
+#if not CLEAN25
+                InventoryProfileOffsetting.RunOnTransProdOrderCompToProfileOnBeforeProcessLine(ProdOrderComp, ShouldProcess);
+#endif
                 if ShouldProcess then begin
                     ReqLine.SetRefOrderFilters(
                       ReqLine."Ref. Order Type"::"Prod. Order", ProdOrderComp.Status.AsInteger(),
@@ -137,6 +149,9 @@ codeunit 99000868 "Prod. Order Comp. Invt.Profile"
                         if InventoryProfile.IsSupply then
                             InventoryProfile.ChangeSign();
                         OnTransProdOrderCompToProfileOnBeforeInvProfileInsert(InventoryProfile, Item, NextLineNo);
+#if not CLEAN25
+                        InventoryProfileOffsetting.RunOnTransProdOrderCompToProfileOnBeforeInvProfileInsert(InventoryProfile, Item, NextLineNo);
+#endif
                         InventoryProfile.Insert();
                     end;
                 end;

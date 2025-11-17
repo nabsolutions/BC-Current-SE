@@ -484,6 +484,9 @@ codeunit 6452 "Serv. Availability Mgt."
         ItemAvailabilityFormsMgt.FilterItem(Item, ServLine."Location Code", ServLine."Variant Code", ServHeader."Response Date");
 
         OnBeforeShowItemAvailFromServLine(Item, ServLine);
+#if not CLEAN25
+        ItemAvailabilityFormsMgt.RunOnBeforeShowItemAvailFromServLine(Item, ServLine);
+#endif
         case AvailabilityType of
             AvailabilityType::Period:
                 ItemAvailabilityFormsMgt.ShowItemAvailabilityByPeriod(Item, GetFieldCaption(ServHeader.FieldCaption("Response Date")), ServHeader."Response Date", NewDate);
@@ -611,6 +614,9 @@ codeunit 6452 "Serv. Availability Mgt."
         InventoryEventBuffer.Positive := not (InventoryEventBuffer."Remaining Quantity (Base)" < 0);
 
         OnAfterTransferFromServiceNeed(InventoryEventBuffer, ServiceLine);
+#if not CLEAN25
+        InventoryEventBuffer.RunOnAfterTransferFromServiceNeed(InventoryEventBuffer, ServiceLine);
+#endif
     end;
 
     [IntegrationEvent(false, false)]
@@ -633,6 +639,9 @@ codeunit 6452 "Serv. Availability Mgt."
     begin
         IsHandled := false;
         OnBeforeUpdateServOrderAvail(AvailabilityAtDate, Item, IsHandled);
+#if not CLEAN25
+        AvailableToPromise.RunOnBeforeUpdateServOrderAvail(AvailabilityAtDate, Item, IsHandled);
+#endif
         if IsHandled then
             exit;
 
@@ -652,12 +661,5 @@ codeunit 6452 "Serv. Availability Mgt."
     [IntegrationEvent(false, false)]
     local procedure OnSetServiceHeaderOnAfterFilterServiceLine(var ServiceLine: Record "Service Line"; var ServiceHeader: Record "Service Header")
     begin
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::Item, 'OnCalcQtyOnServiceOrder', '', false, false)]
-    local procedure OnCalcQtyOnServiceOrder(var Item: Record Item; var Result: Decimal)
-    begin
-        Item.CalcFields("Qty. on Service Order");
-        Result := Item."Qty. on Service Order";
     end;
 }

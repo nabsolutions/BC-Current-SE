@@ -9,6 +9,9 @@ namespace Microsoft.Integration.SyncEngine;
 using System.Reflection;
 using System.Utilities;
 using System.Environment;
+#if not CLEAN25
+using System.IO;
+#endif
 using Microsoft.Integration.Dataverse;
 
 page 5384 "CDS New Man. Int. Table Wizard"
@@ -249,6 +252,46 @@ page 5384 "CDS New Man. Int. Table Wizard"
                             end;
                         end;
                     }
+#if not CLEAN25
+                    field(TableConfigTemplateCode; TableConfigTemplateCode)
+                    {
+                        Caption = 'Table Config. Template Code';
+                        ToolTip = 'Specifies a configuration template to use when creating new records in the Business Central table (specified by the Table ID field) during synchronization.';
+                        Lookup = true;
+                        Visible = false;
+                        ObsoleteState = Pending;
+                        ObsoleteReason = 'Replaced with Table Config Templates field';
+                        ObsoleteTag = '25.0';
+
+                        trigger OnLookup(var Text: Text): Boolean
+                        var
+                            ConfigTemplateHeader: Record "Config. Template Header";
+                        begin
+                            ConfigTemplateHeader.SetRange("Table ID", IntegrationMappingTableId);
+                            if Page.RunModal(Page::"Config. Template List", ConfigTemplateHeader) = Action::LookupOK then
+                                TableConfigTemplateCode := ConfigTemplateHeader.Code;
+                        end;
+                    }
+                    field(IntTableConfigTemplateCode; IntTableConfigTemplateCode)
+                    {
+                        Caption = 'Int. Tbl. Config Template Code';
+                        ToolTip = 'Specifies a configuration template to use for creating new records in the integration table.';
+                        Lookup = true;
+                        Visible = false;
+                        ObsoleteState = Pending;
+                        ObsoleteReason = 'Replaced with Table Config Templates field';
+                        ObsoleteTag = '25.0';
+
+                        trigger OnLookup(var Text: Text): Boolean
+                        var
+                            ConfigTemplateHeader: Record "Config. Template Header";
+                        begin
+                            ConfigTemplateHeader.SetRange("Table ID", IntegrationMappingIntTableId);
+                            if Page.RunModal(Page::"Config. Template List", ConfigTemplateHeader) = Action::LookupOK then
+                                TableConfigTemplateCode := ConfigTemplateHeader.Code;
+                        end;
+                    }
+#endif
                     field("Table Config Templates"; TableConfigTemplates)
                     {
                         Caption = 'Table Config Templates';
@@ -420,12 +463,6 @@ page 5384 "CDS New Man. Int. Table Wizard"
                 DeleteConfigTemplates();
     end;
 
-    trigger OnClosePage()
-    begin
-        if FailedFields then
-            Message(FailedFieldsNotificationLbl);
-    end;
-
     var
         MediaRepositoryDone: Record "Media Repository";
         MediaRepositoryStandard: Record "Media Repository";
@@ -443,8 +480,11 @@ page 5384 "CDS New Man. Int. Table Wizard"
         SyncOnlyCoupledRecords: Boolean;
         SetupExistingIntegrationMapping: Boolean;
         AdvancedVisible: Boolean;
-        FailedFields: Boolean;
         IntegrationMappingName: Code[20];
+#if not CLEAN25
+        TableConfigTemplateCode: Code[20];
+        IntTableConfigTemplateCode: Code[20];
+#endif
         TableConfigTemplates: Text;
         IntTableConfigTemplates: Text;
         IntegrationMappingTableId: Integer;
@@ -458,12 +498,8 @@ page 5384 "CDS New Man. Int. Table Wizard"
         TableFilter: Text;
         IntegrationTableFilter: Text;
         Direction: Option;
-        CategoryTok: Label 'AL Dataverse Integration', Locked = true;
         FillinMandatoryFieldsLbl: Label 'Please fill in all the mandatory fields.';
         CloseWizardLbl: Label 'Data is not saved.\\Are you sure that you want to exit?';
-        FailedFieldsNotificationLbl: Label 'Some runtime fields could not be created in the integration table. Try again later or contact your system administrator.';
-        CreatingFieldMappingsTok: Label 'Creating field mappings.', Locked = true;
-        CreatingRuntimeFieldMappingsTok: Label 'Creating runtime field mappings.', Locked = true;
 
     local procedure EnableControls()
     begin
@@ -485,6 +521,7 @@ page 5384 "CDS New Man. Int. Table Wizard"
     var
         IntegrationTableMapping: Record "Integration Table Mapping";
         ManIntegrationTableMapping: Record "Man. Integration Table Mapping";
+        ManIntFieldMapping: Record "Man. Int. Field Mapping";
         TempManIntFieldMapping: Record "Man. Int. Field Mapping" temporary;
         CDSSetupDefaults: Codeunit "CDS Setup Defaults";
     begin
@@ -503,8 +540,32 @@ page 5384 "CDS New Man. Int. Table Wizard"
 
         //fields
         CurrPage.ManIntFieldMappingList.Page.GetValues(TempManIntFieldMapping);
-        CreateFieldMappings(TempManIntFieldMapping);
-        CreateRuntimeFieldMappings(TempManIntFieldMapping);
+        TempManIntFieldMapping.Reset();
+        TempManIntFieldMapping.SetRange(Name, '');
+        if TempManIntFieldMapping.FindSet() then
+            repeat
+                Rec.InsertIntegrationFieldMapping(
+                    IntegrationMappingName,
+                    TempManIntFieldMapping."Table Field No.",
+                    TempManIntFieldMapping."Integration Table Field No.",
+                    TempManIntFieldMapping.Direction,
+                    TempManIntFieldMapping."Const Value",
+                    TempManIntFieldMapping."Validate Field",
+                    TempManIntFieldMapping."Validate Integr. Table Field",
+                    not SetupExistingIntegrationMapping,
+                    TempManIntFieldMapping."Transformation Rule");
+
+                ManIntFieldMapping.CreateRecord(
+                    IntegrationMappingName,
+                    TempManIntFieldMapping."Table Field No.",
+                    TempManIntFieldMapping."Integration Table Field No.",
+                    TempManIntFieldMapping.Direction,
+                    TempManIntFieldMapping."Const Value",
+                    TempManIntFieldMapping."Validate Field",
+                    TempManIntFieldMapping."Validate Integr. Table Field",
+                    TempManIntFieldMapping."Transformation Rule");
+
+            until TempManIntFieldMapping.Next() = 0;
 
         if not SetupExistingIntegrationMapping then begin
             IntegrationTableMapping.SetTableFilter(TableFilter);
@@ -518,25 +579,6 @@ page 5384 "CDS New Man. Int. Table Wizard"
         CDSSetupDefaults.CreateJobQueueEntry(IntegrationTableMapping);
     end;
 
-    local procedure CreateFieldMappings(var TempManIntFieldMapping: Record "Man. Int. Field Mapping" temporary)
-    var
-        ManIntFieldMapping: Codeunit "Man. Int. Field Mapping";
-    begin
-        Session.LogMessage('0000QLQ', CreatingFieldMappingsTok, Verbosity::Normal, DataClassification::SystemMetadata, TelemetryScope::ExtensionPublisher, 'Category', CategoryTok);
-        ManIntFieldMapping.CreateFieldMappings(TempManIntFieldMapping, IntegrationMappingName, SetupExistingIntegrationMapping);
-    end;
-
-    local procedure CreateRuntimeFieldMappings(var TempManIntFieldMapping: Record "Man. Int. Field Mapping" temporary)
-    var
-        ManIntFieldMapping: Codeunit "Man. Int. Field Mapping";
-        RuntimeFields: List of [Text];
-    begin
-        Session.LogMessage('0000QLA', CreatingRuntimeFieldMappingsTok, Verbosity::Normal, DataClassification::SystemMetadata, TelemetryScope::ExtensionPublisher, 'Category', CategoryTok);
-        Clear(FailedFields);
-        ManIntFieldMapping.GetRuntimeFieldsToCreate(TempManIntFieldMapping, RuntimeFields);
-        ManIntFieldMapping.TryCreateRuntimeFields(RuntimeFields, IntegrationMappingIntTableId);
-        ManIntFieldMapping.CreateFieldMappingsForRuntimeFields(TempManIntFieldMapping, IntegrationMappingName, IntegrationMappingIntTableId, SetupExistingIntegrationMapping, FailedFields);
-    end;
 
     local procedure FinishAction()
     begin

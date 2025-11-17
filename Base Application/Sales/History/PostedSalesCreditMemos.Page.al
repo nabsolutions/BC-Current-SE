@@ -9,7 +9,6 @@ using Microsoft.EServices.EDocument;
 using Microsoft.Finance.Dimension;
 using Microsoft.Finance.GeneralLedger.Ledger;
 using Microsoft.Foundation.Attachment;
-using Microsoft.Utilities;
 using Microsoft.Sales.Comment;
 using Microsoft.Sales.Customer;
 
@@ -257,6 +256,18 @@ page 144 "Posted Sales Credit Memos"
         }
         area(factboxes)
         {
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = All;
+                Visible = false;
+                Caption = 'Attachments';
+                SubPageLink = "Table ID" = const(Database::"Sales Cr.Memo Header"), "No." = field("No.");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = All;
@@ -307,10 +318,8 @@ page 144 "Posted Sales Credit Memos"
                     ToolTip = 'Open the posted sales credit memo.';
 
                     trigger OnAction()
-                    var
-                        PageManagement: Codeunit "Page Management";
                     begin
-                        PageManagement.PageRun(Rec);
+                        PAGE.Run(PAGE::"Posted Sales Credit Memo", Rec)
                     end;
                 }
                 action(Statistics)
@@ -614,11 +623,10 @@ page 144 "Posted Sales Credit Memos"
     local procedure DoDrillDown()
     var
         SalesCrMemoHeader: Record "Sales Cr.Memo Header";
-        PageManagement: Codeunit "Page Management";
     begin
         SalesCrMemoHeader.Copy(Rec);
         SalesCrMemoHeader.SetRange("No.");
-        PageManagement.PageRun(SalesCrMemoHeader);
+        PAGE.Run(PAGE::"Posted Sales Credit Memo", SalesCrMemoHeader);
     end;
 
     var
@@ -631,3 +639,4 @@ page 144 "Posted Sales Credit Memos"
     begin
     end;
 }
+

@@ -1290,21 +1290,14 @@ codeunit 7302 "WMS Management"
 
     procedure ShowPostedSourceDocument(PostedSourceDoc: Enum "Warehouse Shipment Posted Source Document"; PostedSourceNo: Code[20])
     var
-        DummyWarehouseActivitySourceDocument: Enum "Warehouse Activity Source Document";
-    begin
-        ShowPostedSourceDocument(PostedSourceDoc, PostedSourceNo, DummyWarehouseActivitySourceDocument);
-    end;
-
-    procedure ShowPostedSourceDocument(PostedSourceDoc: Enum "Warehouse Shipment Posted Source Document"; PostedSourceNo: Code[20]; WarehouseActivitySourceDocument: Enum "Warehouse Activity Source Document")
-    var
         IsHandled: Boolean;
     begin
         IsHandled := false;
-        OnBeforeShowPostedSourceDocument(PostedSourceDoc, PostedSourceNo, WarehouseActivitySourceDocument, IsHandled);
+        OnBeforeShowPostedSourceDocument(PostedSourceDoc, PostedSourceNo, IsHandled);
         if IsHandled then
             exit;
 
-        OnShowPostedSourceDoc(PostedSourceDoc.AsInteger(), PostedSourceNo, WarehouseActivitySourceDocument);
+        OnShowPostedSourceDoc(PostedSourceDoc.AsInteger(), PostedSourceNo);
     end;
 
     procedure ShowSourceDocCard(SourceType: Integer; SourceSubType: Option; SourceNo: Code[20])
@@ -2035,7 +2028,7 @@ codeunit 7302 "WMS Management"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnBeforeShowPostedSourceDocument(PostedSourceDoc: Enum "Warehouse Shipment Posted Source Document"; PostedSourceNo: Code[20]; WarehouseActivitySourceDocument: Enum "Warehouse Activity Source Document"; var IsHandled: Boolean)
+    local procedure OnBeforeShowPostedSourceDocument(PostedSourceDoc: Enum "Warehouse Shipment Posted Source Document"; PostedSourceNo: Code[20]; var IsHandled: Boolean)
     begin
     end;
 
@@ -2090,7 +2083,7 @@ codeunit 7302 "WMS Management"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnShowPostedSourceDoc(PostedSourceDoc: Option; PostedSourceNo: Code[20]; WarehouseActivitySourceDocument: Enum "Warehouse Activity Source Document")
+    local procedure OnShowPostedSourceDoc(PostedSourceDoc: Option; PostedSourceNo: Code[20])
     begin
     end;
 

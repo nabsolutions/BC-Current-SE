@@ -64,6 +64,9 @@ table 9057 "Job Cue"
         {
             CalcFormula = count(Resource where("Qty. on Order (Job)" = filter(0),
                                                 "Qty. Quoted (Job)" = filter(0),
+#if not CLEAN25
+                                                "Qty. on Service Order" = filter(0),
+#endif
                                                 "Date Filter" = field("Date Filter")));
             Caption = 'Available Resources';
             Editable = false;
@@ -107,8 +110,13 @@ table 9057 "Job Cue"
             Caption = 'Coupled Data Synch Errors';
             FieldClass = FlowField;
             ObsoleteReason = 'Field Service is moved to Field Service Integration app.';
+#if not CLEAN25
+            ObsoleteState = Pending;
+            ObsoleteTag = '25.0';
+#else
             ObsoleteState = Removed;
             ObsoleteTag = '28.0';
+#endif
         }
         field(25; "FS Integration Errors"; Integer)
         {
@@ -116,8 +124,13 @@ table 9057 "Job Cue"
             Caption = 'Field Service Integration Errors';
             FieldClass = FlowField;
             ObsoleteReason = 'Field Service is moved to Field Service Integration app.';
+#if not CLEAN25
+            ObsoleteState = Pending;
+            ObsoleteTag = '25.0';
+#else
             ObsoleteState = Removed;
             ObsoleteTag = '28.0';
+#endif
         }
 #endif
     }
@@ -134,3 +147,4 @@ table 9057 "Job Cue"
     {
     }
 }
+

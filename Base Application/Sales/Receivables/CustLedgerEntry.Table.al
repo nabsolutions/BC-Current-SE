@@ -866,7 +866,6 @@ table 21 "Cust. Ledger Entry"
         SalesCrMemoHdr: Record "Sales Cr.Memo Header";
         IssuedFinChargeMemoHeader: Record "Issued Fin. Charge Memo Header";
         IssuedReminderHeader: Record "Issued Reminder Header";
-        PageManagement: Codeunit "Page Management";
         IsHandled: Boolean;
         IsPageOpened: Boolean;
     begin
@@ -878,12 +877,12 @@ table 21 "Cust. Ledger Entry"
         case "Document Type" of
             "Document Type"::Invoice:
                 if SalesInvoiceHdr.Get("Document No.") then begin
-                    PageManagement.PageRun(SalesInvoiceHdr);
+                    PAGE.Run(PAGE::"Posted Sales Invoice", SalesInvoiceHdr);
                     exit(true);
                 end;
             "Document Type"::"Credit Memo":
                 if SalesCrMemoHdr.Get("Document No.") then begin
-                    PageManagement.PageRun(SalesCrMemoHdr);
+                    PAGE.Run(PAGE::"Posted Sales Credit Memo", SalesCrMemoHdr);
                     exit(true);
                 end;
             "Document Type"::"Finance Charge Memo":

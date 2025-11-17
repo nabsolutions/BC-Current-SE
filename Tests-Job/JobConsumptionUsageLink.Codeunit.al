@@ -15,14 +15,20 @@ codeunit 136303 "Job Consumption - Usage Link"
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryUtility: Codeunit "Library - Utility";
+#if not CLEAN25
         LibraryResource: Codeunit "Library - Resource";
+#endif
         LibraryPurchase: Codeunit "Library - Purchase";
         LibraryJob: Codeunit "Library - Job";
         LibraryRandom: Codeunit "Library - Random";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
+#if not CLEAN25
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
+#endif
         Initialized: Boolean;
+#if not CLEAN25
         UnitPriceErr: Label 'Unit Price is not correct, please refer setup in Project Resource Price.';
+#endif
         ConfirmUsageWithBlankLineTypeQst: Label 'Usage will not be linked to the project planning line because the Line Type field is empty.\\Do you want to continue?';
         PostJournalLineQst: Label 'Do you want to post the journal lines?';
         JobPlanningLineRenameErr: Label 'You cannot change the %1 or %2 of this %3.', Comment = '%1 = Project Number field name; %2 = Project Task Number field name; %3 = Project Planning Line table name';
@@ -1795,9 +1801,11 @@ codeunit 136303 "Job Consumption - Usage Link"
 
     local procedure Initialize()
     var
+#if not CLEAN25
         PurchasePrice: Record "Purchase Price";
         SalesPrice: Record "Sales Price";
         SalesLineDiscount: Record "Sales Line Discount";
+#endif
         LibrarySales: Codeunit "Library - Sales";
         LibraryERMCountryData: Codeunit "Library - ERM Country Data";
     begin
@@ -1807,10 +1815,12 @@ codeunit 136303 "Job Consumption - Usage Link"
             exit;
         LibraryTestInitialize.OnBeforeTestSuiteInitialize(CODEUNIT::"Job Consumption - Usage Link");
 
+#if not CLEAN25
         // Removing special prices, discounts
         PurchasePrice.DeleteAll(true);
         SalesPrice.DeleteAll(true);
         SalesLineDiscount.DeleteAll(true);
+#endif
 
         LibraryERMCountryData.CreateVATData();
         LibraryERMCountryData.CreateGeneralPostingSetupData();
@@ -2084,6 +2094,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         exit(JobPlanningLine.Count - LineCount)
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure ResourcePriceWhenWorkTypeCodeMatched()
@@ -2184,6 +2195,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         Assert.AreEqual(
           UnitPrice, CreateJobJournalLineWithWorkTypeCode(JobTask, Resource."No.", WorkTypeCode), UnitPriceErr);
     end;
+#endif
 
     [Test]
     [HandlerFunctions('ConfirmSpecificMessageHandler,MessageHandler')]
@@ -2295,6 +2307,7 @@ codeunit 136303 "Job Consumption - Usage Link"
             JobPlanningLine2.TableCaption()));
     end;
 
+#if not CLEAN25
     local procedure CreateJobResourcePriceWithUnitPrice(JobTask: Record "Job Task"; JobResourcePriceType: Option; "Code": Code[20]; WorkTypeCode: Code[10]; UnitPrice: Decimal)
     var
         JobResourcePrice: Record "Job Resource Price";
@@ -2326,7 +2339,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         JobJournalLine.Modify(true);
         exit(JobJournalLine."Unit Price");
     end;
-
+#endif
     local procedure CreateJob(ApplyUsageLink: Boolean; BothAllowed: Boolean; var Job: Record Job)
     begin
         LibraryJob.CreateJob(Job);
@@ -2344,7 +2357,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         Job.Modify(true);
         LibraryJob.CreateJobTask(Job, JobTask);
     end;
-
+#if not CLEAN25
     local procedure CreateResourceGroup(Resource: Record Resource): Code[10]
     var
         ResourceGroup: Record "Resource Group";
@@ -2362,7 +2375,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         CreateWorkType(WorkTypeCode);
         UpdateWorkTypeForUnitOfMeasureCode(WorkTypeCode, Resource."Base Unit of Measure");
     end;
-
+#endif
     local procedure CreateSimilarJobPlanningLines(JobPlanningLine: Record "Job Planning Line")
     var
         NewJobPlanningLine: Record "Job Planning Line";
@@ -2481,7 +2494,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         JobUsageLink."Entry No." := LibraryRandom.RandInt(10);
         JobUsageLink.Insert();
     end;
-
+#if not CLEAN25
     local procedure ResourcePriceSuggestedSetup(var JobTask: Record "Job Task"; var Resource: Record Resource; var WorkTypeCode: Code[10])
     var
         Job: Record Job;
@@ -2500,6 +2513,7 @@ codeunit 136303 "Job Consumption - Usage Link"
         WorkType.Validate("Unit of Measure Code", BaseUnitOfMeasure);
         WorkType.Modify(true);
     end;
+#endif
 
     local procedure VerifyUsageLink(JobPlanningLine: Record "Job Planning Line"; JobLedgerEntry: Record "Job Ledger Entry")
     var

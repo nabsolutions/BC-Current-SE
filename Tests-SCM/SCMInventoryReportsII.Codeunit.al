@@ -19,12 +19,13 @@
         LibraryPlanning: Codeunit "Library - Planning";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryManufacturing: Codeunit "Library - Manufacturing";
+#if not CLEAN25
         LibraryMarketing: Codeunit "Library - Marketing";
+#endif
         LibraryUtility: Codeunit "Library - Utility";
         LibrarySales: Codeunit "Library - Sales";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
         LibraryCosting: Codeunit "Library - Costing";
-        LibraryPostInventoryToGL: Codeunit "Library - Post Inventory To GL";
         LibraryERM: Codeunit "Library - ERM";
         LibraryPriceCalculation: Codeunit "Library - Price Calculation";
         LibraryRandom: Codeunit "Library - Random";
@@ -42,6 +43,7 @@
         ReportQtyErr: Label 'Wrong Quantity on Report';
         ValueEntriesWerePostedTxt: Label 'value entries have been posted to the general ledger.';
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('PriceListRequestPageHandler')]
     [Scope('OnPrem')]
@@ -214,6 +216,7 @@
         SalesPrice.FindFirst();
         VerifyUnitPrice(Item, CurrencyCode, SalesPrice."Unit Price");
     end;
+#endif
 
     [Test]
     [HandlerFunctions('InventoryPostingTestRequestPageHandler')]
@@ -867,6 +870,7 @@
         VerifyQtyToReceiveInPurchLine(PurchHeader[3]);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('PriceListRequestPageHandler')]
     [Scope('OnPrem')]
@@ -932,6 +936,7 @@
           'ItemNo_Variant_SalesLineDescs', ItemVariant2.Code, 'MinimumQty_Variant_SalesLineDescs', MinimumQty[4],
           'LineDisc_Variant_SalesLineDescs', LineDiscount[2]);
     end;
+#endif
 
     [Test]
     [HandlerFunctions('PostProductionJournalHandler,MessageHandler,GenericConfirmHandlerYes,RequestPageHandler')]
@@ -945,7 +950,7 @@
 
         // Exercise
         LibraryCosting.AdjustCostItemEntries('', '');
-        LibraryPostInventoryToGL.PostInvtCostToGL(false, WorkDate(), '');
+        LibraryCosting.PostInvtCostToGL(false, WorkDate(), '');
 
         // Verify: Starting Date and Ending Date is work correctly in Inventory Valuation WIP report.
         Commit();
@@ -1563,6 +1568,7 @@
           'Item_Journal_Batch_Name', ExtraItemJournalBatch.Name);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('PriceListRequestPageHandler')]
     [Scope('OnPrem')]
@@ -1672,6 +1678,7 @@
         LibraryReportDataset.AssertElementWithValueExists('SalesPriceUnitPrice', UnitPrice[1]);
         LibraryReportDataset.AssertElementWithValueExists('SalesPriceUnitPrice', UnitPrice[2]);
     end;
+#endif
 
     local procedure Initialize()
     var
@@ -1680,7 +1687,11 @@
         LibraryTestInitialize.OnTestInitialize(CODEUNIT::"SCM Inventory Reports - II");
         LibraryVariableStorage.Clear();
         LibrarySetupStorage.Restore();
+#if not CLEAN25
         LibraryPriceCalculation.SetupDefaultHandler("Price Calculation Handler"::"Business Central (Version 15.0)");
+#else
+        LibraryPriceCalculation.SetupDefaultHandler("Price Calculation Handler"::"Business Central (Version 16.0)");
+#endif
 
         if isInitialized then
             exit;
@@ -1777,6 +1788,7 @@
         ProductionBOMVersion.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure SelectCurrencyCode(): Code[10]
     var
         Currency: Record Currency;
@@ -1806,7 +1818,7 @@
         Customer.Validate("Customer Price Group", CustomerPriceGroup);
         Customer.Modify(true);
     end;
-
+#endif
     local procedure CreateProdBOMVersion(var ProductionBOMVersion: Record "Production BOM Version"; Item: Record Item; Status: Enum "BOM Status")
     begin
         LibraryManufacturing.CreateProductionBOMVersion(
@@ -1816,6 +1828,7 @@
         ProductionBOMVersion.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure RunPriceListReport(NoFilter: Text; SalesType: Option; SalesCode: Code[20]; CurrencyCode: Code[10])
     var
         Item: Record Item;
@@ -1847,7 +1860,7 @@
             LibraryReportDataset.AssertCurrentRowValueEquals('SalesPriceUnitPrice', ExpUnitPrice);
         end;
     end;
-
+#endif
     local procedure VerifyVariantLineInPriceListReport(VariantCap: Text[40]; VariantCode: Code[20]; MinimumQtyCap: Text[40]; MinimumQty: Decimal; AmountCap: Text[40]; Amount: Decimal)
     begin
         LibraryReportDataset.SetRange(VariantCap, VariantCode);
@@ -1889,6 +1902,7 @@
         ItemLedgerEntry.Insert();
     end;
 
+#if not CLEAN25
     local procedure CreateSalesPriceForCampaign(var SalesPrice: Record "Sales Price"; ItemNo: Code[20]; CampaignNo: Code[20])
     begin
         // Create Sales Price with random unit price.
@@ -1917,6 +1931,7 @@
         SalesLineDiscount.Validate("Line Discount %", LineDiscount);
         SalesLineDiscount.Modify(true);
     end;
+#endif
 
     local procedure CreateItemWithProductionBOM(var Item: Record Item)
     var
@@ -2693,6 +2708,7 @@
         // Dummy message Handler.
     end;
 
+#if not CLEAN25
     [RequestPageHandler]
     [Scope('OnPrem')]
     procedure PriceListRequestPageHandler(var PriceList: TestRequestPage "Price List")
@@ -2712,6 +2728,7 @@
         PriceList."Currency.Code".SetValue(CurrencyCode);
         PriceList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [RequestPageHandler]
     [Scope('OnPrem')]

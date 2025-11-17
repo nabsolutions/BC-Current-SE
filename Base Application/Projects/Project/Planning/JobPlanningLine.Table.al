@@ -28,7 +28,9 @@ using Microsoft.Projects.Project.Journal;
 using Microsoft.Projects.Project.Ledger;
 using Microsoft.Projects.Project.Setup;
 using Microsoft.Projects.Resources.Ledger;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Resource;
 using Microsoft.Purchases.Document;
 using Microsoft.Purchases.History;
@@ -2104,10 +2106,13 @@ table 1003 "Job Planning Line"
         OnAfterCalculateRetrievedCost(Rec, xRec, SKU, Item, RetrievedCost);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterResourceFindCost(var ResourceCost: Record "Resource Cost");
     begin
         OnAfterResourceFindCost(Rec, ResourceCost);
     end;
+#endif
 
     protected procedure RetrieveCostPrice(CalledByFieldNo: Integer): Boolean
     var
@@ -2164,12 +2169,18 @@ table 1003 "Job Planning Line"
     end;
 
     local procedure IsQuantityChangedForPrice(): Boolean;
+#if not CLEAN25
     var
         PriceCalculationMgt: Codeunit "Price Calculation Mgt.";
+#endif
     begin
         if Quantity = xRec.Quantity then
             exit(false);
+#if not CLEAN25
         exit(PriceCalculationMgt.IsExtendedPriceCalculationEnabled());
+#else
+        exit(true);
+#endif
     end;
 
     local procedure UpdateTotalCost()
@@ -3505,10 +3516,13 @@ table 1003 "Job Planning Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterResourceFindCost(var JobPlanningLine: Record "Job Planning Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterSetReservationFilters(var ReservEntry: Record "Reservation Entry"; JobPlanningLine: Record "Job Planning Line");
@@ -3570,6 +3584,13 @@ table 1003 "Job Planning Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Event no longer used as procedure EnsureDirectedPutawayandPickFalse is deleted.', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeEnsureDirectedPutawayandPickFalse(var JobPlanningLine: Record "Job Planning Line"; Location: Record Location; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
     [IntegrationEvent(true, false)]
     local procedure OnBeforeFindPriceAndDiscount(CalledByFieldNo: Integer; var IsHandled: Boolean; var JobPlanningLine: Record "Job Planning Line"; xJobPlanningLine: Record "Job Planning Line")

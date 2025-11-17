@@ -20,9 +20,9 @@ codeunit 4312 "Agent Session"
     [Scope('OnPrem')]
     procedure IsAgentSession(var ActiveAgentMetadataProvider: Enum "Agent Metadata Provider"): Boolean
     var
-        AgentUtilities: Codeunit "Agent Utilities";
+        AgentSessionImpl: Codeunit "Agent Session Impl.";
     begin
-        exit(AgentUtilities.IsAgentSession(ActiveAgentMetadataProvider));
+        exit(AgentSessionImpl.IsAgentSession(ActiveAgentMetadataProvider));
     end;
 
     /// <summary>
@@ -32,8 +32,8 @@ codeunit 4312 "Agent Session"
     [Scope('OnPrem')]
     procedure GetCurrentSessionAgentTaskId(): BigInteger
     var
-        AgentUtilities: Codeunit "Agent Utilities";
+        AgentSessionImpl: Codeunit "Agent Session Impl.";
     begin
-        exit(AgentUtilities.GetCurrentSessionAgentTaskId());
+        exit(AgentSessionImpl.GetCurrentSessionAgentTaskId());
     end;
 }

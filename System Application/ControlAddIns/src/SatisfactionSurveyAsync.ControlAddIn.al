@@ -1,4 +1,3 @@
-#if not CLEAN28
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8,10 +7,6 @@ namespace System.Feedback;
 
 controladdin SatisfactionSurveyAsync
 {
-    ObsoleteReason = 'This module is no longer used.';
-    ObsoleteState = Pending;
-    ObsoleteTag = '28.0';
-
     Scripts = 'Resources\SatisfactionSurveyAsync\js\SATAsync.js';
     RequestedWidth = 0;
     RequestedHeight = 0;
@@ -22,4 +17,3 @@ controladdin SatisfactionSurveyAsync
     event ResponseReceived(Status: Integer; Response: Text);
     event ControlAddInReady();
 }
-#endif

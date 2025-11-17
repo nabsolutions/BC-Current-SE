@@ -86,40 +86,37 @@ codeunit 9043 "ABS Helper Library"
     end;
 
     // #region Blob-specific Helper
-    procedure CreateBlobNodeListFromResponse(ResponseAsText: Text; var NextMarker: Text; var BlobPrefixNodeList: XmlNodeList; var BlobNodeList: XmlNodeList)
+    procedure CreateBlobNodeListFromResponse(ResponseAsText: Text; var NextMarker: Text): XmlNodeList
     var
         XmlDoc: XmlDocument;
         Node: XmlNode;
+        NodeList: XmlNodeList;
     begin
         Clear(NextMarker);
         GetXmlDocumentFromResponse(XmlDoc, ResponseAsText);
         if XmlDoc.SelectSingleNode('//NextMarker', Node) then
             NextMarker := Node.AsXmlElement().InnerText;
-        XmlDoc.SelectNodes('//Blobs/BlobPrefix', BlobPrefixNodeList);
-        XmlDoc.SelectNodes('//Blobs/Blob', BlobNodeList);
+        XmlDoc.SelectNodes('//Blobs/Blob', NodeList);
+        exit(NodeList);
     end;
 
-    procedure BlobNodeListToTempRecord(BlobPrefixNodeList: XmlNodeList; BlobNodeList: XmlNodeList; var ABSContainerContent: Record "ABS Container Content")
+    procedure BlobNodeListToTempRecord(NodeList: XmlNodeList)
     var
-        EntryNo: Integer;
+        ABSContainerContent: Record "ABS Container Content";
     begin
-        ABSContainerContent.Reset();
-        ABSContainerContent.DeleteAll();
-
-        BlobPrefixNodeListToTempRecord(BlobPrefixNodeList, './/Name', EntryNo, ABSContainerContent);
-        BlobNodeListToTempRecord(BlobNodeList, './/Name', EntryNo, ABSContainerContent);
+        BlobNodeListToTempRecord(NodeList, ABSContainerContent);
     end;
 
-    procedure BlobNodeListToBlobList(BlobPrefixNodeList: XmlNodeList; BlobNodeList: XmlNodeList; var BlobList: Dictionary of [Text, XmlNode])
+    procedure BlobNodeListToTempRecord(NodeList: XmlNodeList; var ABSContainerContent: Record "ABS Container Content")
+    begin
+        NodeListToTempRecord(NodeList, './/Name', ABSContainerContent);
+    end;
+
+    procedure BlobNodeListToBlobList(NodeList: XmlNodeList; var BlobList: Dictionary of [Text, XmlNode])
     var
         Name, Node : XmlNode;
     begin
-        foreach Node in BlobPrefixNodeList do begin
-            Node.SelectSingleNode('Name', Name);
-            BlobList.Add(Name.AsXmlElement().InnerText, Node);
-        end;
-
-        foreach Node in BlobNodeList do begin
+        foreach Node in NodeList do begin
             Node.SelectSingleNode('Name', Name);
             BlobList.Add(Name.AsXmlElement().InnerText, Node);
         end;
@@ -167,23 +164,15 @@ codeunit 9043 "ABS Helper Library"
         exit(Value);
     end;
 
-    local procedure BlobPrefixNodeListToTempRecord(NodeList: XmlNodeList; XPathName: Text; var EntryNo: Integer; var ABSContainerContent: Record "ABS Container Content")
+    local procedure NodeListToTempRecord(NodeList: XmlNodeList; XPathName: Text; var ABSContainerContent: Record "ABS Container Content")
     var
         ABSContainerContentHelper: Codeunit "ABS Container Content Helper";
         Node: XmlNode;
+        EntryNo: Integer;
     begin
-        if NodeList.Count = 0 then
-            exit;
+        ABSContainerContent.Reset();
+        ABSContainerContent.DeleteAll();
 
-        foreach Node in NodeList do
-            ABSContainerContentHelper.AddNewEntryFromPrefixNode(ABSContainerContent, Node, XPathName, EntryNo);
-    end;
-
-    local procedure BlobNodeListToTempRecord(NodeList: XmlNodeList; XPathName: Text; var EntryNo: Integer; var ABSContainerContent: Record "ABS Container Content")
-    var
-        ABSContainerContentHelper: Codeunit "ABS Container Content Helper";
-        Node: XmlNode;
-    begin
         if NodeList.Count = 0 then
             exit;
 

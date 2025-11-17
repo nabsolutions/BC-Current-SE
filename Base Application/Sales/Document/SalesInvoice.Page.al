@@ -1033,6 +1033,20 @@ page 43 "Sales Invoice"
                 SubPageLink = "No." = field("No."),
                               "Document Type" = field("Document Type");
             }
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = All;
+                Visible = false;
+                Caption = 'Attachments';
+                SubPageLink = "Table ID" = const(Database::"Sales Header"),
+                              "No." = field("No."),
+                              "Document Type" = field("Document Type");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = All;
@@ -2092,7 +2106,6 @@ page 43 "Sales Invoice"
         SalesInvoiceHeader: Record "Sales Invoice Header";
         OfficeMgt: Codeunit "Office Management";
         InstructionMgt: Codeunit "Instruction Mgt.";
-        PageManagement: Codeunit "Page Management";
         PreAssignedNo: Code[20];
         xLastPostingNo: Code[20];
         IsScheduledPosting: Boolean;
@@ -2128,7 +2141,7 @@ page 43 "Sales Invoice"
                 SalesInvoiceHeader.SetRange("Pre-Assigned No.", PreAssignedNo);
             end;
             if SalesInvoiceHeader.FindFirst() then
-                PageManagement.PageRun(SalesInvoiceHeader);
+                PAGE.Run(PAGE::"Posted Sales Invoice", SalesInvoiceHeader);
         end else
             case Navigate of
                 Enum::"Navigate After Posting"::"Posted Document":

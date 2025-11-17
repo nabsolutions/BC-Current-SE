@@ -1,4 +1,4 @@
-namespace System.Integration;
+﻿namespace System.Integration;
 
 using System;
 using System.Environment;
@@ -381,6 +381,18 @@ codeunit 1297 "Http Web Request Mgt."
         RequestStr.Close();
         RequestStr.Dispose();
     end;
+#if not CLEAN25
+
+    [NonDebuggable]
+    [Obsolete('Replaced by AddBasicAuthentication(BasicUserId: Text; BasicUserPassword: SecretText)', '25.0')]
+    procedure AddBasicAuthentication(BasicUserId: Text; BasicUserPassword: Text)
+    var
+        BasicUserPasswordAsSecretText: SecretText;
+    begin
+        BasicUserPasswordAsSecretText := BasicUserPassword;
+        AddBasicAuthentication(BasicUserId, BasicUserPasswordAsSecretText);
+    end;
+#endif
 
     [NonDebuggable]
     procedure AddBasicAuthentication(BasicUserId: Text; BasicUserPassword: SecretText)
@@ -558,3 +570,4 @@ codeunit 1297 "Http Web Request Mgt."
         end;
     end;
 }
+

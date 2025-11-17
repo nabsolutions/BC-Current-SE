@@ -33,6 +33,9 @@ codeunit 6477 "Serv. Document No. Visibility"
     begin
         IsHandled := false;
         OnBeforeServiceDocumentNoIsVisible(DocType, DocNo, Result, IsHandled);
+#if not CLEAN25
+        DocumentNoVisibility.RunOnBeforeServiceDocumentNoIsVisible(DocType, DocNo, Result, IsHandled);
+#endif
         if IsHandled then
             exit(Result);
 
@@ -64,6 +67,9 @@ codeunit 6477 "Serv. Document No. Visibility"
         IsHandled := false;
         IsVisible := false;
         OnBeforeServiceItemNoIsVisible(IsVisible, IsHandled);
+#if not CLEAN25
+        DocumentNoVisibility.RUnOnBeforeServiceItemNoIsVisible(IsVisible, IsHandled);
+#endif
         if IsHandled then
             exit(IsVisible);
 

@@ -48,7 +48,6 @@ codeunit 136102 "Service Contracts"
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryService: Codeunit "Library - Service";
         LibraryUtility: Codeunit "Library - Utility";
-        LibraryUtilityOnPrem: Codeunit "Library - Utility OnPrem";
         LibraryERM: Codeunit "Library - ERM";
         LibrarySales: Codeunit "Library - Sales";
         LibraryInventory: Codeunit "Library - Inventory";
@@ -737,7 +736,7 @@ codeunit 136102 "Service Contracts"
         ServiceContractQuoteDetail.SaveAsExcel(FilePath);
 
         // 3. Verify: Verify that Saved file have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -774,7 +773,7 @@ codeunit 136102 "Service Contracts"
         ServiceContractDetailRep.SaveAsExcel(FilePath);
 
         // 3. Verify: Verify that Saved file have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -804,7 +803,7 @@ codeunit 136102 "Service Contracts"
         ServiceContractCustomerRep.SaveAsExcel(FilePath);
 
         // 3. Verify: Verify that Saved file have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -3608,48 +3607,6 @@ codeunit 136102 "Service Contracts"
 
         // [THEN] Check Customer No. is updated.
         CheckChangeCustomerNo(ServiceContractHeader, ContactBusinessRelation."No.");
-    end;
-
-    [Test]
-    [HandlerFunctions('ConfirmHandlerYes,ServContrctTemplateListHandler')]
-    [Scope('OnPrem')]
-    procedure PersonContactLinkedViaCompanyValidation()
-    var
-        Contact: Record Contact;
-        CompanyContact: Record Contact;
-        ContactBusinessRelation: Record "Contact Business Relation";
-        Customer: Record Customer;
-        ServiceContractHeader: Record "Service Contract Header";
-    begin
-        // [SCENARIO 603351] Person contact linked to customer via Company No. should be valid in Service Contract
-        Initialize();
-
-        // [GIVEN] Create a Company contact
-        LibraryMarketing.CreateCompanyContact(CompanyContact);
-
-        // [GIVEN] Create a customer
-        LibrarySales.CreateCustomer(Customer);
-        ContactBusinessRelation.Init();
-        ContactBusinessRelation."Contact No." := CompanyContact."No.";
-        ContactBusinessRelation."Business Relation Code" := 'CUST';
-        ContactBusinessRelation."Link to Table" := ContactBusinessRelation."Link to Table"::Customer;
-        ContactBusinessRelation."No." := Customer."No.";
-        ContactBusinessRelation.Insert();
-
-        // [GIVEN] Create a Person contact under the Company
-        LibraryMarketing.CreatePersonContact(Contact);
-        Contact.Validate("Company No.", CompanyContact."No.");
-        Contact.Modify(true);
-
-        // [GIVEN] Create a Service Contract for the customer
-        LibraryService.CreateServiceContractHeader(
-            ServiceContractHeader, ServiceContractHeader."Contract Type"::Contract, Customer."No.");
-
-        // [WHEN] Assign the Person contact to the Service Contract
-        ServiceContractHeader.Validate("Contact No.", Contact."No.");
-
-        // [THEN] No error should occur and Contact No. should be set
-        ServiceContractHeader.TestField("Contact No.", Contact."No.");
     end;
 
     local procedure Initialize()

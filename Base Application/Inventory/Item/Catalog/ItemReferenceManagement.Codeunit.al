@@ -547,8 +547,11 @@ codeunit 5720 "Item Reference Management"
     end;
 
     procedure SalesReferenceNoLookup(var SalesLine: Record "Sales Line")
+    var
+        SalesHeader: record "Sales Header";
     begin
-        SalesReferenceNoLookup(SalesLine, SalesLine.GetSalesHeader());
+        SalesHeader.Get(SalesLine."Document Type", SalesLine."Document No.");
+        SalesReferenceNoLookup(SalesLine, SalesHeader);
     end;
 
     procedure SalesReferenceNoLookup(var SalesLine: Record "Sales Line"; SalesHeader: record "Sales Header")

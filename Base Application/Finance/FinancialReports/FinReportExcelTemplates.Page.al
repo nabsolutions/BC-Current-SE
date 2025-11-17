@@ -92,9 +92,7 @@ page 773 "Fin. Report Excel Templates"
                 var
                     ExportAccSchedToExcel: Report "Export Acc. Sched. to Excel";
                 begin
-                    ExportAccSchedToExcel.SetOptions(
-                        this.AccScheduleLine, this.TempFinancialReport."Financial Report Column Group", this.TempFinancialReport.UseAmountsInAddCurrency,
-                        this.TempFinancialReport.Name, this.TempFinancialReport.SheetDefinition);
+                    ExportAccSchedToExcel.SetOptions(this.AccScheduleLine, this.TempFinancialReport."Financial Report Column Group", this.TempFinancialReport.UseAmountsInAddCurrency, this.TempFinancialReport.Name);
                     ExportAccSchedToExcel.SetUseExistingTemplate(Rec);
                     ExportAccSchedToExcel.Run();
                 end;
@@ -143,9 +141,7 @@ page 773 "Fin. Report Excel Templates"
         ExportAccSchedToExcel: Report "Export Acc. Sched. to Excel";
         OutStream: OutStream;
     begin
-        ExportAccSchedToExcel.SetOptions(
-            this.AccScheduleLine, this.TempFinancialReport."Financial Report Column Group", this.TempFinancialReport.UseAmountsInAddCurrency,
-            this.TempFinancialReport.Name, this.TempFinancialReport.SheetDefinition);
+        ExportAccSchedToExcel.SetOptions(this.AccScheduleLine, this.TempFinancialReport."Financial Report Column Group", this.TempFinancialReport.UseAmountsInAddCurrency, this.TempFinancialReport.Name);
         ExportAccSchedToExcel.SetSaveToStream(true);
         ExportAccSchedToExcel.RunModal();
         Rec.Template.CreateOutStream(OutStream);

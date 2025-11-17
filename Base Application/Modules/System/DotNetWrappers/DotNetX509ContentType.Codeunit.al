@@ -4,8 +4,6 @@ using System;
 
 codeunit 3042 DotNet_X509ContentType
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

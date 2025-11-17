@@ -6,8 +6,6 @@ using System.Utilities;
 
 codeunit 3032 DotNet_BinaryReader
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

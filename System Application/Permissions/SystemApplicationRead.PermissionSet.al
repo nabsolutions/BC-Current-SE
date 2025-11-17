@@ -5,26 +5,24 @@
 
 namespace System.Security.AccessControl;
 
-using System.Apps;
 using System.Azure.Identity;
-using System.DataAdministration;
-using System.Device;
-using System.Environment;
-using System.Environment.Configuration;
-using System.ExternalFileStorage;
-#if not CLEAN28
-using System.Feedback;
-#endif
-using System.Globalization;
-using System.Integration;
-using System.Integration.Excel;
-using System.Integration.Word;
-using System.MCP;
-using System.Privacy;
-using System.Reflection;
-using System.Security.User;
 using System.Utilities;
 using System.Visualization;
+using System.Privacy;
+using System.Environment.Configuration;
+using System.Integration.Excel;
+using System.ExternalFileStorage;
+using System.Reflection;
+using System.Globalization;
+using System.Integration;
+using System.Device;
+using System.DataAdministration;
+using System.Environment;
+using System.Security.User;
+using System.Integration.Word;
+using System.Feedback;
+using System.Apps;
+using System.MCP;
 
 permissionset 21 "System Application - Read"
 {
@@ -54,9 +52,7 @@ permissionset 21 "System Application - Read"
                              "Record Link Management - Read",
                              "Retention Policy - Read",
                              "Environment Cleanup - Read",
-#if not CLEAN28
                              "Satisfaction Survey - Read",
-#endif
                              "System Initialization - Exec",
                              "Security Groups - Read",
                              "Table Information - Read",

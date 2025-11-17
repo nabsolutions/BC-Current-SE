@@ -13,12 +13,13 @@ codeunit 137292 "SCM Inventory Costing Orders"
         DocumentErrorsMgt: Codeunit "Document Errors Mgt.";
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryCosting: Codeunit "Library - Costing";
-        LibraryPostInventoryToGL: Codeunit "Library - Post Inventory To GL";
         LibraryERM: Codeunit "Library - ERM";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryManufacturing: Codeunit "Library - Manufacturing";
         LibraryPurchase: Codeunit "Library - Purchase";
+#if not CLEAN25
         LibraryPlanning: Codeunit "Library - Planning";
+#endif
         LibrarySales: Codeunit "Library - Sales";
         LibraryService: Codeunit "Library - Service";
         LibraryUtility: Codeunit "Library - Utility";
@@ -26,7 +27,9 @@ codeunit 137292 "SCM Inventory Costing Orders"
         LibrarySetupStorage: Codeunit "Library - Setup Storage";
         LibraryWarehouse: Codeunit "Library - Warehouse";
         LibraryRandom: Codeunit "Library - Random";
+#if not CLEAN25
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
+#endif
         isInitialized: Boolean;
         AvailabilityWarning: Label 'You do not have enough inventory to meet the demand for items in one or more lines';
         BaseCalendarError: Label 'There is no Base Calendar Change within the filter.';
@@ -819,7 +822,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
 
         // Exercise: Run Post Inventory Cost to G/L Report.
         LibraryVariableStorage.Enqueue(ValueEntriesWerePostedTxt);
-        LibraryPostInventoryToGL.PostInvtCostToGL(false, WorkDate(), '');
+        LibraryCosting.PostInvtCostToGL(false, WorkDate(), '');
 
         // Verify: Verify Post Value Entry To G/L should not exist any entry for given Item.
         PostValueEntryToGL.SetRange("Item No.", ItemJournalLine."Item No.");
@@ -924,6 +927,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
           LibraryERM.GetAmountRoundingPrecision(), ValueNotMatchedError);
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('SuggestSalesPriceOnWkshRequestPageHandler')]
     [Scope('OnPrem')]
@@ -1110,6 +1114,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         VerifySalesInvoiceLine(DocumentNo, true, SalesPrice."Unit Price", LineDicountPct);
         VerifySalesInvoiceLine(DocumentNo, false, SalesPrice."Unit Price", LineDicountPct);
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -1300,6 +1305,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         VerifyPairedItemLedgerEntriesAmount(Item."No.");
     end;
 
+#if not CLEAN25
     [Test]
     [HandlerFunctions('SuggestSalesPriceOnWkshRequestPageHandler')]
     [Scope('OnPrem')]
@@ -1334,6 +1340,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
           CustomerPriceGroup2."Allow Invoice Disc.", CustomerPriceGroup2."Allow Line Disc.",
           CustomerPriceGroup2."Price Includes VAT", CustomerPriceGroup2."VAT Bus. Posting Gr. (Price)");
     end;
+#endif
 
     [Test]
     procedure CostAdjustmentCompletelyCorrectsSalesPostedInTwoIterations()
@@ -1433,6 +1440,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         end;
     end;
 
+#if not CLEAN25
     local procedure CreateCustomCustomerPriceGroup(var CustomerPriceGroup: Record "Customer Price Group"; AllowInvDisc: Boolean; AllowLineDisc: Boolean; PriceInclVAT: Boolean; VATBusPostGroup: Code[20])
     begin
         LibrarySales.CreateCustomerPriceGroup(CustomerPriceGroup);
@@ -1455,6 +1463,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         SalesPriceWorksheet.TestField("Price Includes VAT", PriceInclVAT);
         SalesPriceWorksheet.TestField("VAT Bus. Posting Gr. (Price)", VATBusPostGroup);
     end;
+#endif
 
     local procedure CloseInventoryPeriod(var InventoryPeriod: Record "Inventory Period"; ItemNo: Code[20]; ReOpen: Boolean)
     var
@@ -1476,6 +1485,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         Location.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateAndUpdateSalesPrice(var SalesPrice: Record "Sales Price"; SalesType: Enum "Sales Price Type"; SalesCode: Code[20]; ItemNo: Code[20]; BaseUnitOfMeasure: Code[10]; StartingDate: Date; EndingDate: Date; UnitPrice: Decimal; MinimumQuantity: Decimal)
     begin
         LibraryCosting.CreateSalesPrice(SalesPrice, SalesType, SalesCode, ItemNo, StartingDate, '', '', BaseUnitOfMeasure, MinimumQuantity);
@@ -1507,6 +1517,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         PurchasePrice.Validate("Direct Unit Cost", LibraryRandom.RandDec(10, 2));  // Use random for Direct Unit Cost.
         PurchasePrice.Modify(true);
     end;
+#endif
 
     local procedure CreateBaseCalendarChange(var BaseCalendarChange: Record "Base Calendar Change"; BaseCalendarCode: Code[10]; Day: Option; Day2: Option)
     begin
@@ -1529,6 +1540,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         exit(Currency.Code);
     end;
 
+#if not CLEAN25
     local procedure CreateCustomerPriceGroup(): Code[10]
     var
         CustomerPriceGroup: Record "Customer Price Group";
@@ -1539,13 +1551,14 @@ codeunit 137292 "SCM Inventory Costing Orders"
         CustomerPriceGroup.Modify(true);
         exit(CustomerPriceGroup.Code);
     end;
-
+#endif
     local procedure CreateItemJournalLine(var ItemJournalLine: Record "Item Journal Line"; JournalTemplateName: Code[10]; JournalBatchName: Code[10]; EntryType: Enum "Item Ledger Document Type"; ItemNo: Code[20])
     begin
         LibraryInventory.CreateItemJournalLine(
           ItemJournalLine, JournalTemplateName, JournalBatchName, EntryType, ItemNo, LibraryRandom.RandInt(100));  // Taking Random Quantity.
     end;
 
+#if not CLEAN25
     local procedure CreateLineDiscForCustomer(SalesPrice: Record "Sales Price"; LineDiscountPct: Decimal)
     var
         SalesLineDiscount: Record "Sales Line Discount";
@@ -1566,6 +1579,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         PurchaseLineDiscount.Validate("Line Discount %", LibraryRandom.RandDec(10, 2));  // Take random for Line Discount.
         PurchaseLineDiscount.Modify(true);
     end;
+#endif
 
     local procedure CreateTransferOrderWithBaseCalendar(var TransferLine: Record "Transfer Line")
     var
@@ -1619,6 +1633,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         PurchaseHeader.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreatePurchasingCode(DropShipment: Boolean; SpecialOrder: Boolean): Code[10]
     var
         Purchasing: Record Purchasing;
@@ -1629,7 +1644,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         Purchasing.Modify(true);
         exit(Purchasing.Code);
     end;
-
+#endif
     local procedure CreateItem(CostingMethod: Enum "Costing Method"; OrderTrackingPolicy: Enum "Order Tracking Policy"): Code[20]
     var
         Item: Record Item;
@@ -1759,6 +1774,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         LibraryInventory.CreateItemJournalBatch(ItemJournalBatch, ItemJournalTemplate.Name);
     end;
 
+#if not CLEAN25
     local procedure CreateSalesLineWithPurchCode(SalesHeader: Record "Sales Header"; ItemNo: Code[20]; PurchasingCode: Code[10]; Quantity: Decimal)
     var
         SalesLine: Record "Sales Line";
@@ -1767,7 +1783,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         SalesLine.Validate("Purchasing Code", PurchasingCode);
         SalesLine.Modify(true);
     end;
-
+#endif
     local procedure CreateVendor(): Code[20]
     var
         Vendor: Record Vendor;
@@ -1776,6 +1792,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         exit(Vendor."No.");
     end;
 
+#if not CLEAN25
     local procedure EnqueVariables(BaseUnitOfMeasure: Code[10]; CustomerPriceGroup: Code[10]; EndingDate: Date; NewPrices: Boolean)
     var
         SalesPrice: Record "Sales Price";
@@ -1787,6 +1804,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         LibraryVariableStorage.Enqueue(WorkDate());  // StartDate
         LibraryVariableStorage.Enqueue(BaseUnitOfMeasure);
     end;
+#endif
 
     local procedure FindAndUpdateSalesLine(var SalesLine: Record "Sales Line"; DocumentType: Enum "Sales Document Type"; DocumentNo: Code[20])
     begin
@@ -1834,6 +1852,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         PurchRcptLine.FindFirst();
     end;
 
+#if not CLEAN25
     local procedure FindSalesLine(var SalesLine: Record "Sales Line"; DocumentType: Enum "Sales Document Type"; DocumentNo: Code[20])
     begin
         SalesLine.SetRange("Document Type", DocumentType);
@@ -1854,7 +1873,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         LibraryPlanning.GetSpecialOrder(RequisitionLine, ItemNo);
         LibraryPlanning.CarryOutReqWksh(RequisitionLine, WorkDate(), WorkDate(), WorkDate(), WorkDate(), '');
     end;
-
+#endif
     local procedure ModifyServiceLine(var ServiceLine: Record "Service Line"; EntryNo: Integer)
     begin
         ServiceLine.Validate("Appl.-from Item Entry", EntryNo);
@@ -1965,6 +1984,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         ReclassificationItemJournalLine.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure RunSuggestSalesPriceOnWkshReport(CustomerPriceGroup: Code[10]; StartingDate: Date; EndingDate: Date)
     var
         SalesPrice: Record "Sales Price";
@@ -1979,6 +1999,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         SuggestSalesPriceOnWksh.UseRequestPage(true);
         SuggestSalesPriceOnWksh.RunModal();
     end;
+#endif
 
     local procedure SalesReturnOrderGetPostedDocumentLinesToReverse(No: Code[20])
     var
@@ -2024,6 +2045,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         exit(Item."No.");
     end;
 
+#if not CLEAN25
     local procedure SetupSuggestSalesPrice(var SalesPrice: Record "Sales Price"; CustomerPriceGroup: Code[10]; CustomerPriceGroup2: Code[10]; Range: Integer; ItemNo: Code[20]; StartingDate: Date; NewPrice: Boolean; UnitPrice: Decimal)
     var
         Item: Record Item;
@@ -2048,6 +2070,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         // Exercise: Run Suggest Sales Price on Worksheet.
         RunSuggestSalesPriceOnWkshReport(CustomerPriceGroup, StartingDate, EndingDate);
     end;
+#endif
 
     local procedure SelectItemJournalBatch(var ItemJournalBatch: Record "Item Journal Batch"; Type: Enum "Item Journal Template Type")
     var
@@ -2167,6 +2190,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         ItemApplicationEntry.TestField(Quantity, Quantity);
     end;
 
+#if not CLEAN25
     local procedure VerifySalesPriceWorksheet(SalesPrice: Record "Sales Price"; StartingDate: Date; ItemNo: Code[20]; SalesCode: Code[20]; CurrentUnitPrice: Decimal; NewUnitPrice: Decimal)
     var
         SalesPriceWorksheet: Record "Sales Price Worksheet";
@@ -2189,7 +2213,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         SalesInvoiceLine.TestField("Unit Price", UnitPrice);
         SalesInvoiceLine.TestField("Line Discount %", LineDiscountPct);
     end;
-
+#endif
     [ModalPageHandler]
     [Scope('OnPrem')]
     procedure ItemTrackingPageHandler(var ItemTrackingLines: TestPage "Item Tracking Lines")
@@ -2242,6 +2266,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         Reservation."Auto Reserve".Invoke();
     end;
 
+#if not CLEAN25
     [RequestPageHandler]
     [Scope('OnPrem')]
     procedure SuggestSalesPriceOnWkshRequestPageHandler(var SuggestSalesPriceOnWksh: TestRequestPage "Suggest Sales Price on Wksh.")
@@ -2268,6 +2293,7 @@ codeunit 137292 "SCM Inventory Costing Orders"
         SuggestSalesPriceOnWksh.CreateNewPrices.SetValue(NewPrices);
         SuggestSalesPriceOnWksh.OK().Invoke();
     end;
+#endif
 
     [PageHandler]
     [Scope('OnPrem')]

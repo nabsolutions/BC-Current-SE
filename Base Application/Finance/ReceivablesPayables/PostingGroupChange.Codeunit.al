@@ -135,6 +135,17 @@ codeunit 960 "Posting Group Change" implements "Posting Group Change Method"
         SalesReceivablesSetup.TestField("Check Multiple Posting Groups", "Posting Group Change Method"::"Alternative Groups");
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CheckAllowChangeServiceSetup() in codeunit "Serv. Posting Group Change"', '25.0')]
+    procedure CheckAllowChangeServiceSetup()
+    var
+        ServiceMgtSetup: Record Microsoft.Service.Setup."Service Mgt. Setup";
+    begin
+        ServiceMgtSetup.Get();
+        ServiceMgtSetup.TestField("Allow Multiple Posting Groups");
+        ServiceMgtSetup.TestField("Check Multiple Posting Groups", "Posting Group Change Method"::"Alternative Groups");
+    end;
+#endif
 
     procedure CheckAllowChangePurchaseSetup()
     var
@@ -186,3 +197,4 @@ codeunit 960 "Posting Group Change" implements "Posting Group Change Method"
     begin
     end;
 }
+

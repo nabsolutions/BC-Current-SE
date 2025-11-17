@@ -6,7 +6,6 @@ namespace Microsoft.Sales.History;
 
 using Microsoft.Finance.Dimension;
 using Microsoft.Inventory.Item.Catalog;
-using Microsoft.Utilities;
 
 page 5853 "Get Pst.Doc-RtrnRcptLn Subform"
 {
@@ -292,11 +291,10 @@ page 5853 "Get Pst.Doc-RtrnRcptLn Subform"
     local procedure ShowDocument()
     var
         ReturnRcptHeader: Record "Return Receipt Header";
-        PageManagement: Codeunit "Page Management";
     begin
         if not ReturnRcptHeader.Get(Rec."Document No.") then
             exit;
-        PageManagement.PageRun(ReturnRcptHeader);
+        PAGE.Run(PAGE::"Posted Return Receipt", ReturnRcptHeader);
     end;
 
     local procedure ItemTrackingLines()

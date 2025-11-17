@@ -195,10 +195,12 @@ table 5071 Campaign
             Caption = 'Date Filter';
             FieldClass = FlowFilter;
         }
-        field(23; "Action Taken Filter"; Enum "Opportunity Action Taken")
+        field(23; "Action Taken Filter"; Option)
         {
             Caption = 'Action Taken Filter';
             FieldClass = FlowFilter;
+            OptionCaption = ' ,Next,Previous,Updated,Jumped,Won,Lost';
+            OptionMembers = " ",Next,Previous,Updated,Jumped,Won,Lost;
         }
         field(24; "Sales Cycle Filter"; Code[10])
         {

@@ -1,5 +1,9 @@
+#if not CLEAN25
 codeunit 101100 "Create Purch. Line Discount"
 {
+    ObsoleteState = Pending;
+    ObsoleteTag = '19.0';
+    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
 
     trigger OnRun()
     begin
@@ -21,3 +25,4 @@ codeunit 101100 "Create Purch. Line Discount"
         PurchLineDisc.Insert(true);
     end;
 }
+#endif

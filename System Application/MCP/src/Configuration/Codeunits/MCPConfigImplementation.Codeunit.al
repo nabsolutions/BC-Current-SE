@@ -78,26 +78,9 @@ codeunit 8351 "MCP Config Implementation"
         if not MCPConfiguration.GetBySystemId(ConfigId) then
             exit;
 
-        if not Allow then
-            DisableCreateUpdateDeleteToolsInConfig(ConfigId);
-
         MCPConfiguration.AllowProdChanges := Allow;
         MCPConfiguration.Modify();
         Session.LogMessage('0000QEA', StrSubstNo(SettingConfigurationAllowProdChangesLbl, ConfigId, Allow), Verbosity::Normal, DataClassification::SystemMetadata, TelemetryScope::ExtensionPublisher, 'Category', GetTelemetryCategory());
-    end;
-
-    internal procedure DisableCreateUpdateDeleteToolsInConfig(ConfigId: Guid)
-    var
-        MCPConfigurationTool: Record "MCP Configuration Tool";
-    begin
-        MCPConfigurationTool.SetRange(ID, ConfigId);
-        if MCPConfigurationTool.IsEmpty() then
-            exit;
-
-        MCPConfigurationTool.ModifyAll("Allow Create", false);
-        MCPConfigurationTool.ModifyAll("Allow Modify", false);
-        MCPConfigurationTool.ModifyAll("Allow Delete", false);
-        MCPConfigurationTool.ModifyAll("Allow Bound Actions", false);
     end;
 
     internal procedure DeleteConfiguration(ConfigId: Guid)
@@ -233,7 +216,7 @@ codeunit 8351 "MCP Config Implementation"
     #endregion
 
     #region Tools
-    internal procedure CreateAPITool(ConfigId: Guid; APIPageId: Integer; ValidateAPIPublisher: Boolean): Guid
+    internal procedure CreateAPITool(ConfigId: Guid; APIPageId: Integer): Guid
     var
         MCPConfiguration: Record "MCP Configuration";
         MCPConfigurationTool: Record "MCP Configuration Tool";
@@ -244,8 +227,7 @@ codeunit 8351 "MCP Config Implementation"
         if IsDefaultConfiguration(MCPConfiguration) then
             Error(ToolsCannotBeAddedToDefaultConfigErr);
 
-        ValidateAPITool(APIPageId, ValidateAPIPublisher);
-
+        ValidateAPITool(APIPageId);
         MCPConfigurationTool.ID := ConfigId;
         MCPConfigurationTool."Object Type" := MCPConfigurationTool."Object Type"::Page;
         MCPConfigurationTool."Object ID" := APIPageId;
@@ -396,7 +378,7 @@ codeunit 8351 "MCP Config Implementation"
             APIGroup := MCPAPIPublisherGroup."API Group";
     end;
 
-    internal procedure ValidateAPITool(PageId: Integer; ValidateAPIPublisher: Boolean)
+    internal procedure ValidateAPITool(PageId: Integer)
     var
         PageMetadata: Record "Page Metadata";
     begin
@@ -405,9 +387,6 @@ codeunit 8351 "MCP Config Implementation"
 
         if PageMetadata.PageType <> PageMetadata.PageType::API then
             Error(InvalidPageTypeErr);
-
-        if not ValidateAPIPublisher then
-            exit;
 
         if PageMetadata.APIPublisher = 'microsoft' then
             Error(InvalidAPIVersionErr);
@@ -443,9 +422,7 @@ codeunit 8351 "MCP Config Implementation"
             exit;
 
         repeat
-            if CheckAPIToolExists(ConfigId, PageMetadata.ID) then
-                continue;
-            CreateAPITool(ConfigId, PageMetadata.ID, false);
+            CreateAPITool(ConfigId, PageMetadata.ID);
         until PageMetadata.Next() = 0;
     end;
 
@@ -461,20 +438,8 @@ codeunit 8351 "MCP Config Implementation"
             exit;
 
         repeat
-            if CheckAPIToolExists(ConfigId, PageMetadata.ID) then
-                continue;
-            CreateAPITool(ConfigId, PageMetadata.ID, false);
+            CreateAPITool(ConfigId, PageMetadata.ID);
         until PageMetadata.Next() = 0;
-    end;
-
-    local procedure CheckAPIToolExists(ConfigId: Guid; PageId: Integer): Boolean
-    var
-        MCPConfigurationTool: Record "MCP Configuration Tool";
-    begin
-        MCPConfigurationTool.SetRange(ID, ConfigId);
-        MCPConfigurationTool.SetRange("Object Type", MCPConfigurationTool."Object Type"::Page);
-        MCPConfigurationTool.SetRange("Object ID", PageId);
-        exit(not MCPConfigurationTool.IsEmpty());
     end;
 
     internal procedure GetObjectCaption(ToolId: Guid): Text[100]

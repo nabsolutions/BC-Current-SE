@@ -49,7 +49,7 @@ codeunit 5407 "Prod. Order Status Management"
 
         ChangeStatusForm.Set(Rec);
         if ChangeStatusForm.RunModal() = ACTION::Yes then begin
-            OnRunOnAfterChangeStatusFormRun(Rec, ChangeStatusForm);
+            OnRunOnAfterChangeStatusFormRun(Rec);
             ChangeStatusForm.ReturnPostingInfo(NewStatus, NewPostingDate, NewUpdateUnitCost, FinishOrderWithoutOutput);
             ChangeProdOrderStatus(Rec, NewStatus, NewPostingDate, NewUpdateUnitCost);
             Commit();
@@ -461,8 +461,6 @@ codeunit 5407 "Prod. Order Status Management"
         if GeneralLedgerSetup."Journal Templ. Name Mandatory" then
             InventoryPostingToGL.SetGenJnlBatch(InventorySetup."Invt. Cost Jnl. Template Name", InventorySetup."Invt. Cost Jnl. Batch Name");
 
-        if NewPostingDate <> 0D then
-            ValueEntry."Posting Date" := NewPostingDate;
         InventoryPostingToGL.PostInvtPostBufPerEntry(ValueEntry);
     end;
 
@@ -1254,7 +1252,7 @@ codeunit 5407 "Prod. Order Status Management"
         OnAfterInitItemJnlLineFromProdOrderComp(ItemJnlLine, ProdOrder, ProdOrderLine, ProdOrderComp);
     end;
 
-    procedure CheckBeforeFinishProdOrder(ProdOrder: Record "Production Order")
+    local procedure CheckBeforeFinishProdOrder(ProdOrder: Record "Production Order")
     var
         ProdOrderLine: Record "Prod. Order Line";
         ProdOrderComp: Record "Prod. Order Component";
@@ -1894,7 +1892,7 @@ codeunit 5407 "Prod. Order Status Management"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnRunOnAfterChangeStatusFormRun(var ProductionOrder: Record "Production Order"; var ChangeStatusOnProdOrder: Page "Change Status on Prod. Order")
+    local procedure OnRunOnAfterChangeStatusFormRun(var ProductionOrder: Record "Production Order")
     begin
     end;
 

@@ -5,10 +5,10 @@
 
 namespace System.DataAdministration;
 
-using System.Reflection;
-using System.Security.AccessControl;
-using System.Security.User;
 using System.Telemetry;
+using System.Reflection;
+using System.Security.User;
+using System.Security.AccessControl;
 
 codeunit 3904 "Apply Retention Policy Impl."
 {

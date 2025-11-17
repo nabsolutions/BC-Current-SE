@@ -2,7 +2,6 @@
 
 using Microsoft.Finance.GeneralLedger.Journal;
 using Microsoft.Inventory.Item;
-using Microsoft.Inventory.Requisition;
 using Microsoft.Purchases.Document;
 using Microsoft.Purchases.Vendor;
 using Microsoft.Sales.Customer;
@@ -260,7 +259,6 @@ codeunit 1543 "Workflow Webhook Management"
         Customer: Record Customer;
         GenJournalBatch: Record "Gen. Journal Batch";
         GenJournalLine: Record "Gen. Journal Line";
-        RequisitionWkshName: Record "Requisition Wksh. Name";
         Item: Record Item;
         PurchaseHeader: Record "Purchase Header";
         SalesHeader: Record "Sales Header";
@@ -295,11 +293,6 @@ codeunit 1543 "Workflow Webhook Management"
                 begin
                     RecRef.SetTable(GenJournalLine);
                     WorkflowWebhookEntry."Data ID" := GenJournalLine.SystemId;
-                end;
-            Database::"Requisition Wksh. Name":
-                begin
-                    RecRef.SetTable(RequisitionWkshName);
-                    WorkflowWebhookEntry."Data ID" := RequisitionWkshName.SystemId;
                 end;
             DATABASE::Item:
                 begin

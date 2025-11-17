@@ -4,7 +4,6 @@ using Microsoft.EServices.EDocument;
 using Microsoft.Finance.GeneralLedger.Journal;
 using Microsoft.FixedAssets.Journal;
 using Microsoft.Inventory.Journal;
-using Microsoft.Inventory.Requisition;
 using Microsoft.Purchases.Document;
 using Microsoft.Purchases.History;
 using Microsoft.Purchases.Posting;
@@ -191,8 +190,6 @@ codeunit 1521 "Workflow Response Handling"
                     AddResponsePredecessor(
                         CreateApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnGeneralJournalBatchBalancedCode());
                     AddResponsePredecessor(
-                        CreateApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnSendRequisitionWkshBatchForApprovalCode());
-                    AddResponsePredecessor(
                 CreateApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnSendJobQueueEntryForApprovalCode());
                 end;
             SendApprovalRequestForApprovalCode():
@@ -226,8 +223,6 @@ codeunit 1521 "Workflow Response Handling"
                     AddResponsePredecessor(
                         SendApprovalRequestForApprovalCode(), WorkflowEventHandling.RunWorkflowOnGeneralJournalBatchBalancedCode());
                     AddResponsePredecessor(
-                        SendApprovalRequestForApprovalCode(), WorkflowEventHandling.RunWorkflowOnSendRequisitionWkshBatchForApprovalCode());
-                    AddResponsePredecessor(
                         SendApprovalRequestForApprovalCode(), WorkflowEventHandling.RunWorkflowOnApproveApprovalRequestCode());
                     AddResponsePredecessor(
                         SendApprovalRequestForApprovalCode(), WorkflowEventHandling.RunWorkflowOnDelegateApprovalRequestCode());
@@ -252,7 +247,6 @@ codeunit 1521 "Workflow Response Handling"
                     AddResponsePredecessor(OpenDocumentCode(), WorkflowEventHandling.RunWorkflowOnCancelItemApprovalRequestCode());
                     AddResponsePredecessor(OpenDocumentCode(), WorkflowEventHandling.RunWorkflowOnCancelGeneralJournalLineApprovalRequestCode());
                     AddResponsePredecessor(OpenDocumentCode(), WorkflowEventHandling.RunWorkflowOnCancelGeneralJournalBatchApprovalRequestCode());
-                    AddResponsePredecessor(OpenDocumentCode(), WorkflowEventHandling.RunWorkflowOnCancelRequisitionWkshBatchApprovalRequestCode());
                 end;
             CancelAllApprovalRequestsCode():
                 begin
@@ -272,8 +266,6 @@ codeunit 1521 "Workflow Response Handling"
                         CancelAllApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnCancelGeneralJournalLineApprovalRequestCode());
                     AddResponsePredecessor(
                         CancelAllApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnCancelGeneralJournalBatchApprovalRequestCode());
-                    AddResponsePredecessor(
-                        CancelAllApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnCancelRequisitionWkshBatchApprovalRequestCode());
                     AddResponsePredecessor(
                 CancelAllApprovalRequestsCode(), WorkflowEventHandling.RunWorkflowOnCancelJobQueueEntryApprovalRequestCode());
                 end;
@@ -1012,7 +1004,6 @@ codeunit 1521 "Workflow Response Handling"
         GenJournalBatch: Record "Gen. Journal Batch";
         ItemJournalBatch: Record "Item Journal Batch";
         FAJournalBatch: Record "FA Journal Batch";
-        RequisitionWkshName: Record "Requisition Wksh. Name";
         RecordRestrictionMgt: Codeunit "Record Restriction Mgt.";
         RecRef: RecordRef;
     begin
@@ -1046,12 +1037,7 @@ codeunit 1521 "Workflow Response Handling"
                 begin
                     RecRef.SetTable(FAJournalBatch);
                     RecordRestrictionMgt.AllowFAJournalBatchUsage(FAJournalBatch);
-                end;
-            Database::"Requisition Wksh. Name":
-                begin
-                    RecRef.SetTable(RequisitionWkshName);
-                    RecordRestrictionMgt.AllowRequisitionWkshUsage(RequisitionWkshName);
-                end;
+                end
             else
                 AllowRecordUsageDefault(Variant);
         end;

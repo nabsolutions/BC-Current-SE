@@ -168,22 +168,11 @@ codeunit 825 "Sales Post Invoice Events"
 
     procedure RunOnBeforeInitGenJnlLineAmountFieldsFromTotalLines(var GenJnlLine: Record "Gen. Journal Line"; var SalesHeader: Record "Sales Header"; var TotalSalesLine: Record "Sales Line"; var TotalSalesLineLCY: Record "Sales Line"; var IsHandled: Boolean)
     begin
-#if not CLEAN28
         OnBeforeInitGenJnlLineAmountFieldsFromTotalLines(GenJnlLine, SalesHeader, TotalSalesLine, TotalSalesLineLCY, IsHandled);
-#endif
-        OnBeforeInitGenJnlLineAmountFieldsFromTotalLines2(GenJnlLine, SalesHeader, TotalSalesLine, TotalSalesLineLCY, IsHandled);
     end;
 
-#if not CLEAN28
-    [Obsolete('Replaced by OnBeforeInitGenJnlLineAmountFieldsFromTotalLines2', '28.0')]
     [IntegrationEvent(false, false)]
     local procedure OnBeforeInitGenJnlLineAmountFieldsFromTotalLines(var GenJnlLine: Record "Gen. Journal Line"; var PurchHeader: Record "Sales Header"; var TotalPurchLine: Record "Sales Line"; var TotalPurchLineLCY: Record "Sales Line"; var IsHandled: Boolean)
-    begin
-    end;
-#endif
-
-    [IntegrationEvent(false, false)]
-    local procedure OnBeforeInitGenJnlLineAmountFieldsFromTotalLines2(var GenJnlLine: Record "Gen. Journal Line"; var SalesHeader: Record "Sales Header"; var TotalSalesLine: Record "Sales Line"; var TotalSalesLineLCY: Record "Sales Line"; var IsHandled: Boolean)
     begin
     end;
 
@@ -509,6 +498,15 @@ codeunit 825 "Sales Post Invoice Events"
         OnPrepareLineOnBeforePrepareDeferralLine(SalesLine, InvoicePostingBuffer, UseDate, InvDefLineNo, DeferralLineNo, SuppressCommit, DeferralAccount, SalesAccount);
     end;
 
+#if not CLEAN25
+    [Obsolete('Use the method RunOnPrepareLineOnBeforePrepareDeferralLine(SalesLine: Record "Sales Line"; InvoicePostingBuffer: Record "Invoice Posting Buffer"; UseDate: Date; InvDefLineNo: Integer; DeferralLineNo: Integer; SuppressCommit: Boolean; var DeferralAccount: Code[20]; var SalesAccount: Code[20]) instead', '25.0')]
+    procedure RunOnPrepareLineOnBeforePrepareDeferralLine(SalesLine: Record "Sales Line"; InvoicePostingBuffer: Record "Invoice Posting Buffer"; UseDate: Date; InvDefLineNo: Integer; DeferralLineNo: Integer; SuppressCommit: Boolean)
+    var
+        DeferralAccount, SalesAccount : Code[20];
+    begin
+        OnPrepareLineOnBeforePrepareDeferralLine(SalesLine, InvoicePostingBuffer, UseDate, InvDefLineNo, DeferralLineNo, SuppressCommit, DeferralAccount, SalesAccount);
+    end;
+#endif
     [IntegrationEvent(false, false)]
     local procedure OnPrepareLineOnBeforePrepareDeferralLine(SalesLine: Record "Sales Line"; InvoicePostingBuffer: Record "Invoice Posting Buffer"; UseDate: Date; InvDefLineNo: Integer; DeferralLineNo: Integer; SuppressCommit: Boolean; var DeferralAccount: Code[20]; var SalesAccount: Code[20])
     begin

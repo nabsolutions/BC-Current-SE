@@ -926,6 +926,13 @@ codeunit 99000834 "Purch. Line-Reserve"
         ReservQty: Decimal;
         IsReserved: Boolean;
     begin
+#if not CLEAN25
+        IsReserved := false;
+        sender.RunOnBeforeAutoReservePurchLine(
+          ReservSummEntryNo, RemainingQtyToReserve, RemainingQtyToReserveBase, Description, AvailabilityDate, IsReserved, Search, NextStep, CalcReservEntry);
+        if IsReserved then
+            exit;
+#endif
         IsReserved := false;
         OnBeforeAutoReservePurchLine(
           ReservSummEntryNo, RemainingQtyToReserve, RemainingQtyToReserveBase, Description, AvailabilityDate, IsReserved, Search, NextStep, CalcReservEntry);
@@ -1202,6 +1209,9 @@ codeunit 99000834 "Purch. Line-Reserve"
               PurchLine."Qty. Invoiced (Base)");
 
         OnAfterInitFromPurchLine(TransactionSpecification, PurchLine);
+#if not CLEAN25
+        TransactionSpecification.RunOnAfterInitFromPurchLine(TransactionSpecification, PurchLine);
+#endif
     end;
 
     [IntegrationEvent(false, false)]

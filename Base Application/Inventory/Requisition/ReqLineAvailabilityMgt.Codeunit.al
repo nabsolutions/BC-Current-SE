@@ -29,6 +29,9 @@ codeunit 99000879 "Req. Line Availability Mgt."
         ItemAvailabilityFormsMgt.FilterItem(Item, ReqLine."Location Code", ReqLine."Variant Code", ReqLine."Due Date");
 
         OnBeforeShowItemAvailabilityFromReqLine(Item, ReqLine, AvailabilityType);
+#if not CLEAN25
+        ItemAvailabilityFormsMgt.RunOnBeforeShowItemAvailFromReqLine(Item, ReqLine, AvailabilityType);
+#endif
         case AvailabilityType of
             AvailabilityType::Period:
                 if ItemAvailabilityFormsMgt.ShowItemAvailabilityByPeriod(Item, ReqLine.FieldCaption(ReqLine."Due Date"), ReqLine."Due Date", NewDate) then
@@ -135,6 +138,9 @@ codeunit 99000879 "Req. Line Availability Mgt."
         InventoryEventBuffer."Ref. Order Type" := GetRefOrderTypeFromReqLine(ReqLine."Ref. Order Type");
 
         OnAfterTransferFromPlanProdComp(InventoryEventBuffer, PlngComp, ReqLine);
+#if not CLEAN25
+        InventoryEventBuffer.RunOnAfterTransferFromPlanProdComp(InventoryEventBuffer, PlngComp, ReqLine);
+#endif
     end;
 
     procedure TransferFromReqLineTransDemand(var InventoryEventBuffer: Record "Inventory Event Buffer"; ReqLine: Record "Requisition Line")
@@ -163,6 +169,9 @@ codeunit 99000879 "Req. Line Availability Mgt."
         InventoryEventBuffer."Transfer Direction" := InventoryEventBuffer."Transfer Direction"::Inbound;
 
         OnAfterTransferFromReqLineTransDemand(InventoryEventBuffer, ReqLine);
+#if not CLEAN25
+        InventoryEventBuffer.RunOnAfterTransferFromReqLineTransDemand(InventoryEventBuffer, ReqLine);
+#endif
     end;
 
     procedure TransferFromReqLine(var InventoryEventBuffer: Record "Inventory Event Buffer"; ReqLine: Record "Requisition Line"; AtLocation: Code[10]; AtDate: Date; DeltaQtyBase: Decimal; RecID: RecordID)
@@ -186,6 +195,9 @@ codeunit 99000879 "Req. Line Availability Mgt."
         InventoryEventBuffer."Ref. Order Type" := GetRefOrderTypeFromReqLine(ReqLine."Ref. Order Type");
 
         OnAfterTransferFromReqLine(InventoryEventBuffer, ReqLine);
+#if not CLEAN25
+        InventoryEventBuffer.RunOnAfterTransferFromReqLine(InventoryEventBuffer, ReqLine);
+#endif
     end;
 
     local procedure GetRefOrderTypeFromReqLine(ReqLineRefOrderType: Enum "Requisition Ref. Order Type"): Integer

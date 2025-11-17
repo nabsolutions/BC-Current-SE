@@ -33,7 +33,9 @@ using Microsoft.Pricing.PriceList;
 using Microsoft.Projects.Project.Job;
 using Microsoft.Projects.Project.Planning;
 using Microsoft.Projects.Resources.Journal;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Resource;
 using Microsoft.Projects.TimeSheet;
 using Microsoft.Sales.Customer;
@@ -4427,10 +4429,13 @@ table 5902 "Service Line"
     end;
 
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterResourseFindCost(var ResourceCost: Record "Resource Cost");
     begin
         OnAfterResourseFindCost(Rec, ResourceCost);
     end;
+#endif
 
     procedure InitOutstanding()
     begin
@@ -6378,6 +6383,9 @@ table 5902 "Service Line"
     begin
         IsHandled := false;
         OnBeforeCopyToItemJnlLine(ItemJournalLine, Rec, IsHandled);
+#if not CLEAN25
+        ItemJournalLine.RunOnBeforeCopyItemJnlLineFromServLine(ItemJournalLine, Rec, IsHandled);
+#endif
         if not IsHandled then begin
             ItemJournalLine."Item No." := Rec."No.";
             ItemJournalLine."Posting Date" := Rec."Posting Date";
@@ -6416,6 +6424,9 @@ table 5902 "Service Line"
         end;
 
         OnAfterCopyToItemJnlLine(ItemJournalLine, Rec);
+#if not CLEAN25
+        ItemJournalLine.RunOnAfterCopyItemJnlLineFromServLine(ItemJournalLine, Rec);
+#endif
     end;
 
     procedure CopyToResJournalLine(var ResJournalLine: Record "Res. Journal Line")
@@ -6614,10 +6625,13 @@ table 5902 "Service Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterResourseFindCost(var ServiceLine: Record "Service Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterTestStatusOpen(var ServiceLine: Record "Service Line"; ServiceHeader: Record "Service Header")

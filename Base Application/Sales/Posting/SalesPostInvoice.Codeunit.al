@@ -326,6 +326,9 @@ codeunit 815 "Sales Post Invoice" implements "Invoice Posting"
     procedure PrepareInvoicePostingBuffer(var SalesLine: Record "Sales Line"; var InvoicePostingBuffer: Record "Invoice Posting Buffer")
     begin
         SalesPostInvoiceEvents.RunOnBeforePrepareInvoicePostingBuffer(SalesLine, InvoicePostingBuffer);
+#if not CLEAN25
+        InvoicePostingBuffer.RunOnBeforePrepareSales(InvoicePostingBuffer, SalesLine);
+#endif
 
         Clear(InvoicePostingBuffer);
         InvoicePostingBuffer.Type := SalesLine.Type;
@@ -366,17 +369,23 @@ codeunit 815 "Sales Post Invoice" implements "Invoice Posting"
         end;
 
         InvoicePostingBuffer."Journal Templ. Name" := SalesLine.GetJnlTemplateName();
+#if not CLEAN25
+        InvoicePostingBuffer.RunOnAfterPrepareSales(SalesLine, InvoicePostingBuffer);
+#endif
         SalesPostInvoiceEvents.RunOnAfterPrepareInvoicePostingBuffer(SalesLine, InvoicePostingBuffer);
     end;
 
     local procedure UpdateEntryDescriptionFromSalesLine(SalesLine: Record "Sales Line"; var InvoicePostingBuffer: Record "Invoice Posting Buffer")
+    var
+        SalesHeader: Record "Sales Header";
     begin
         SalesSetup.Get();
+        SalesHeader.Get(SalesLine."Document Type", SalesLine."Document No.");
         InvoicePostingBuffer.UpdateEntryDescription(
             SalesSetup."Copy Line Descr. to G/L Entry",
             SalesLine."Line No.",
             SalesLine.Description,
-            SalesLine.GetSalesHeader()."Posting Description");
+            SalesHeader."Posting Description");
     end;
 
     local procedure UpdateInvoicePostingBuffer(InvoicePostingBuffer: Record "Invoice Posting Buffer"; ForceGLAccountType: Boolean)

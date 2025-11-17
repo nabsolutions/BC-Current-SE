@@ -111,9 +111,11 @@ table 5093 "Opportunity Entry"
             DecimalPlaces = 0 : 0;
             MinValue = 0;
         }
-        field(13; "Action Taken"; Enum "Opportunity Action Taken")
+        field(13; "Action Taken"; Option)
         {
             Caption = 'Action Taken';
+            OptionCaption = ' ,Next,Previous,Updated,Jumped,Won,Lost';
+            OptionMembers = " ",Next,Previous,Updated,Jumped,Won,Lost;
 
             trigger OnValidate()
             begin

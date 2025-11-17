@@ -36,6 +36,9 @@ codeunit 1621 "PEPPOL Service Validation"
             repeat
                 PEPPOLManagement.TransferLineToSalesLine(ServiceLine, SalesLine);
                 OnCheckServiceHeaderOnBeforeCheckSalesDocumentLine(SalesLine, ServiceLine);
+#if not CLEAN25
+                PEPPOLValidation.RunOnCheckServiceHeaderOnBeforeCheckSalesDocumentLine(SalesLine, ServiceLine);
+#endif
                 PEPPOLValidation.CheckSalesDocumentLine(SalesLine);
             until ServiceLine.Next() = 0;
     end;
@@ -57,6 +60,9 @@ codeunit 1621 "PEPPOL Service Validation"
                 PEPPOLManagement.TransferLineToSalesLine(ServiceInvoiceLine, SalesLine);
                 SalesLine."Document Type" := SalesLine."Document Type"::Invoice;
                 OnCheckServiceInvoiceOnBeforeCheckSalesDocumentLine(SalesLine, ServiceInvoiceLine);
+#if not CLEAN25
+                PEPPOLValidation.RunOnCheckServiceInvoiceOnBeforeCheckSalesDocumentLine(SalesLine, ServiceInvoiceLine);
+#endif
                 PEPPOLValidation.CheckSalesDocumentLine(SalesLine);
             until ServiceInvoiceLine.Next() = 0;
     end;
@@ -77,6 +83,9 @@ codeunit 1621 "PEPPOL Service Validation"
                 PEPPOLManagement.TransferLineToSalesLine(ServiceCrMemoLine, SalesLine);
                 SalesLine."Document Type" := SalesLine."Document Type"::"Credit Memo";
                 OnCheckServiceCreditMemoOnBeforeCheckSalesDocumentLine(SalesLine, ServiceCrMemoLine);
+#if not CLEAN25
+                PEPPOLValidation.RunOnCheckServiceCreditMemoOnBeforeCheckSalesDocumentLine(SalesLine, ServiceCrMemoLine);
+#endif
                 PEPPOLValidation.CheckSalesDocumentLine(SalesLine);
             until ServiceCrMemoLine.Next() = 0;
     end;
@@ -106,3 +115,4 @@ codeunit 1621 "PEPPOL Service Validation"
     begin
     end;
 }
+

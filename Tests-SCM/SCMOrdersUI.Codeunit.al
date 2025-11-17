@@ -1833,3 +1833,4 @@ codeunit 137929 "SCM Orders UI"
         Reservation.OK().Invoke();
     end;
 }
+

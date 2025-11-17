@@ -4,8 +4,6 @@ using System;
 
 codeunit 3015 DotNet_StringComparison
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

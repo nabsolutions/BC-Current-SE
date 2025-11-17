@@ -17,13 +17,16 @@ codeunit 137201 "SCM Sales Price Wksht"
         LibrarySetupStorage: Codeunit "Library - Setup Storage";
         LibraryRandom: Codeunit "Library - Random";
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
+#if not CLEAN25
         LibraryERM: Codeunit "Library - ERM";
         LibrarySales: Codeunit "Library - Sales";
         LibraryCosting: Codeunit "Library - Costing";
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
         Assert: Codeunit Assert;
+#endif
         isInitialized: Boolean;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure LineDiscountWithSalesPrice()
@@ -231,6 +234,7 @@ codeunit 137201 "SCM Sales Price Wksht"
             GeneralLedgerSetup."Inv. Rounding Precision (LCY)");
         PurchaseLine.TestField("Line Amount", ExpectedLineAmount);
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -262,6 +266,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         PurchaseLine.TestField("Expected Receipt Date", ExpectedReceiptDate);
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure CheckSalesPricePageforCustomerPriceGroup()
@@ -362,6 +367,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         // [THEN] Error is shown "There are multiple source lines for the record"
         Assert.ExpectedError('There are multiple source lines for the record');
     end;
+#endif
 
     local procedure Initialize()
     var
@@ -377,7 +383,11 @@ codeunit 137201 "SCM Sales Price Wksht"
             exit;
         LibraryTestInitialize.OnBeforeTestSuiteInitialize(CODEUNIT::"SCM Sales Price Wksht");
 
+#if not CLEAN25
         LibraryPriceCalculation.SetupDefaultHandler("Price Calculation Handler"::"Business Central (Version 15.0)");
+#else
+        LibraryPriceCalculation.SetupDefaultHandler("Price Calculation Handler"::"Business Central (Version 16.0)");
+#endif
         LibraryERMCountryData.CreateVATData();
         LibraryERMCountryData.UpdateGeneralPostingSetup();
         LibraryERMCountryData.UpdateGeneralLedgerSetup();
@@ -390,6 +400,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         LibraryTestInitialize.OnAfterTestSuiteInitialize(CODEUNIT::"SCM Sales Price Wksht");
     end;
 
+#if not CLEAN25
     local procedure UpdateSalesReceivablesSetup(StockoutWarning: Boolean)
     var
         SalesReceivablesSetup: Record "Sales & Receivables Setup";
@@ -484,7 +495,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         LibrarySales.CreateSalesHeader(SalesHeader, SalesHeader."Document Type"::Order, CustomerNo);
         LibrarySales.CreateSalesLine(SalesLine, SalesHeader, SalesLine.Type::Item, ItemNo, MinimumQty);
     end;
-
+#endif
     local procedure CreatePurchaseOrder(var PurchaseLine: Record "Purchase Line"; VendorNo: Code[20]; ItemNo: Code[20]; MinimumQty: Decimal)
     var
         PurchaseHeader: Record "Purchase Header";
@@ -493,6 +504,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, ItemNo, MinimumQty);
     end;
 
+#if not CLEAN25
     local procedure ImplementNewSalesPrice() NewUnitPrice: Decimal
     var
         SalesPriceWorksheet: Record "Sales Price Worksheet";
@@ -529,6 +541,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         SalesPriceWorksheet.Rename(
           WorkDate(), WorkDate(), "Sales Price Type"::Campaign, CampaignNo, '', Item."No.", '', Item."Base Unit of Measure", MinimumQuantity);
     end;
+#endif
 
     local procedure UpdateItemVendor(var ItemVendor: Record "Item Vendor")
     var
@@ -539,6 +552,7 @@ codeunit 137201 "SCM Sales Price Wksht"
         ItemVendor.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure UpdateCustomer(var Customer: Record Customer; CustomerPriceGroupCode: Code[10])
     begin
         Customer.Validate("Customer Price Group", CustomerPriceGroupCode);
@@ -583,4 +597,5 @@ codeunit 137201 "SCM Sales Price Wksht"
         SalesPriceWorksheet.FindFirst();
         SalesPriceWorksheet.TestField("Current Unit Price", CurrentUnitPrice);
     end;
+#endif
 }

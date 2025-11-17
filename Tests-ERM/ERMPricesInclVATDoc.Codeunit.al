@@ -13,6 +13,7 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         Assert: Codeunit Assert;
         LibraryERM: Codeunit "Library - ERM";
         LibrarySales: Codeunit "Library - Sales";
+        AmountError: Label '%1 must be %2 in %3.';
         LibraryPmtDiscSetup: Codeunit "Library - Pmt Disc Setup";
         LibraryPurchase: Codeunit "Library - Purchase";
         LibraryRandom: Codeunit "Library - Random";
@@ -22,7 +23,7 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryService: Codeunit "Library - Service";
         IsInitialized: Boolean;
-        AmountErr: Label '%1 must be %2 in %3.', Comment = '%1 = Field Caption, %2 = Expected Value, %3 = Table Caption';
+        AmtErrorMessage: Label 'The %1 must be %2 in %3.';
 
     [Test]
     [Scope('OnPrem')]
@@ -40,7 +41,10 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         Initialize();
         FindVATPostingSetup(VATPostingSetup);
         CreateSalesDocument(SalesHeader, Amount, SalesHeader."Document Type"::Invoice, CreateCustomer(), true);
-        VATAmount := Round(CalculateVATAmount(SalesHeader."No.", SalesHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %")));
+        VATAmount :=
+          Round(
+            CalculateVATAmount(
+              SalesHeader."No.", SalesHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %")));
 
         // Exercise: Post Sales Document.
         DocumentNo := LibrarySales.PostSalesDocument(SalesHeader, true, true);
@@ -65,7 +69,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         Initialize();
         FindVATPostingSetup(VATPostingSetup);
         CreateSalesDocument(SalesHeader, Amount, SalesHeader."Document Type"::"Credit Memo", CreateCustomer(), false);
-        VATAmount := Round(CalculateVATAmount(SalesHeader."No.", SalesHeader."Document Type"::"Credit Memo", VATPostingSetup."VAT %" / 100));
+        VATAmount :=
+          Round(CalculateVATAmount(SalesHeader."No.", SalesHeader."Document Type"::"Credit Memo", VATPostingSetup."VAT %" / 100));
 
         // Exercise: Post Sales Document.
         DocumentNo := LibrarySales.PostSalesDocument(SalesHeader, true, true);
@@ -151,7 +156,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         // Verify: Verify that Amount is Zero in GL and VAT Entries after Posting Sales Document.
         GeneralPostingSetup.Get(SalesHeader."Gen. Bus. Posting Group", GenProdPostingGroup);
-        VerifyGLAndVATEntry(PostedDocumentNo, GetSalesGenPostGLAccNoByDocType(DocumentType, GeneralPostingSetup), DocumentType, 0);
+        VerifyGLAndVATEntry(
+          PostedDocumentNo, GetSalesGenPostGLAccNoByDocType(DocumentType, GeneralPostingSetup), DocumentType, 0);
     end;
 
     [Test]
@@ -191,7 +197,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         // Verify: Verify that Amount is zero in GL Entry, VAT Entry after posting Purchase Document.
         GeneralPostingSetup.Get(PurchaseHeader."Gen. Bus. Posting Group", GenProdPostingGroup);
-        VerifyGLAndVATEntry(PostedDocumentNo, GetPurchGenPostGLAccNoByDocType(DocumentType, GeneralPostingSetup), DocumentType, 0);
+        VerifyGLAndVATEntry(
+          PostedDocumentNo, GetPurchGenPostGLAccNoByDocType(DocumentType, GeneralPostingSetup), DocumentType, 0);
     end;
 
     [Test]
@@ -209,9 +216,11 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Setup: Modify Purchase Payables Setup and create Purchase order and update purchase Line for Invoice Quantity.
         Initialize();
         LibraryPurchase.SetCalcInvDiscount(true);
-        CreatePurchaseDocument(PurchaseHeader, PurchaseLine, PurchaseHeader."Document Type"::Order, CreateInvoiceDiscForVendor(CreateVendor()), true);
+        CreatePurchaseDocument(
+          PurchaseHeader, PurchaseLine, PurchaseHeader."Document Type"::Order, CreateInvoiceDiscForVendor(CreateVendor()), true);
         UpdatePartialQtyRcveAndInvoice(PurchaseLine);
-        InvoiceDiscAmount := Round(PurchaseLine."Qty. to Invoice" * PurchaseLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
+        InvoiceDiscAmount :=
+          Round(PurchaseLine."Qty. to Invoice" * PurchaseLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
 
         // Exercise: Calculate VAT Amount Line for Invoice Discount Amount.
         PurchaseLine.CalcVATAmountLines(QtyType::Invoicing, PurchaseHeader, PurchaseLine, VATAmountLine);
@@ -239,7 +248,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         CreateAndPostPurchasePartQty(PurchaseHeader, PurchaseLine);
         PurchaseLine.Get(PurchaseHeader."Document Type", PurchaseHeader."No.", PurchaseLine."Line No.");
         GeneralInvDiscAmount := Round(PurchaseLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
-        InvoiceDiscAmount := Round(PurchaseLine."Qty. to Invoice" * PurchaseLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
+        InvoiceDiscAmount :=
+          Round(PurchaseLine."Qty. to Invoice" * PurchaseLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
 
         // Exercise: Calculate VAT Amount Line for Invoice Discount Amount with different options.
         PurchaseLine.CalcVATAmountLines(QtyType::General, PurchaseHeader, PurchaseLine, VATAmountLine);
@@ -272,7 +282,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Exercise: Find Posted Purchase Invoice and Calculate VAT Amount Line for Invoice Discount Amount.
         FindPostedPurchaseInvoice(PurchInvHeader, PurchInvLine, PurchaseHeader."No.");
         PurchInvLine.CalcVATAmountLines(PurchInvHeader, VATAmountLine);
-        GeneralInvDiscAmount := Round(PurchInvLine.Quantity * PurchInvLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
+        GeneralInvDiscAmount :=
+          Round(PurchInvLine.Quantity * PurchInvLine."Direct Unit Cost" * PurchaseHeader."Invoice Discount Value" / 100);
 
         // Verify: Verify Invoice Discount Amount on Statistics page for Posted Purchase Invoice.
         VerifyInvoiceDiscountAmount(GeneralInvDiscAmount, VATAmountLine."Invoice Discount Amount");
@@ -302,7 +313,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         // Exercise: Calculate VAT Base Amount.
         SalesLine.CalcVATAmountLines(QtyType::General, SalesHeader, SalesLine, VATAmountLine);
-        VATBaseAmount := CalculateSalesVATBaseAmount(LineAmount, SalesHeader."No.", SalesHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
+        VATBaseAmount :=
+          CalculateSalesVATBaseAmount(LineAmount, SalesHeader."No.", SalesHeader."Document Type"::Invoice,
+            VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
 
         // Verify: Verify VAT Base Amount on Statistics page for Sales Invoice.
         VerifyInvoiceDiscountAmount(VATBaseAmount, VATAmountLine."VAT Base");
@@ -333,7 +346,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Exercise: Calculate VAT Base Amount after Validating Invoice Discount Amount using RANDOM values on VAT Amount Line.
         SalesLine.CalcVATAmountLines(QtyType::General, SalesHeader, SalesLine, VATAmountLine);
         UpdateVATAmountLine(VATAmountLine);
-        CalculateSalesVATBaseAmount(LineAmount, SalesHeader."No.", SalesHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
+        CalculateSalesVATBaseAmount(LineAmount, SalesHeader."No.", SalesHeader."Document Type"::Invoice,
+          VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
         VATBaseAmount := LineAmount - VATAmountLine."Invoice Discount Amount";
 
         // Verify: Verify VAT Base Amount on Statistics page for Sales Invoice.
@@ -363,7 +377,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         // Exercise: Calculate VAT Base Amount.
         PurchaseLine.CalcVATAmountLines(QtyType::General, PurchaseHeader, PurchaseLine, VATAmountLine);
-        VATBaseAmount := CalculatePurchaseVATBaseAmount(Amount, PurchaseHeader."No.", PurchaseHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
+        VATBaseAmount :=
+          CalculatePurchaseVATBaseAmount(Amount, PurchaseHeader."No.", PurchaseHeader."Document Type"::Invoice,
+            VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
 
         // Verify: Verify VAT Base Amount on Statistics page for Sales Invoice.
         VerifyInvoiceDiscountAmount(VATBaseAmount, VATAmountLine."VAT Base");
@@ -393,7 +409,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Exercise: Calculate VAT Base Amount after Validating Invoice Discount Amount using RANDOM values on VAT Amount Line.
         PurchaseLine.CalcVATAmountLines(QtyType::General, PurchaseHeader, PurchaseLine, VATAmountLine);
         UpdateVATAmountLine(VATAmountLine);
-        CalculatePurchaseVATBaseAmount(Amount, PurchaseHeader."No.", PurchaseHeader."Document Type"::Invoice, VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
+        CalculatePurchaseVATBaseAmount(Amount, PurchaseHeader."No.", PurchaseHeader."Document Type"::Invoice,
+          VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
         VATBaseAmount := Amount - VATAmountLine."Invoice Discount Amount";
 
         // Verify: Verify VAT Base Amount on Statistics page for Sales Invoice.
@@ -556,14 +573,16 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Setup: Create Purchase Credit Memo and Calculate Amount Including VAT.
         Initialize();
         PurchDocumentPricesExclVAT(PurchaseHeader, PurchaseLine, VATAmount, VATPostingSetup, PurchaseHeader."Document Type"::Order);
-        AmountIncludingVAT := ((PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Inv. Discount Amount") + VATAmount;
+        AmountIncludingVAT :=
+          ((PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Inv. Discount Amount") + VATAmount;
 
         // Exercise: Post Purchase Document.
         PostedDocumentNo := LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, true);
 
         // Verify Amount Including VAT,General Ledger Entry and VAT Entry.
         VerifyPurchOrderAmountInclVAT(PostedDocumentNo, AmountIncludingVAT);
-        VerifyGLAndVATEntry(PostedDocumentNo, VATPostingSetup."Purchase VAT Account", PurchaseLine."Document Type"::Invoice, VATAmount);
+        VerifyGLAndVATEntry(
+          PostedDocumentNo, VATPostingSetup."Purchase VAT Account", PurchaseLine."Document Type"::Invoice, VATAmount);
     end;
 
     [Test]
@@ -582,14 +601,16 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Setup: Create Purchase Credit Memo and Calculate Amount Including VAT.
         Initialize();
         PurchDocumentPricesExclVAT(PurchaseHeader, PurchaseLine, VATAmount, VATPostingSetup, PurchaseHeader."Document Type"::"Credit Memo");
-        AmountIncludingVAT := ((PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Inv. Discount Amount") + VATAmount;
+        AmountIncludingVAT :=
+          ((PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Inv. Discount Amount") + VATAmount;
 
         // Exercise: Post Purchase Document.
         PostedDocumentNo := LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, true);
 
         // Verify Amount Including VAT,General Ledger Entry and VAT Entry.
         VerifyPurchCMAmountInclVAT(PostedDocumentNo, AmountIncludingVAT);
-        VerifyGLAndVATEntry(PostedDocumentNo, VATPostingSetup."Purchase VAT Account", PurchaseLine."Document Type"::"Credit Memo", -VATAmount);
+        VerifyGLAndVATEntry(
+          PostedDocumentNo, VATPostingSetup."Purchase VAT Account", PurchaseLine."Document Type"::"Credit Memo", -VATAmount);
     end;
 
     [Test]
@@ -633,7 +654,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibraryERM.FindCurrency(Currency);
         VATAmount := CreateSingleLineSalesDoc(SalesHeader, SalesLine, Currency, UnitPrice, DocumentType);
         SalesLine.CalcVATAmountLines(QtyType::Invoicing, SalesHeader, SalesLine, VATAmountLine);
-        ExpectedAmountInclVAT := Round(SalesLine.Quantity * UnitPrice, Currency."Invoice Rounding Precision", Currency.InvoiceRoundingDirection());
+        ExpectedAmountInclVAT :=
+          Round(SalesLine.Quantity * UnitPrice, Currency."Invoice Rounding Precision", Currency.InvoiceRoundingDirection());
 
         // Exercise: Release Sales Document.
         LibrarySales.ReleaseSalesDocument(SalesHeader);
@@ -641,7 +663,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         ActualAmountInclVAT := Round(SalesHeader."Amount Including VAT", Currency."Invoice Rounding Precision");
 
         // Verify: Verify Amount Including VAT on Released Sales Header and VAT Amount Line.
-        Assert.AreEqual(ExpectedAmountInclVAT, ActualAmountInclVAT, StrSubstNo(AmountErr, SalesHeader.FieldCaption("Amount Including VAT"), ExpectedAmountInclVAT, SalesHeader.TableCaption()));
+        Assert.AreEqual(
+          ExpectedAmountInclVAT, ActualAmountInclVAT, StrSubstNo(AmountError, SalesHeader.FieldCaption("Amount Including VAT"),
+            ExpectedAmountInclVAT, SalesHeader.TableCaption()));
         VerifyVATAmountLine(VATAmountLine, VATPostingSetup."VAT %", SalesLine."Line Amount" - VATAmount, VATAmount);
 
         // Tear Down: Delete Sales Header.
@@ -698,7 +722,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         VATAmount := Round(AmountIncludingVAT * VATPostingSetup."VAT %" / (100 + VATPostingSetup."VAT %"));
 
         // Verify: Verify Amount Including VAT on Released Sales Header and VAT Amount Line.
-        Assert.AreEqual(AmountIncludingVAT, SalesHeader."Amount Including VAT", StrSubstNo(AmountErr, SalesHeader.FieldCaption("Amount Including VAT"), AmountIncludingVAT, SalesHeader.TableCaption()));
+        Assert.AreEqual(
+          AmountIncludingVAT, SalesHeader."Amount Including VAT", StrSubstNo(AmountError, SalesHeader.FieldCaption("Amount Including VAT"),
+            AmountIncludingVAT, SalesHeader.TableCaption()));
         VerifyVATAmountLine(VATAmountLine, VATPostingSetup."VAT %", Round(AmountIncludingVAT - VATAmount), VATAmount);
 
         // Tear Down: Delete Sales Header.
@@ -744,7 +770,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibraryERM.FindCurrency(Currency);
         VATAmount := CreateSingleLinePurchaseDoc(PurchaseHeader, PurchaseLine, Currency, DirectUnitCost, DocumentType);
         PurchaseLine.CalcVATAmountLines(QtyType::Invoicing, PurchaseHeader, PurchaseLine, VATAmountLine);
-        ExpectedAmtInclVAT := Round(PurchaseLine.Quantity * DirectUnitCost, Currency."Invoice Rounding Precision", Currency.InvoiceRoundingDirection());
+        ExpectedAmtInclVAT :=
+          Round(PurchaseLine.Quantity * DirectUnitCost, Currency."Invoice Rounding Precision", Currency.InvoiceRoundingDirection());
 
         // Exercise: Release Purchase Document.
         LibraryPurchase.ReleasePurchaseDocument(PurchaseHeader);
@@ -752,7 +779,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         ActualAmtInclVAT := Round(PurchaseHeader."Amount Including VAT", Currency."Invoice Rounding Precision");
 
         // Verify: Verify Amount Including VAT on Released Purchase Header and VAT Amount Line.
-        Assert.AreEqual(ExpectedAmtInclVAT, ActualAmtInclVAT, StrSubstNo(AmountErr, PurchaseHeader.FieldCaption("Amount Including VAT"), ExpectedAmtInclVAT, PurchaseHeader.TableCaption()));
+        Assert.AreEqual(
+          ExpectedAmtInclVAT, ActualAmtInclVAT, StrSubstNo(AmountError, PurchaseHeader.FieldCaption("Amount Including VAT"),
+            ExpectedAmtInclVAT, PurchaseHeader.TableCaption()));
         VerifyVATAmountLine(VATAmountLine, PurchaseLine."VAT %", PurchaseLine."Line Amount" - VATAmount, VATAmount);
 
         // Tear Down: Delete Purchase Header.
@@ -807,7 +836,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         VATAmount := Round(AmountIncludingVAT * PurchaseLine."VAT %" / (100 + PurchaseLine."VAT %"));
 
         // Verify: Verify Amount Including VAT on Released Purchase Header and VAT Amount Line.
-        Assert.AreEqual(AmountIncludingVAT, PurchaseHeader."Amount Including VAT", StrSubstNo(AmountErr, PurchaseHeader.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchaseHeader.TableCaption()));
+        Assert.AreEqual(
+          AmountIncludingVAT, PurchaseHeader."Amount Including VAT", StrSubstNo(AmountError,
+            PurchaseHeader.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchaseHeader.TableCaption()));
         VerifyVATAmountLine(VATAmountLine, PurchaseLine."VAT %", Round(AmountIncludingVAT - VATAmount), VATAmount);
 
         // Tear Down: Delete Purchase Header.
@@ -831,7 +862,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Setup: Create Sales Return Order with Random Quantity and Unit Price.
         Initialize();
         LibraryERM.FindCurrency(Currency);
-        CreateSingleLineSalesDoc(SalesHeader, SalesLine, Currency, LibraryRandom.RandInt(10), SalesHeader."Document Type"::"Return Order");  // Random value for Unit Price.
+        CreateSingleLineSalesDoc(
+          SalesHeader, SalesLine, Currency, LibraryRandom.RandInt(10), SalesHeader."Document Type"::"Return Order");  // Random value for Unit Price.
         LibraryVariableStorage.Enqueue(SalesLine."Amount Including VAT"); // Enqueue value for SalesOrderStatisticsModalPageHandler.
         OpenSalesRetOrdPage(SalesReturnOrder, SalesHeader."No.");
 
@@ -964,7 +996,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Setup: Create Purchase Return Order with Random Direct Unit Cost.
         Initialize();
         LibraryERM.FindCurrency(Currency);
-        CreateSingleLinePurchaseDoc(PurchaseHeader, PurchaseLine, Currency, 10 + LibraryRandom.RandInt(10), PurchaseHeader."Document Type"::"Return Order");
+        CreateSingleLinePurchaseDoc(
+          PurchaseHeader, PurchaseLine, Currency, 10 + LibraryRandom.RandInt(10), PurchaseHeader."Document Type"::"Return Order");
         LibraryVariableStorage.Enqueue(PurchaseLine."Amount Including VAT");  // Enqueue value for ApplyVendorEntriesHandler.
         OpenPurchRetOrdPage(PurchaseReturnOrder, PurchaseHeader."No.");
 
@@ -987,10 +1020,14 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         Initialize();
         CreateSalesInvWithLineDiscAndPricesInclVAT(SalesLine);
-        CreateNewVATPostingSetupBasedOnExisting(VATPostingSetup, SalesLine."VAT Bus. Posting Group", SalesLine."VAT Prod. Posting Group", SalesLine."VAT %");
+        CreateNewVATPostingSetupBasedOnExisting(
+          VATPostingSetup, SalesLine."VAT Bus. Posting Group", SalesLine."VAT Prod. Posting Group", SalesLine."VAT %");
         SalesLine.Validate("VAT Prod. Posting Group", VATPostingSetup."VAT Prod. Posting Group");
-        SalesLine.TestField("Line Discount Amount", Round(Round(SalesLine.Quantity * SalesLine."Unit Price") * SalesLine."Line Discount %" / 100));
-        SalesLine.TestField("Line Amount", Round(SalesLine.Quantity * SalesLine."Unit Price") - SalesLine."Line Discount Amount");
+        SalesLine.TestField("Line Discount Amount",
+          Round(
+            Round(SalesLine.Quantity * SalesLine."Unit Price") * SalesLine."Line Discount %" / 100));
+        SalesLine.TestField("Line Amount",
+          Round(SalesLine.Quantity * SalesLine."Unit Price") - SalesLine."Line Discount Amount");
     end;
 
     [Test]
@@ -1005,10 +1042,14 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         Initialize();
         CreatePurchInvWithLineDiscAndPricesInclVAT(PurchaseLine);
-        CreateNewVATPostingSetupBasedOnExisting(VATPostingSetup, PurchaseLine."VAT Bus. Posting Group", PurchaseLine."VAT Prod. Posting Group", PurchaseLine."VAT %");
+        CreateNewVATPostingSetupBasedOnExisting(
+          VATPostingSetup, PurchaseLine."VAT Bus. Posting Group", PurchaseLine."VAT Prod. Posting Group", PurchaseLine."VAT %");
         PurchaseLine.Validate("VAT Prod. Posting Group", VATPostingSetup."VAT Prod. Posting Group");
-        PurchaseLine.TestField("Line Discount Amount", Round(Round(PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") * PurchaseLine."Line Discount %" / 100));
-        PurchaseLine.TestField("Line Amount", Round(PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Line Discount Amount");
+        PurchaseLine.TestField("Line Discount Amount",
+          Round(
+            Round(PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") * PurchaseLine."Line Discount %" / 100));
+        PurchaseLine.TestField("Line Amount",
+          Round(PurchaseLine.Quantity * PurchaseLine."Direct Unit Cost") - PurchaseLine."Line Discount Amount");
     end;
 
     [Test]
@@ -1023,10 +1064,14 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
 
         Initialize();
         CreateServInvWithLineDiscAndPricesInclVAT(ServiceLine);
-        CreateNewVATPostingSetupBasedOnExisting(VATPostingSetup, ServiceLine."VAT Bus. Posting Group", ServiceLine."VAT Prod. Posting Group", ServiceLine."VAT %");
+        CreateNewVATPostingSetupBasedOnExisting(
+          VATPostingSetup, ServiceLine."VAT Bus. Posting Group", ServiceLine."VAT Prod. Posting Group", ServiceLine."VAT %");
         ServiceLine.Validate("VAT Prod. Posting Group", VATPostingSetup."VAT Prod. Posting Group");
-        ServiceLine.TestField("Line Discount Amount", Round(Round(ServiceLine.Quantity * ServiceLine."Unit Price") * ServiceLine."Line Discount %" / 100));
-        ServiceLine.TestField("Line Amount", Round(ServiceLine.Quantity * ServiceLine."Unit Price") - ServiceLine."Line Discount Amount");
+        ServiceLine.TestField("Line Discount Amount",
+          Round(
+            Round(ServiceLine.Quantity * ServiceLine."Unit Price") * ServiceLine."Line Discount %" / 100));
+        ServiceLine.TestField("Line Amount",
+          Round(ServiceLine.Quantity * ServiceLine."Unit Price") - ServiceLine."Line Discount Amount");
     end;
 
     local procedure Initialize()
@@ -1127,6 +1172,7 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
     local procedure CreateItem(var Item: Record Item)
     var
         VATPostingSetup: Record "VAT Posting Setup";
+        LibraryInventory: Codeunit "Library - Inventory";
     begin
         // Using Random and value is not important for Test Case.
         FindVATPostingSetup(VATPostingSetup);
@@ -1156,7 +1202,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         // Using Random values for calculation. Quantity will always be greater than 2 in Partial Scenario.
         CreatePurchaseHeader(PurchaseHeader, DocumentType, VendorNo, '', PricesIncludingVAT);
         CreateItem(Item);
-        LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, Item."No.", 2 + LibraryRandom.RandInt(10));
+        LibraryPurchase.CreatePurchaseLine(
+          PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, Item."No.", 2 + LibraryRandom.RandInt(10));
         Amount := PurchaseLine.Quantity * Item."Unit Price" * PurchaseLine."VAT %" / 100;
         PurchCalcDiscount.CalculateInvoiceDiscount(PurchaseHeader, PurchaseLine);
     end;
@@ -1193,7 +1240,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         SalesHeader: Record "Sales Header";
     begin
         CreateSalesHeader(SalesHeader, SalesHeader."Document Type"::Invoice, LibrarySales.CreateCustomerNo(), '', true);
-        LibrarySales.CreateSalesLine(SalesLine, SalesHeader, SalesLine.Type::Item, LibraryInventory.CreateItemNo(), LibraryRandom.RandInt(10));
+        LibrarySales.CreateSalesLine(
+          SalesLine, SalesHeader, SalesLine.Type::Item, LibraryInventory.CreateItemNo(), LibraryRandom.RandInt(10));
         SalesLine.Validate("Unit Price", LibraryRandom.RandDec(100, 2));
         SalesLine.Validate("Line Discount %", LibraryRandom.RandIntInRange(3, 10));
         SalesLine.Modify(true);
@@ -1204,7 +1252,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         PurchaseHeader: Record "Purchase Header";
     begin
         CreatePurchaseHeader(PurchaseHeader, PurchaseHeader."Document Type"::Invoice, LibraryPurchase.CreateVendorNo(), '', true);
-        LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, LibraryInventory.CreateItemNo(), LibraryRandom.RandInt(10));
+        LibraryPurchase.CreatePurchaseLine(
+          PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, LibraryInventory.CreateItemNo(), LibraryRandom.RandInt(10));
         PurchaseLine.Validate("Direct Unit Cost", LibraryRandom.RandDec(100, 2));
         PurchaseLine.Validate("Line Discount %", LibraryRandom.RandIntInRange(3, 10));
         PurchaseLine.Modify(true);
@@ -1217,7 +1266,8 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibraryService.CreateServiceHeader(ServiceHeader, ServiceHeader."Document Type"::Invoice, LibrarySales.CreateCustomerNo());
         ServiceHeader.Validate("Prices Including VAT", true);
         ServiceHeader.Modify(true);
-        LibraryService.CreateServiceLine(ServiceLine, ServiceHeader, ServiceLine.Type::Item, LibraryInventory.CreateItemNo());
+        LibraryService.CreateServiceLine(
+          ServiceLine, ServiceHeader, ServiceLine.Type::Item, LibraryInventory.CreateItemNo());
         ServiceLine.Validate(Quantity, LibraryRandom.RandInt(10));
         ServiceLine.Validate("Unit Price", LibraryRandom.RandDec(100, 2));
         ServiceLine.Validate("Line Discount %", LibraryRandom.RandIntInRange(3, 10));
@@ -1273,7 +1323,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
           PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, Item."No.", LibraryRandom.RandInt(10));
         PurchaseLine.Validate("Direct Unit Cost", DirectUnitCost);
         PurchaseLine.Modify(true);
-        VATAmount := Round(PurchaseLine.Quantity * DirectUnitCost * PurchaseLine."VAT %" / (100 + PurchaseLine."VAT %"), Currency."Amount Rounding Precision");
+        VATAmount :=
+          Round(PurchaseLine.Quantity * DirectUnitCost * PurchaseLine."VAT %" / (100 + PurchaseLine."VAT %"),
+            Currency."Amount Rounding Precision");
         OnAfterCreateSingleLinePurchaseDoc(PurchaseHeader, PurchaseLine);
     end;
 
@@ -1287,7 +1339,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibrarySales.CreateSalesLine(SalesLine, SalesHeader, SalesLine.Type::Item, Item."No.", LibraryRandom.RandInt(10));
         SalesLine.Validate("Unit Price", UnitPrice);
         SalesLine.Modify(true);
-        VATAmount := Round(SalesLine.Quantity * SalesLine."Unit Price" * SalesLine."VAT %" / (100 + SalesLine."VAT %"), Currency."Amount Rounding Precision");
+        VATAmount :=
+          Round(SalesLine.Quantity * SalesLine."Unit Price" * SalesLine."VAT %" / (100 + SalesLine."VAT %"),
+            Currency."Amount Rounding Precision");
     end;
 
     local procedure CreateInvoiceDiscForVendor(VendorNo: Code[20]): Code[20]
@@ -1372,7 +1426,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         LibraryUtility: Codeunit "Library - Utility";
     begin
         // Create Random Vendor Invoice No for Remaining Quantity.
-        PurchaseHeader.Validate("Vendor Invoice No.", LibraryUtility.GenerateRandomCode(PurchaseHeader.FieldNo("Vendor Invoice No."), DATABASE::"Purchase Header"));
+        PurchaseHeader.Validate(
+          "Vendor Invoice No.",
+          LibraryUtility.GenerateRandomCode(PurchaseHeader.FieldNo("Vendor Invoice No."), DATABASE::"Purchase Header"));
         PurchaseHeader.Modify(true);
         LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, true);
     end;
@@ -1451,7 +1507,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         VATAmountLine: Record "VAT Amount Line";
     begin
         GeneralLedgerSetup.Get();
-        Assert.AreNearlyEqual(Amount, VATAmountLineDiscount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, VATAmountLine.FieldCaption("Invoice Discount Amount"), Amount, VATAmountLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          Amount, VATAmountLineDiscount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)",
+          StrSubstNo(AmtErrorMessage, VATAmountLine.FieldCaption("Invoice Discount Amount"), Amount, VATAmountLine.TableCaption()));
     end;
 
     local procedure VerifyPurchCMAmountInclVAT(DocumentNo: Code[20]; AmountIncludingVAT: Decimal)
@@ -1466,7 +1524,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += PurchCrMemoLine."Amount Including VAT";
         until PurchCrMemoLine.Next() = 0;
-        Assert.AreNearlyEqual(AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, PurchCrMemoLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchCrMemoLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(
+            AmtErrorMessage, PurchCrMemoLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchCrMemoLine.TableCaption()));
     end;
 
     local procedure VerifyPurchOrderAmountInclVAT(DocumentNo: Code[20]; AmountIncludingVAT: Decimal)
@@ -1481,7 +1541,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += PurchInvLine."Amount Including VAT";
         until PurchInvLine.Next() = 0;
-        Assert.AreNearlyEqual(AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, PurchInvLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchInvLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)",
+          StrSubstNo(AmtErrorMessage, PurchInvLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, PurchInvLine.TableCaption()));
     end;
 
     local procedure VerifySalesOrderAmountInclVAT(DocumentNo: Code[20]; AmountIncludingVAT: Decimal)
@@ -1496,7 +1558,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += SalesInvoiceLine."Amount Including VAT";
         until SalesInvoiceLine.Next() = 0;
-        Assert.AreNearlyEqual(AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, SalesInvoiceLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, SalesInvoiceLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmtErrorMessage,
+            SalesInvoiceLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, SalesInvoiceLine.TableCaption()));
     end;
 
     local procedure VerifySalesCMAmountInclVAT(DocumentNo: Code[20]; AmountIncludingVAT: Decimal)
@@ -1511,7 +1575,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += SalesCrMemoLine."Amount Including VAT";
         until SalesCrMemoLine.Next() = 0;
-        Assert.AreNearlyEqual(AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, SalesCrMemoLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, SalesCrMemoLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          AmountIncludingVAT, Amount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(
+            AmtErrorMessage, SalesCrMemoLine.FieldCaption("Amount Including VAT"), AmountIncludingVAT, SalesCrMemoLine.TableCaption()));
     end;
 
     local procedure VerifyGLAndVATEntry(PostedDocumentNo: Code[20]; GLAccountNo: Code[20]; DocumentType: Enum "Gen. Journal Document Type"; VATAmount: Decimal)
@@ -1534,7 +1600,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += GLEntry.Amount;
         until GLEntry.Next() = 0;
-        Assert.AreNearlyEqual(GLEntryAmount, Amount, GeneralLedgerSetup."Amount Rounding Precision", StrSubstNo(AmountErr, GLEntry.FieldCaption(Amount), GLEntryAmount, GLEntry.TableCaption()));
+        Assert.AreNearlyEqual(
+          GLEntryAmount, Amount, GeneralLedgerSetup."Amount Rounding Precision",
+          StrSubstNo(AmountError, GLEntry.FieldCaption(Amount), GLEntryAmount, GLEntry.TableCaption()));
     end;
 
     local procedure VerifyVATAmount(Amount: Decimal; VATAmountLineDiscount: Decimal)
@@ -1543,7 +1611,9 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         VATAmountLine: Record "VAT Amount Line";
     begin
         GeneralLedgerSetup.Get();
-        Assert.AreNearlyEqual(Amount, VATAmountLineDiscount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)", StrSubstNo(AmountErr, VATAmountLine.FieldCaption("VAT Amount"), Amount, VATAmountLine.TableCaption()));
+        Assert.AreNearlyEqual(
+          Amount, VATAmountLineDiscount, GeneralLedgerSetup."Inv. Rounding Precision (LCY)",
+          StrSubstNo(AmtErrorMessage, VATAmountLine.FieldCaption("VAT Amount"), Amount, VATAmountLine.TableCaption()));
     end;
 
     local procedure VerifyVATEntry(DocumentNo: Code[20]; DocumentType: Enum "Gen. Journal Document Type"; VATEntryAmount: Decimal)
@@ -1559,15 +1629,21 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
         repeat
             Amount += VATEntry.Amount;
         until VATEntry.Next() = 0;
-        Assert.AreNearlyEqual(VATEntryAmount, Amount, GeneralLedgerSetup."Amount Rounding Precision", StrSubstNo(AmountErr, VATEntry.FieldCaption(Amount), VATEntryAmount, VATEntry.TableCaption()));
+        Assert.AreNearlyEqual(
+          VATEntryAmount, Amount, GeneralLedgerSetup."Amount Rounding Precision",
+          StrSubstNo(AmountError, VATEntry.FieldCaption(Amount), VATEntryAmount, VATEntry.TableCaption()));
     end;
 
-    local procedure VerifyVATAmountLine(var VATAmountLine: Record "VAT Amount Line"; VATPct: Decimal; VATBase: Decimal; VATAmount: Decimal)
+    local procedure VerifyVATAmountLine(VATAmountLine: Record "VAT Amount Line"; VATPct: Decimal; VATBase: Decimal; VATAmount: Decimal)
     begin
         VATAmountLine.SetRange("VAT %", VATPct);
         VATAmountLine.FindFirst();
-        Assert.AreEqual(VATBase, VATAmountLine."VAT Base", StrSubstNo(AmountErr, VATAmountLine.FieldCaption("VAT Base"), VATBase, VATAmountLine.TableCaption()));
-        Assert.AreEqual(VATAmount, VATAmountLine."VAT Amount", StrSubstNo(AmountErr, VATAmountLine.FieldCaption("VAT Amount"), VATAmount, VATAmountLine.TableCaption()));
+        Assert.AreEqual(
+          VATBase, VATAmountLine."VAT Base", StrSubstNo(AmountError, VATAmountLine.FieldCaption("VAT Base"), VATBase,
+            VATAmountLine.TableCaption()));
+        Assert.AreEqual(
+          VATAmount, VATAmountLine."VAT Amount", StrSubstNo(AmountError, VATAmountLine.FieldCaption("VAT Amount"),
+            VATAmount, VATAmountLine.TableCaption()));
     end;
 
 #if not CLEAN26
@@ -1640,3 +1716,4 @@ codeunit 134046 "ERM Prices Incl VAT Doc"
     begin
     end;
 }
+

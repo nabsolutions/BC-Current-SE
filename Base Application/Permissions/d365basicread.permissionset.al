@@ -218,9 +218,6 @@ permissionset 209 "D365 Basic - Read"
                   tabledata "Acc. Schedule Line Entity" = R,
                   tabledata "Acc. Schedule Name" = R,
                   tabledata "Financial Report" = R,
-                  tabledata "Financial Report Export Log" = R,
-                  tabledata "Financial Report Recipient" = R,
-                  tabledata "Financial Report Schedule" = R,
                   tabledata "Financial Report User Filters" = R,
                   tabledata "Fin. Report Excel Template" = R,
                   tabledata "Account Schedules Chart Setup" = R,
@@ -646,15 +643,21 @@ permissionset 209 "D365 Basic - Read"
                   tabledata "Purch. Cr. Memo Entity Buffer" = R,
                   tabledata "Purch. Inv. Entity Aggregate" = R,
                   tabledata "Purch. Inv. Line Aggregate" = R,
+#if not CLEAN25
                   tabledata "Purch. Price Line Disc. Buff." = R,
+#endif
                   tabledata "Purchase Cue" = R,
                   tabledata "Purchase Discount Access" = R,
                   tabledata "Purchase Header" = R,
                   tabledata "Purchase Line" = R,
+#if not CLEAN25
                   tabledata "Purchase Line Discount" = R,
+#endif
                   tabledata "Purchase Order Entity Buffer" = R,
                   tabledata "Purchase Prepayment %" = R,
+#if not CLEAN25
                   tabledata "Purchase Price" = R,
+#endif
                   tabledata "Purchase Price Access" = R,
                   tabledata "Purchases & Payables Setup" = R,
                   tabledata "RapidStart Services Cue" = R,
@@ -724,12 +727,18 @@ permissionset 209 "D365 Basic - Read"
                   tabledata "Sales Invoice Header" = r,
                   tabledata "Sales Invoice Line Aggregate" = R,
                   tabledata "Sales Line" = R,
+#if not CLEAN25
                   tabledata "Sales Line Discount" = R,
+#endif
                   tabledata "Sales Order Entity Buffer" = R,
                   tabledata "Sales Prepayment %" = R,
+#if not CLEAN25
                   tabledata "Sales Price" = R,
+#endif
                   tabledata "Sales Price Access" = R,
+#if not CLEAN25
                   tabledata "Sales Price and Line Disc Buff" = R,
+#endif
                   tabledata "Sales Quote Entity Buffer" = R,
                   tabledata "Sales Shipment Buffer" = R,
                   tabledata "Salesperson/Purchaser" = R,
@@ -741,8 +750,6 @@ permissionset 209 "D365 Basic - Read"
                   tabledata "Sent Notification Entry" = R,
                   tabledata "SEPA Direct Debit Mandate" = R,
                   tabledata "Service Connection" = R,
-                  tabledata "Sheet Definition Name" = R,
-                  tabledata "Sheet Definition Line" = R,
                   tabledata "Ship-to Address" = R,
                   tabledata "Shipment Method" = R,
                   tabledata "Shipment Method Translation" = R,

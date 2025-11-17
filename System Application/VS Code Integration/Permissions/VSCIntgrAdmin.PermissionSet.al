@@ -6,8 +6,8 @@
 namespace System.Integration;
 
 using System.Apps;
-using System.Reflection;
 using System.Tooling;
+using System.Reflection;
 
 permissionset 8335 "VSC Intgr. - Admin"
 {

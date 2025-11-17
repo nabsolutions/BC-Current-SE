@@ -237,6 +237,15 @@ codeunit 5701 "Item Subst."
             until ItemSubstitution.Next() = 0;
     end;
 
+#if not CLEAN25
+    [Obsolete('Moved to codeunit ServItemSubstitution', '25.0')]
+    procedure ItemServiceSubstGet(var ServiceLine2: Record Microsoft.Service.Document."Service Line")
+    var
+        ServItemSubstitution: Codeunit Microsoft.Service.Item."Serv. Item Substitution";
+    begin
+        ServItemSubstitution.ItemServiceSubstGet(ServiceLine2);
+    end;
+#endif
 
     local procedure GetSetupData()
     begin

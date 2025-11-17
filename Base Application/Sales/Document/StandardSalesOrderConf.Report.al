@@ -347,6 +347,20 @@ report 1305 "Standard Sales - Order Conf."
             column(VATRegistrationNo_Lbl; GetCustomerVATRegistrationNumberLbl())
             {
             }
+#if not CLEAN25
+            column(GlobalLocationNumber; '')
+            {
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Not in use anymore.';
+                ObsoleteTag = '25.0';
+            }
+            column(GlobalLocationNumber_Lbl; '')
+            {
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Not in use anymore.';
+                ObsoleteTag = '25.0';
+            }
+#endif
             column(SellToFaxNo; GetSellToCustomerFaxNo())
             {
             }
@@ -1318,3 +1332,4 @@ report 1305 "Standard Sales - Order Conf."
     begin
     end;
 }
+

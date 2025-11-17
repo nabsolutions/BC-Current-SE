@@ -323,7 +323,6 @@ table 81 "Gen. Journal Line"
         }
         field(10; "VAT %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'VAT %';
             DecimalPlaces = 0 : 5;
             Editable = false;
@@ -567,7 +566,6 @@ table 81 "Gen. Journal Line"
         field(16; "Amount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Amount (LCY)';
 
             trigger OnValidate()
@@ -610,13 +608,11 @@ table 81 "Gen. Journal Line"
         field(17; "Balance (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Balance (LCY)';
             Editable = false;
         }
         field(18; "Currency Factor"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Currency Factor';
             DecimalPlaces = 0 : 15;
             Editable = false;
@@ -632,19 +628,16 @@ table 81 "Gen. Journal Line"
         field(19; "Sales/Purch. (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Sales/Purch. (LCY)';
         }
         field(20; "Profit (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Profit (LCY)';
         }
         field(21; "Inv. Discount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Inv. Discount (LCY)';
         }
         field(22; "Bill-to/Pay-to No."; Code[20])
@@ -932,7 +925,6 @@ table 81 "Gen. Journal Line"
         }
         field(40; "Payment Discount %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Payment Discount %';
             DecimalPlaces = 0 : 5;
             MaxValue = 100;
@@ -974,7 +966,6 @@ table 81 "Gen. Journal Line"
         }
         field(43; Quantity; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Quantity';
             DecimalPlaces = 0 : 5;
 
@@ -1375,7 +1366,6 @@ table 81 "Gen. Journal Line"
         }
         field(68; "Bal. VAT %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Bal. VAT %';
             DecimalPlaces = 0 : 5;
             Editable = false;
@@ -1897,7 +1887,6 @@ table 81 "Gen. Journal Line"
         }
         field(98; "FA Add.-Currency Factor"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'FA Add.-Currency Factor';
             DecimalPlaces = 0 : 15;
             MinValue = 0;
@@ -1934,7 +1923,6 @@ table 81 "Gen. Journal Line"
         }
         field(103; "VAT Base Discount %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'VAT Base Discount %';
             DecimalPlaces = 0 : 5;
             Editable = false;
@@ -1944,28 +1932,24 @@ table 81 "Gen. Journal Line"
         field(104; "VAT Amount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'VAT Amount (LCY)';
             Editable = false;
         }
         field(105; "VAT Base Amount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'VAT Base Amount (LCY)';
             Editable = false;
         }
         field(106; "Bal. VAT Amount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Bal. VAT Amount (LCY)';
             Editable = false;
         }
         field(107; "Bal. VAT Base Amount (LCY)"; Decimal)
         {
             AutoFormatType = 1;
-            AutoFormatExpression = '';
             Caption = 'Bal. VAT Base Amount (LCY)';
             Editable = false;
         }
@@ -2307,7 +2291,6 @@ table 81 "Gen. Journal Line"
         field(1004; "Job Quantity"; Decimal)
         {
             AccessByPermission = TableData Job = R;
-            AutoFormatType = 0;
             Caption = 'Project Quantity';
             DecimalPlaces = 0 : 5;
 
@@ -2324,7 +2307,6 @@ table 81 "Gen. Journal Line"
         field(1005; "Job Unit Cost (LCY)"; Decimal)
         {
             AccessByPermission = TableData Job = R;
-            AutoFormatExpression = '';
             AutoFormatType = 2;
             Caption = 'Project Unit Cost (LCY)';
             Editable = false;
@@ -2332,7 +2314,6 @@ table 81 "Gen. Journal Line"
         field(1006; "Job Line Discount %"; Decimal)
         {
             AccessByPermission = TableData Job = R;
-            AutoFormatType = 0;
             Caption = 'Project Line Discount %';
 
             trigger OnValidate()
@@ -2472,7 +2453,6 @@ table 81 "Gen. Journal Line"
         }
         field(1018; "Job Currency Factor"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Project Currency Factor';
         }
         field(1019; "Job Currency Code"; Code[10])
@@ -2537,7 +2517,6 @@ table 81 "Gen. Journal Line"
         field(1030; "Job Remaining Qty."; Decimal)
         {
             AccessByPermission = TableData Job = R;
-            AutoFormatType = 0;
             Caption = 'Project Remaining Qty.';
             DecimalPlaces = 0 : 5;
 
@@ -2886,7 +2865,6 @@ table 81 "Gen. Journal Line"
         }
         field(6200; "Non-Deductible VAT %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Non-Deductible VAT %';
             DecimalPlaces = 0 : 5;
             Editable = false;
@@ -2949,7 +2927,6 @@ table 81 "Gen. Journal Line"
         }
         field(6209; "Bal. Non-Ded. VAT %"; Decimal)
         {
-            AutoFormatType = 0;
             Caption = 'Bal. Non-Deductible VAT %';
             DecimalPlaces = 0 : 5;
             Editable = false;
@@ -6566,8 +6543,29 @@ table 81 "Gen. Journal Line"
         OnAfterCopyGenJnlLineFromSalesHeaderPayment(SalesHeader, Rec);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CopyToGenJournalLine() in table Service Header', '25.0')]
+    procedure CopyFromServiceHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        ServiceHeader.CopyToGenJournalLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CopyToGenJournalLineApplyTo() in table Service Header', '25.0')]
+    procedure CopyFromServiceHeaderApplyTo(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        ServiceHeader.CopyToGenJournalLineApplyTo(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure CopyToGenJournalLinePayment() in table Service Header', '25.0')]
+    procedure CopyFromServiceHeaderPayment(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        ServiceHeader.CopyToGenJournalLinePayment(Rec);
+    end;
+#endif
 
     procedure CopyFromPaymentCustLedgEntry(CustLedgEntry: Record "Cust. Ledger Entry")
     begin
@@ -6812,10 +6810,6 @@ table 81 "Gen. Journal Line"
     begin
     end;
 
-    [IntegrationEvent(true, false)]
-    procedure OnCheckGenJournalLineExportRestrictions()
-    begin
-    end;
 
     procedure NeedCheckZeroAmount(): Boolean
     begin
@@ -8014,8 +8008,44 @@ table 81 "Gen. Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyGenJnlLineFromServHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+        OnAfterCopyGenJnlLineFromServHeader(ServiceHeader, GenJournalLine);
+    end;
 
+    [Obsolete('Replaced by event OnAfterCopyToGenJnlLine in table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyGenJnlLineFromServHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyGenJnlLineFromServHeaderApplyTo(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+        OnAfterCopyGenJnlLineFromServHeaderApplyTo(ServiceHeader, GenJournalLine);
+    end;
+
+    [Obsolete('Replaced by event OnAfterCopyToGenJnlLineApplyTo in table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyGenJnlLineFromServHeaderApplyTo(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnAfterCopyGenJnlLineFromServHeaderPayment(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+        OnAfterCopyGenJnlLineFromServHeaderPayment(ServiceHeader, GenJournalLine);
+    end;
+
+    [Obsolete('Replaced by event OnAfterCopyToGenJnlLinePayment in table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyGenJnlLineFromServHeaderPayment(ServiceHeader: Record Microsoft.Service.Document."Service Header"; var GenJournalLine: Record "Gen. Journal Line")
+    begin
+    end;
+#endif
 
     /// <summary>
     /// Event triggered after copying data from a prepayment invoice line buffer to the general journal line.

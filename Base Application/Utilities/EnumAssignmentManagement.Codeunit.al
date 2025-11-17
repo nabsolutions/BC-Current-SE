@@ -72,6 +72,15 @@ codeunit 500 "Enum Assignment Management"
         end;
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by sane procedure in codeunit ServDocExchangeMgt', '25.0')]
+    procedure GetServiceIncomingDocumentType(ServiceDocumentType: Enum Microsoft.Service.Document."Service Document Type") IncomingDocumentType: Enum "Incoming Document Type"
+    var
+        ServDocExchangeMgt: Codeunit "Serv. Doc. Exchange Mgt.";
+    begin
+        exit(ServDocExchangeMgt.GetServiceIncomingDocumentType(ServiceDocumentType));
+    end;
+#endif
 
     procedure GetPurchApprovalDocumentType(PurchDocumentType: Enum "Purchase Document Type") ApprovalDocumentType: Enum "Approval Document Type"
     var
@@ -207,3 +216,4 @@ codeunit 500 "Enum Assignment Management"
     begin
     end;
 }
+

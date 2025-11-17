@@ -4,8 +4,6 @@ using System;
 
 codeunit 3040 DotNet_XsltArgumentList
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

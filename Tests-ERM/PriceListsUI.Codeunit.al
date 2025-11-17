@@ -1,4 +1,4 @@
-﻿codeunit 134117 "Price Lists UI"
+codeunit 134117 "Price Lists UI"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -23,7 +23,9 @@
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryUtility: Codeunit "Library - Utility";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
+#if not CLEAN25
         FeatureIsOffErr: Label 'This page is used by a feature that is not enabled.';
+#endif
         IsInitialized: Boolean;
         CreateNewTxt: Label 'Create New...';
         ViewExistingTxt: Label 'View Existing Prices and Discounts...';
@@ -140,7 +142,10 @@
         Assert.IsFalse(SalesPriceLists.Next(), 'found 4th');
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T003_SalesPriceListsDiscountsFromCustomersList()
     var
         Customer: array[2] of Record Customer;
@@ -188,7 +193,8 @@
         SalesPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(SalesPriceLists.Next(), 'found third');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T004_SalesPriceLinesFromCustomersCard()
     var
@@ -383,7 +389,10 @@
         Assert.IsFalse(PriceListLineReview.Next(), 'found 2nd');
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T008_SalesPriceListsDiscForDiscGroupFromCustomersCard()
     var
         Customer: array[2] of Record Customer;
@@ -445,7 +454,8 @@
         SalesPriceLists.SourceNo.AssertEquals(PriceListHeader[5]."Source No.");
         Assert.IsFalse(SalesPriceLists.Next(), 'found fourth');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T009_SalesDisounctLinesForDiscGroupFromCustomerDiscountGroups()
     var
@@ -863,12 +873,17 @@
 
         // [THEN] "Sales Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(CustomerCard.PriceLists.Visible(), 'PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(CustomerCard.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(CustomerCard.Prices.Visible(), 'Prices. Visible');
         Assert.IsFalse(CustomerCard."Line Discounts".Visible(), 'Line Discounts. Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T021_CustomerCardPriceListsActionNotVisibleIfFeatureOff()
     var
         CustomerCard: TestPage "Customer Card";
@@ -885,6 +900,8 @@
         Assert.IsTrue(CustomerCard.Prices.Visible(), 'Prices. not Visible');
         Assert.IsTrue(CustomerCard."Line Discounts".Visible(), 'Line Discounts. not Visible');
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T022_CustomerListPriceListsActionVisibleIfFeatureOn()
@@ -899,12 +916,17 @@
 
         // [THEN] "Sales Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(CustomerList.PriceLists.Visible(), 'PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(CustomerList.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(CustomerList.Prices_Prices.Visible(), 'Prices_Prices. Visible');
         Assert.IsFalse(CustomerList.Prices_LineDiscounts.Visible(), 'Prices_LineDiscounts. Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T023_CustomerListPriceListsActionNotVisibleIfFeatureOff()
     var
         CustomerList: TestPage "Customer List";
@@ -923,6 +945,7 @@
     end;
 
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T024_SalesPriceListsPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -934,6 +957,7 @@
     end;
 
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T025_SalesPriceListPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -943,6 +967,8 @@
         asserterror Page.Run(Page::"Sales Price List");
         Assert.ExpectedError(FeatureIsOffErr);
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T026_SalesPriceListPageAllowDiscountsOn()
@@ -1871,7 +1897,10 @@
         Assert.IsFalse(PurchasePriceLists.Next(), 'found 4th');
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T053_PurchasePriceListsDiscountsFromVendorsList()
     var
         Vendor: array[2] of Record Vendor;
@@ -1919,7 +1948,8 @@
         PurchasePriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(PurchasePriceLists.Next(), 'found third');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T054_PurchasePriceLinesFromVendorsCard()
     var
@@ -2326,12 +2356,17 @@
 
         // [THEN] "Purchase Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(VendorCard.PriceLists.Visible(), 'PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(VendorCard.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(VendorCard.Prices.Visible(), 'Prices. Visible');
         Assert.IsFalse(VendorCard."Line Discounts".Visible(), 'Line Discounts. Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T071_VendorCardPriceListsActionNotVisibleIfFeatureOff()
     var
         VendorCard: TestPage "Vendor Card";
@@ -2348,6 +2383,8 @@
         Assert.IsTrue(VendorCard.Prices.Visible(), 'Prices. not Visible');
         Assert.IsTrue(VendorCard."Line Discounts".Visible(), 'Line Discounts. not Visible');
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T072_VendorListPriceListsActionVisibleIfFeatureOn()
@@ -2362,12 +2399,17 @@
 
         // [THEN] "Purchase Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(VendorList.PriceLists.Visible(), 'PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(VendorList.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(VendorList.Prices.Visible(), 'Prices_Prices. Visible');
         Assert.IsFalse(VendorList."Line Discounts".Visible(), 'Prices_LineDiscounts. Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T073_VendorListPriceListsActionNotVisibleIfFeatureOff()
     var
         VendorList: TestPage "Vendor List";
@@ -2386,6 +2428,7 @@
     end;
 
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T074_PurchPriceListsPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -2397,6 +2440,7 @@
     end;
 
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T075_PurchPriceListPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -2406,6 +2450,8 @@
         asserterror Page.Run(Page::"Purchase Price List");
         Assert.ExpectedError(FeatureIsOffErr);
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T076_PurchPriceListPageAllowDiscountsOn()
@@ -2669,7 +2715,10 @@
         Assert.IsFalse(SalesJobPriceLists.Next(), 'found 5th');
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T103_SalesJobPriceListsDiscountsFromJobsList()
     var
         Job: array[2] of Record Job;
@@ -2717,7 +2766,8 @@
         SalesJobPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(SalesJobPriceLists.Next(), 'found third');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T104_SalesJobPricesFromJobsCard()
     var
@@ -2853,14 +2903,19 @@
         // [THEN] "Sales/Purchase Price Lists" actions are visible, old actions are not visible
         Assert.IsTrue(JobCard.SalesPriceLists.Visible(), 'S.PriceLists. not Visible');
         Assert.IsTrue(JobCard.PurchasePriceLists.Visible(), 'P.PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(JobCard.SalesPriceListsDiscounts.Visible(), 'S.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobCard.PurchasePriceListsDiscounts.Visible(), 'P.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobCard."&Resource".Visible(), '"&Resource". Visible');
         Assert.IsFalse(JobCard."&Item".Visible(), '"&Item". Visible');
         Assert.IsFalse(JobCard."&G/L Account".Visible(), '"&G/L Account". Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T121_JobCardPriceListsActionNotVisibleIfFeatureOff()
     var
         JobCard: TestPage "Job Card";
@@ -2880,6 +2935,8 @@
         Assert.IsTrue(JobCard."&Item".Visible(), '"&Item". not Visible');
         Assert.IsTrue(JobCard."&G/L Account".Visible(), '"&G/L Account". not Visible');
     end;
+#pragma warning restore AS0072
+#endif
 
     [Test]
     procedure T122_JobListPriceListsActionVisibleIfFeatureOn()
@@ -2895,14 +2952,19 @@
         // [THEN] "Sales/Purchase Price Lists" actions are visible, old actions are not visible
         Assert.IsTrue(JobList.SalesPriceLists.Visible(), 'S.PriceLists. not Visible');
         Assert.IsTrue(JobList.PurchasePriceLists.Visible(), 'P.PriceLists. not Visible');
+#if not CLEAN25
         Assert.IsFalse(JobList.SalesPriceListsDiscounts.Visible(), 'S.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobList.PurchasePriceListsDiscounts.Visible(), 'P.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobList."&Resource".Visible(), '"&Resource". Visible');
         Assert.IsFalse(JobList."&Item".Visible(), '"&Item". Visible');
         Assert.IsFalse(JobList."&G/L Account".Visible(), '"&G/L Account". Visible');
+#endif
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T123_JobListPriceListsActionNotVisibleIfFeatureOff()
     var
         JobList: TestPage "Job List";
@@ -2922,7 +2984,8 @@
         Assert.IsTrue(JobList."&Item".Visible(), '"&Item". not Visible');
         Assert.IsTrue(JobList."&G/L Account".Visible(), '"&G/L Account". not Visible');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T124_JobCardFactBoxPricesIfFeatureOn()
     var
@@ -3155,7 +3218,10 @@
         Assert.IsFalse(PurchaseJobPriceLists.Next(), 'found 5th');
     end;
 
+#if not CLEAN25
+#pragma warning disable AS0072
     [Test]
+    [Obsolete('Not Used.', '23.0')]
     procedure T153_PurchaseJobPriceListsDiscountsFromJobList()
     var
         Job: array[2] of Record Job;
@@ -3203,7 +3269,8 @@
         PurchaseJobPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(PurchaseJobPriceLists.Next(), 'found third');
     end;
-
+#pragma warning restore AS0072
+#endif
     [Test]
     procedure T154_PurchaseJobPricesFromJobsCard()
     var

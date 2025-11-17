@@ -2492,6 +2492,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "SI1" has one attachment in factbox
         SalesHeader.Get(SalesHeader."Document Type"::Invoice, SalesHeaders[1]);
         SalesInvoiceList.Filter.SetFilter("No.", SalesHeader."No.");
+#if not CLEAN25
+        SalesInvoiceList.AttachedDocuments.Documents.AssertEquals(1);
+#endif
         Assert.IsTrue(SalesInvoiceList."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', SalesInvoiceList."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', SalesInvoiceList."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2500,6 +2503,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "SI2" has two attachments in factbox
         SalesHeader.Get(SalesHeader."Document Type"::Invoice, SalesHeaders[2]);
         SalesInvoiceList.Filter.SetFilter("No.", SalesHeader."No.");
+#if not CLEAN25
+        SalesInvoiceList.AttachedDocuments.Documents.AssertEquals(2);
+#endif
         Assert.IsTrue(SalesInvoiceList."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', SalesInvoiceList."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', SalesInvoiceList."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2539,6 +2545,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "SCM1" has one attachment in factbox
         SalesHeader.Get(SalesHeader."Document Type"::"Credit Memo", SalesHeaders[1]);
         SalesCreditMemos.Filter.SetFilter("No.", SalesHeader."No.");
+#if not CLEAN25
+        SalesCreditMemos.AttachedDocuments.Documents.AssertEquals(1);
+#endif
         Assert.IsTrue(SalesCreditMemos."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', SalesCreditMemos."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', SalesCreditMemos."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2547,6 +2556,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "SCM2" has two attachments in factbox
         SalesHeader.Get(SalesHeader."Document Type"::"Credit Memo", SalesHeaders[2]);
         SalesCreditMemos.Filter.SetFilter("No.", SalesHeader."No.");
+#if not CLEAN25
+        SalesCreditMemos.AttachedDocuments.Documents.AssertEquals(2);
+#endif
         Assert.IsTrue(SalesCreditMemos."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', SalesCreditMemos."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', SalesCreditMemos."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2586,6 +2598,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "PI1" has one attachment in factbox
         PurchaseHeader.Get(PurchaseHeader."Document Type"::Invoice, PurchaseHeaders[1]);
         PurchaseInvoices.Filter.SetFilter("No.", PurchaseHeader."No.");
+#if not CLEAN25
+        PurchaseInvoices.AttachedDocuments.Documents.AssertEquals(1);
+#endif
         Assert.IsTrue(PurchaseInvoices."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', PurchaseInvoices."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', PurchaseInvoices."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2594,6 +2609,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "PI2" has two attachments in factbox
         PurchaseHeader.Get(PurchaseHeader."Document Type"::Invoice, PurchaseHeaders[2]);
         PurchaseInvoices.Filter.SetFilter("No.", PurchaseHeader."No.");
+#if not CLEAN25
+        PurchaseInvoices.AttachedDocuments.Documents.AssertEquals(2);
+#endif
         Assert.IsTrue(PurchaseInvoices."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', PurchaseInvoices."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', PurchaseInvoices."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2633,6 +2651,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "PCM1" has one attachment in factbox
         PurchaseHeader.Get(PurchaseHeader."Document Type"::"Credit Memo", PurchaseHeaders[1]);
         PurchaseCreditMemos.Filter.SetFilter("No.", PurchaseHeader."No.");
+#if not CLEAN25
+        PurchaseCreditMemos.AttachedDocuments.Documents.AssertEquals(1);
+#endif
         Assert.IsTrue(PurchaseCreditMemos."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', PurchaseCreditMemos."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', PurchaseCreditMemos."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -2641,6 +2662,9 @@ codeunit 134776 "Document Attachment Tests"
         // [THEN] "PCM2" has two attachments in factbox
         PurchaseHeader.Get(PurchaseHeader."Document Type"::"Credit Memo", PurchaseHeaders[2]);
         PurchaseCreditMemos.Filter.SetFilter("No.", PurchaseHeader."No.");
+#if not CLEAN25
+        PurchaseCreditMemos.AttachedDocuments.Documents.AssertEquals(2);
+#endif
         Assert.IsTrue(PurchaseCreditMemos."Attached Documents List".First(), 'No attachments found');
         Assert.AreEqual('1', PurchaseCreditMemos."Attached Documents List".Name.Value(), 'Incorrect Name of attachments');
         Assert.AreEqual('txt', PurchaseCreditMemos."Attached Documents List"."File Extension".Value, 'Incorrect file extension of attachments');
@@ -4340,80 +4364,6 @@ codeunit 134776 "Document Attachment Tests"
             ExpectedRoutingFileName,
             DocumentAttachment."File Name" + '.' + DocumentAttachment."File Extension",
             StrSubstNo(ValueMustBeEqualErr, DocumentAttachment.FieldCaption("File Name"), ExpectedRoutingFileName, DocumentAttachment.TableCaption()));
-    end;
-
-    [Test]
-    procedure PostedSalesShipmentPrintWithAttachment()
-    var
-        SalesHeader: Record "Sales Header";
-        SalesShipmentHeader: Record "Sales Shipment Header";
-        DocumentAttachment: Record "Document Attachment";
-        PostedSalesShipment: TestPage "Posted Sales Shipment";
-    begin
-        // [SCENARIO 425426] Verify "Attach As PDF" action on posted sales shipment page makes new "Document Attachment" record.
-        Initialize();
-
-        // [GIVEN] Select "Sales - Shipment" report in report selections for Sales Shipment.
-        LibraryERM.SetupReportSelection("Report Selection Usage"::"S.Shipment", Report::"Sales - Shipment");
-
-        // [GIVEN] Create Sales Order.
-        LibrarySales.CreateSalesOrder(SalesHeader);
-
-        // [GIVEN] Post Sales Document.
-        SalesShipmentHeader.Get(LibrarySales.PostSalesDocument(SalesHeader, true, false));
-
-        // [GIVEN] Open Posted Sales Shipment.
-        PostedSalesShipment.OpenEdit();
-        PostedSalesShipment.Filter.SetFilter("No.", SalesShipmentHeader."No.");
-
-        // [WHEN] Invoke "Print to attachment" action on Posted Sales Shipment page.
-        PostedSalesShipment.AttachAsPDF.Invoke();
-
-        // [THEN] Verify new document attachment is created.
-        FindDocumentAttachment(DocumentAttachment, Database::"Sales Shipment Header", SalesShipmentHeader."No.", 0);
-        Assert.AreEqual(
-            GetExpectedAttachmentFileName(Report::"Sales - Shipment", SalesShipmentHeader."No."),
-            DocumentAttachment."File Name",
-            StrSubstNo(ValueMustBeEqualErr, DocumentAttachment.FieldCaption("File Name"), GetExpectedAttachmentFileName(Report::"Sales - Shipment", SalesShipmentHeader."No."), DocumentAttachment.TableCaption()));
-
-        LibraryNotificationMgt.RecallNotificationsForRecord(SalesShipmentHeader);
-    end;
-
-    [Test]
-    procedure PostedReturnReceiptPrintWithAttachment()
-    var
-        SalesHeader: Record "Sales Header";
-        ReturnReceiptHeader: Record "Return Receipt Header";
-        DocumentAttachment: Record "Document Attachment";
-        PostedReturnReceipt: TestPage "Posted Return Receipt";
-    begin
-        // [SCENARIO 425426] Verify "Attach As PDF" action on posted return receipt page makes new "Document Attachment" record.
-        Initialize();
-
-        // [GIVEN] Select "Sales - Return Receipt" report in report selections for Sales Return Receipt.
-        LibraryERM.SetupReportSelection("Report Selection Usage"::"S.Ret.Rcpt.", Report::"Sales - Return Receipt");
-
-        // [GIVEN] Create Sales Return Order.
-        LibrarySales.CreateSalesReturnOrder(SalesHeader);
-
-        // [GIVEN] Post Sales Document.
-        ReturnReceiptHeader.Get(LibrarySales.PostSalesDocument(SalesHeader, true, false));
-
-        // [GIVEN] Open Posted Return Receipt.
-        PostedReturnReceipt.OpenEdit();
-        PostedReturnReceipt.Filter.SetFilter("No.", ReturnReceiptHeader."No.");
-
-        // [WHEN] Invoke "Print to attachment" action on Posted Return Receipt page.
-        PostedReturnReceipt.AttachAsPDF.Invoke();
-
-        // [THEN] Verify new document attachment is created.
-        FindDocumentAttachment(DocumentAttachment, Database::"Return Receipt Header", ReturnReceiptHeader."No.", 0);
-        Assert.AreEqual(
-            GetExpectedAttachmentFileName(Report::"Sales - Return Receipt", ReturnReceiptHeader."No."),
-            DocumentAttachment."File Name",
-            StrSubstNo(ValueMustBeEqualErr, DocumentAttachment.FieldCaption("File Name"), GetExpectedAttachmentFileName(Report::"Sales - Return Receipt", ReturnReceiptHeader."No."), DocumentAttachment.TableCaption()));
-
-        LibraryNotificationMgt.RecallNotificationsForRecord(ReturnReceiptHeader);
     end;
 
     local procedure Initialize()

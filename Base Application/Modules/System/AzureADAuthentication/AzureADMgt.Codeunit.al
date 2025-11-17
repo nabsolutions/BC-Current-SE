@@ -1,4 +1,4 @@
-namespace System.Azure.Identity;
+﻿namespace System.Azure.Identity;
 
 using System;
 using System.Environment;
@@ -33,6 +33,16 @@ codeunit 6300 "Azure AD Mgt."
             AuthCodeUrl += '&resource=' + UrlEncode(ResourceName);
         AuthCodeUrl += '&redirect_uri=' + UrlEncode(GetRedirectUrl());
     end;
+#if not CLEAN25
+
+    [NonDebuggable]
+    [Obsolete('Replaced by AcquireTokenByAuthorizationCodeAsSecretText', '25.0')]
+    [Scope('OnPrem')]
+    procedure AcquireTokenByAuthorizationCode(AuthorizationCode: Text; ResourceUrl: Text) AccessToken: Text
+    begin
+        exit(AcquireTokenByAuthorizationCodeAsSecretText(AuthorizationCode, ResourceUrl).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure AcquireTokenByAuthorizationCodeAsSecretText(AuthorizationCode: SecretText; ResourceUrl: Text) AccessToken: SecretText
@@ -52,6 +62,16 @@ codeunit 6300 "Azure AD Mgt."
                 ResourceUrl);
         end;
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by GetAccessTokenAsSecretText', '25.0')]
+    procedure GetAccessToken(ResourceUrl: Text; ResourceName: Text; ShowDialog: Boolean) AccessToken: Text
+    begin
+        exit(GetAccessTokenAsSecretText(ResourceUrl, ResourceName, ShowDialog).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure GetAccessTokenAsSecretText(ResourceUrl: Text; ResourceName: Text; ShowDialog: Boolean) AccessToken: SecretText
@@ -92,6 +112,16 @@ codeunit 6300 "Azure AD Mgt."
             if AccessToken <> '' then
                 exit(AccessToken);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by GetOnBehalfAccessTokenAsSecretText(ResourceUrl: Text): SecretText', '25.0')]
+    procedure GetOnBehalfAccessToken(ResourceUrl: Text): Text
+    begin
+        exit(GetOnBehalfAccessTokenAsSecretText(ResourceUrl).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure GetOnBehalfAccessTokenAsSecretText(ResourceUrl: Text): SecretText
@@ -247,6 +277,19 @@ codeunit 6300 "Azure AD Mgt."
 
         exit(true);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by CreateExchangeServiceWrapperWithToken(Token: SecretText; var Service: DotNet ExchangeServiceWrapper)', '25.0')]
+    procedure CreateExchangeServiceWrapperWithToken(Token: Text; var Service: DotNet ExchangeServiceWrapper)
+    var
+        TokenAsSecretText: SecretText;
+    begin
+        TokenAsSecretText := Token;
+        CreateExchangeServiceWrapperWithToken(TokenAsSecretText, Service);
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure CreateExchangeServiceWrapperWithToken(Token: SecretText; var Service: DotNet ExchangeServiceWrapper)
@@ -273,6 +316,19 @@ codeunit 6300 "Azure AD Mgt."
         end else
             AccessToken := '';
     end;
+#if not CLEAN25
+
+    [TryFunction]
+    [NonDebuggable]
+    [Obsolete('Replaced by parameter with AccessToken: SecretText', '25.0')]
+    local procedure AcquireToken(ResourceName: Text; var AccessToken: Text)
+    var
+        AccessTokenAsSecretText: SecretText;
+    begin
+        AcquireToken(ResourceName, AccessTokenAsSecretText);
+        AccessToken := AccessTokenAsSecretText.Unwrap();
+    end;
+#endif
 
     [TryFunction]
     local procedure AcquireToken(ResourceName: Text; var AccessToken: SecretText)
@@ -307,3 +363,4 @@ codeunit 6300 "Azure AD Mgt."
         exit(GetLastErrorText());
     end;
 }
+

@@ -114,17 +114,17 @@ codeunit 9051 "ABS Client Impl."
         ABSOperationResponse: Codeunit "ABS Operation Response";
         Operation: Enum "ABS Operation";
         NextMarker, ResponseText : Text;
-        BlobPrefixNodeList, BlobNodeList : XmlNodeList;
+        NodeList: XmlNodeList;
     begin
         ABSOperationPayload.SetOperation(Operation::ListBlobs);
         ABSOperationPayload.SetOptionalParameters(ABSOptionalParameters);
 
         ABSOperationResponse := ABSWebRequestHelper.GetOperationAsText(ABSOperationPayload, ResponseText, StrSubstNo(ListBlobsContainercOperationNotSuccessfulErr, ABSOperationPayload.GetContainerName()));
 
-        ABSHelperLibrary.CreateBlobNodeListFromResponse(ResponseText, NextMarker, BlobPrefixNodeList, BlobNodeList);
+        NodeList := ABSHelperLibrary.CreateBlobNodeListFromResponse(ResponseText, NextMarker);
         ABSOperationResponse.SetNextMarker(NextMarker);
 
-        ABSHelperLibrary.BlobNodeListToTempRecord(BlobPrefixNodeList, BlobNodeList, ABSContainerContent);
+        ABSHelperLibrary.BlobNodeListToTempRecord(NodeList, ABSContainerContent);
 
         exit(ABSOperationResponse);
     end;
@@ -135,7 +135,7 @@ codeunit 9051 "ABS Client Impl."
         ABSOperationResponse: Codeunit "ABS Operation Response";
         Operation: Enum "ABS Operation";
         NextMarker, ResponseText : Text;
-        BlobPrefixNodeList, BlobNodeList : XmlNodeList;
+        NodeList: XmlNodeList;
     begin
         Clear(BlobList);
         ABSOperationPayload.SetOperation(Operation::ListBlobs);
@@ -143,10 +143,10 @@ codeunit 9051 "ABS Client Impl."
 
         ABSOperationResponse := ABSWebRequestHelper.GetOperationAsText(ABSOperationPayload, ResponseText, StrSubstNo(ListBlobsContainercOperationNotSuccessfulErr, ABSOperationPayload.GetContainerName()));
 
-        ABSHelperLibrary.CreateBlobNodeListFromResponse(ResponseText, NextMarker, BlobPrefixNodeList, BlobNodeList);
+        NodeList := ABSHelperLibrary.CreateBlobNodeListFromResponse(ResponseText, NextMarker);
         ABSOperationResponse.SetNextMarker(NextMarker);
 
-        ABSHelperLibrary.BlobNodeListToBlobList(BlobPrefixNodeList, BlobNodeList, BlobList);
+        ABSHelperLibrary.BlobNodeListToBlobList(NodeList, BlobList);
 
         exit(ABSOperationResponse);
     end;

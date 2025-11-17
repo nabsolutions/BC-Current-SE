@@ -4,8 +4,6 @@ using System;
 
 codeunit 3030 DotNet_HybridDeployment
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin

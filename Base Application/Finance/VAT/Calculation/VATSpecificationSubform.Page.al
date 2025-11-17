@@ -302,6 +302,13 @@ page 576 "VAT Specification Subform"
         OnAfterSetParentControl(ParentControl);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure SetSourceHeader', '25.0')]
+    procedure SetServHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        SourceHeader := ServiceHeader;
+    end;
+#endif
 
     procedure SetSourceHeader(NewSourceHeader: Variant)
     begin
@@ -338,3 +345,4 @@ page 576 "VAT Specification Subform"
     begin
     end;
 }
+

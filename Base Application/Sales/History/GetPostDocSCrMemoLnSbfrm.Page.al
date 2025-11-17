@@ -6,7 +6,6 @@ namespace Microsoft.Sales.History;
 
 using Microsoft.Finance.Dimension;
 using Microsoft.Inventory.Item.Catalog;
-using Microsoft.Utilities;
 
 page 5854 "Get Post.Doc-S.Cr.MemoLn Sbfrm"
 {
@@ -414,12 +413,10 @@ page 5854 "Get Post.Doc-S.Cr.MemoLn Sbfrm"
     end;
 
     local procedure ShowDocument()
-    var
-        PageManagement: Codeunit "Page Management";
     begin
         if not SalesCrMemoHeader.Get(Rec."Document No.") then
             exit;
-        PageManagement.PageRun(SalesCrMemoHeader);
+        PAGE.Run(PAGE::"Posted Sales Credit Memo", SalesCrMemoHeader);
     end;
 
     local procedure ItemTrackingLines()

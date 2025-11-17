@@ -6,8 +6,8 @@
 namespace System.Azure.Storage.Files;
 
 using System.Azure.Storage;
-using System.Telemetry;
 using System.Utilities;
+using System.Telemetry;
 
 codeunit 8951 "AFS File Client Impl."
 {

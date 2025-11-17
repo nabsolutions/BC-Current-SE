@@ -1222,14 +1222,6 @@ codeunit 134998 "Reminder - Add. Fee Setup"
         if AdditionalFeeSetup."Additional Fee Amount" < AdditionalFeeSetup."Min. Additional Fee Amount" then
             ColumnIndexMin := 2;
 
-        if (AdditionalFeeSetup."Additional Fee %" > 0) and (AdditionalFeeSetup."Min. Additional Fee Amount" > 0) and
-                       (AdditionalFeeSetup."Additional Fee Amount" < AdditionalFeeSetup."Min. Additional Fee Amount") then
-            RemainingAmount := AdditionalFeeSetup."Threshold Remaining Amount" +
-                          (AdditionalFeeSetup."Min. Additional Fee Amount" - AdditionalFeeSetup."Additional Fee Amount") /
-                          (AdditionalFeeSetup."Additional Fee %" / 100);
-
-        AccumulatedDynamicAmount := 0;
-
         case ColumnIndex of
             0:
                 RemainingAmount := 0;
@@ -1247,11 +1239,8 @@ codeunit 134998 "Reminder - Add. Fee Setup"
             SingleDynamicAmount := AdditionalFeeSetup."Additional Fee Amount" +
               ((AdditionalFeeSetup."Additional Fee %" / 100) * RemainingAmount);
 
-            if AdditionalFeeSetup."Additional Fee Amount" > 0 then
-                AccumulatedDynamicAmount += AdditionalFeeSetup."Additional Fee Amount";
-
-            if AdditionalFeeSetup."Additional Fee %" > 0 then
-                AccumulatedDynamicAmount += ((RemainingAmount - AdditionalFeeSetup."Threshold Remaining Amount") * AdditionalFeeSetup."Additional Fee %") / 100;
+            AccumulatedDynamicAmount := AdditionalFeeSetup."Additional Fee Amount" +
+              ((AdditionalFeeSetup."Additional Fee %" / 100) * RemainingAmount);
 
             if SingleDynamicAmount > AdditionalFeeSetup."Max. Additional Fee Amount" then
                 SingleDynamicAmount := AdditionalFeeSetup."Max. Additional Fee Amount";

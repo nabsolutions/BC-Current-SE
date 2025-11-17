@@ -25,6 +25,7 @@ codeunit 2679 "Purchase Alloc. Acc. Mgt."
 
     internal procedure GetOrGenerateAllocationLines(var AllocationLine: Record "Allocation Line"; var ParentSystemId: Guid; var AmountToAllocate: Decimal; var PostingDate: Date)
     var
+        PurchaseHeader: Record "Purchase Header";
         PurchaseLine: Record "Purchase Line";
         AllocationAccount: Record "Allocation Account";
         AllocationAccountMgt: Codeunit "Allocation Account Mgt.";
@@ -34,7 +35,9 @@ codeunit 2679 "Purchase Alloc. Acc. Mgt."
         PurchaseLine.GetBySystemId(ParentSystemId);
         AmountToAllocate := PurchaseLine.Amount;
 
-        PostingDate := PurchaseLine.GetPurchHeader()."Posting Date";
+        PurchaseHeader.ReadIsolation := IsolationLevel::ReadUncommitted;
+        PurchaseHeader.Get(PurchaseLine."Document Type", PurchaseLine."Document No.");
+        PostingDate := PurchaseHeader."Posting Date";
 
         if PurchaseLine."Alloc. Acc. Modified by User" then
             LoadManualAllocationLines(PurchaseLine, AllocationLine)
@@ -559,10 +562,13 @@ codeunit 2679 "Purchase Alloc. Acc. Mgt."
 
     local procedure GetUnitPrice(var PurchaseLine: Record "Purchase Line"; AllocationLineAmount: Decimal): Decimal
     var
+        PurchaseHeader: Record "Purchase Header";
         AllocationAccountMgt: Codeunit "Allocation Account Mgt.";
         AmountRoundingPrecision: Decimal;
     begin
-        if PurchaseLine.GetPurchHeader()."Prices Including VAT" then begin
+        PurchaseHeader.ReadIsolation := IsolationLevel::ReadUncommitted;
+        PurchaseHeader.Get(PurchaseLine."Document Type", PurchaseLine."Document No.");
+        if PurchaseHeader."Prices Including VAT" then begin
             AllocationLineAmount += AllocationLineAmount * PurchaseLine."VAT %" / 100;
             AmountRoundingPrecision := AllocationAccountMgt.GetCurrencyRoundingPrecision(PurchaseLine."Currency Code");
             exit(Round(AllocationLineAmount / PurchaseLine.Quantity, AmountRoundingPrecision));

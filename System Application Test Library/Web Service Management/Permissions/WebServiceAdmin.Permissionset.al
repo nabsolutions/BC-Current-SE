@@ -5,8 +5,8 @@
 
 namespace System.TestLibraries.Integration;
 
-using System.Environment.Configuration;
 using System.Integration;
+using System.Environment.Configuration;
 
 permissionset 139043 "Web Service Admin"
 {

@@ -5,8 +5,8 @@
 
 namespace System.TestTools.TestRunner;
 
-using System.Reflection;
 using System.TestTools.CodeCoverage;
+using System.Reflection;
 
 codeunit 130454 "Test Runner - Mgt"
 {

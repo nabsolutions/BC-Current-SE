@@ -617,6 +617,21 @@ page 5905 "Service Lines"
         }
         area(factboxes)
         {
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = Service;
+                Caption = 'Attachments';
+                Visible = false;
+                SubPageLink = "Table ID" = const(Database::"Service Line"),
+                              "No." = field("Document No."),
+                              "Document Type" = field("Document Type"),
+                              "Line No." = field("Line No.");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = Service;
@@ -1127,6 +1142,7 @@ page 5905 "Service Lines"
                         end;
                     end;
                 }
+#if not CLEAN25
                 action("Get Li&ne Discount")
                 {
                     AccessByPermission = TableData "Sales Line Discount" = R;
@@ -1135,6 +1151,9 @@ page 5905 "Service Lines"
                     Image = LineDiscount;
                     ToolTip = 'Insert the best possible discount in the Line Discount field according to any special discounts that you have set up.';
                     Visible = not ExtendedPriceEnabled;
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     begin
@@ -1142,6 +1161,7 @@ page 5905 "Service Lines"
                         CurrPage.Update();
                     end;
                 }
+#endif
                 action(GetLineDiscount)
                 {
                     AccessByPermission = TableData "Sales Discount Access" = R;
@@ -1606,3 +1626,4 @@ page 5905 "Service Lines"
     begin
     end;
 }
+

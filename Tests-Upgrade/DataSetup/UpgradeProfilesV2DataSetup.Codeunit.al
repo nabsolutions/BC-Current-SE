@@ -1,4 +1,3 @@
-#if not CLEAN26
 codeunit 132805 "Upgrade Profiles V2 Data Setup"
 {
     Subtype = Upgrade;
@@ -7,4 +6,3 @@ codeunit 132805 "Upgrade Profiles V2 Data Setup"
     ObsoleteState = Pending;
     ObsoleteTag = '26.0';
 }
-#endif

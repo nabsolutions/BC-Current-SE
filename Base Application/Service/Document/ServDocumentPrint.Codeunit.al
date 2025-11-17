@@ -13,6 +13,9 @@ using Microsoft.Service.Reports;
 codeunit 6461 "Serv. Document Print"
 {
     var
+#if not CLEAN25
+        DocumentPrint: Codeunit "Document-Print";
+#endif
 
         MissingReportSelectionErr: Label 'Report Selections is missing for %1 %2.', Comment = '%1 - Contract Type, %2 - Contract No.';
         MissingReportSelection2Err: Label '%1 for %2 is missing in Report Selections.', Comment = '%1 - Document Type, %2 - Service Header';
@@ -42,6 +45,9 @@ codeunit 6461 "Serv. Document Print"
         ServiceHeader.SetRange("No.", ServiceHeader."No.");
         CalcServDisc(ServiceHeader);
         OnBeforePrintServiceHeader(ServiceHeader, ReportUsage.AsInteger(), IsPrinted);
+#if not CLEAN25
+        DocumentPrint.RunOnBeforePrintServiceHeader(ServiceHeader, ReportUsage.AsInteger(), IsPrinted);
+#endif
         if IsPrinted then
             exit;
 
@@ -83,6 +89,9 @@ codeunit 6461 "Serv. Document Print"
 
         ServiceContractHeader.SetRange("Contract No.", ServiceContractHeader."Contract No.");
         OnBeforePrintServiceContract(ServiceContractHeader, ReportUsage.AsInteger(), IsPrinted);
+#if not CLEAN25
+        DocumentPrint.RunOnBeforePrintServiceContract(ServiceContractHeader, ReportUsage.AsInteger(), IsPrinted);
+#endif
         if IsPrinted then
             exit;
 
@@ -102,6 +111,9 @@ codeunit 6461 "Serv. Document Print"
     begin
         IsHandled := false;
         OnBeforeCalcServDisc(ServHeader, IsHandled);
+#if not CLEAN25
+        DocumentPrint.RunOnBeforeCalcServDisc(ServHeader, IsHandled);
+#endif
         if IsHandled then
             exit;
 
@@ -131,6 +143,9 @@ codeunit 6461 "Serv. Document Print"
             else begin
                 IsHandled := false;
                 OnGetServContractTypeUsageElseCase(ServiceContractHeader, TypeUsage, IsHandled);
+#if not CLEAN25
+                DocumentPrint.RunOnGetServContractTypeUsageElseCase(ServiceContractHeader, TypeUsage, IsHandled);
+#endif
                 if IsHandled then
                     exit("Report Selection Usage".FromInteger(TypeUsage));
                 Error('');
@@ -156,6 +171,9 @@ codeunit 6461 "Serv. Document Print"
             else begin
                 IsHandled := false;
                 OnGetServHeaderDocTypeUsageElseCase(ServiceHeader, TypeUsage, IsHandled);
+#if not CLEAN25
+                DocumentPrint.RunOnGetServHeaderDocTypeUsageElseCase(ServiceHeader, TypeUsage, IsHandled);
+#endif
                 if IsHandled then
                     exit("Report Selection Usage".FromInteger(TypeUsage));
                 Error('');

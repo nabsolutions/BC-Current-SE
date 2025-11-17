@@ -390,24 +390,24 @@ codeunit 136129 "Service Order Tracking"
     var
         NoSeriesLine: Record "No. Series Line";
         ServiceHeader: Record "Service Header";
-        NoSeries: Codeunit "No. Series";
+        LastNoUsed: Code[20];
     begin
         // Check Last No. Used In No. Series for Service Invoice when Item created with Item Tracking Code.
 
         // Setup: Create and Update Service Line with Item with Item Tracking Code.
         Initialize();
         FindNoSeriesLine(NoSeriesLine);
+        LastNoUsed := NoSeriesLine."Last No. Used";
         CreateAndUpdateServiceLine(
           ServiceLine, CreateItemWithItemTrackingCode(FindItemTrackingCode(false, true)), LibraryRandom.RandInt(10));
         ServiceHeader.Get(ServiceLine."Document Type", ServiceLine."Document No.");
 
-        // Exercise: Post Service Order. Will allocate and save a document no.
+        // Exercise: Post Service Order.
         asserterror LibraryService.PostServiceOrder(ServiceHeader, true, false, true);
 
         // Verify: Verify Last No. Used in No. Series of Service Invoice.
-        ServiceHeader.Find();
         FindNoSeriesLine(NoSeriesLine);
-        Assert.AreEqual(NoSeries.GetLastNoUsed(NoSeriesLine."Series Code"), ServiceHeader."Posting No.", 'Wrong last used invoice number.');
+        NoSeriesLine.TestField("Last No. Used", LastNoUsed);
     end;
 
     [Test]
@@ -419,7 +419,6 @@ codeunit 136129 "Service Order Tracking"
         NoSeriesLine: Record "No. Series Line";
         ServiceHeader: Record "Service Header";
         ServiceInvoiceHeader: Record "Service Invoice Header";
-        NoSeries: Codeunit "No. Series";
         TrackingActionForSerialNo: Option "None",AssignSerialNo,AssignLotNo,SelectEntries,EnterValues,VerifyValues;
     begin
         // Check Last No. Used In No. Series for Posted Service Invoice when Item created with Item Tracking Code.
@@ -439,7 +438,7 @@ codeunit 136129 "Service Order Tracking"
         ServiceInvoiceHeader.SetRange("Order No.", ServiceHeader."No.");
         ServiceInvoiceHeader.FindFirst();
         FindNoSeriesLine(NoSeriesLine);
-        Assert.AreEqual(NoSeries.GetLastNoUsed(NoSeriesLine."Series Code"), ServiceInvoiceHeader."No.", 'Wrong last used invoice number.');
+        NoSeriesLine.TestField("Last No. Used", ServiceInvoiceHeader."No.");
     end;
 
     [Test]

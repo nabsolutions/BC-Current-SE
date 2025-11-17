@@ -2,6 +2,9 @@ namespace System.Security.AccessControl;
 
 using Microsoft.Integration.D365Sales;
 using Microsoft.Integration.Dataverse;
+#if not CLEAN25
+using Microsoft.Integration.FieldService;
+#endif
 using Microsoft.Sales.Customer;
 using Microsoft.Integration.SyncEngine;
 using Microsoft.CRM.Interaction;
@@ -71,6 +74,22 @@ permissionset 617 "D365 DYN CRM MGT"
                   tabledata "CRM Transactioncurrency" = IMD,
                   tabledata "CRM Uom" = IMD,
                   tabledata "CRM Uomschedule" = IMD,
+#if not CLEAN25
+                  tabledata "FS Connection Setup" = IMD,
+                  tabledata "FS Bookable Resource" = IMD,
+                  tabledata "FS Bookable Resource Booking" = IMD,
+                  tabledata "FS BookableResourceBookingHdr" = IMD,
+                  tabledata "FS Customer Asset" = IMD,
+                  tabledata "FS Customer Asset Category" = IMD,
+                  tabledata "FS Project Task" = IMD,
+                  tabledata "FS Resource Pay Type" = IMD,
+                  tabledata "FS Work Order" = IMD,
+                  tabledata "FS Work Order Incident" = IMD,
+                  tabledata "FS Work Order Product" = IMD,
+                  tabledata "FS Work Order Service" = IMD,
+                  tabledata "FS Work Order Substatus" = IMD,
+                  tabledata "FS Work Order Type" = IMD,
+#endif
                   tabledata "Customer Templ." = IMD,
                   tabledata "Vendor Templ." = IMD,
                   tabledata "Int. Table Config Template" = IMD,

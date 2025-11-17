@@ -32,10 +32,6 @@ page 293 "Req. Worksheet Templates"
                     ApplicationArea = Planning;
                     ToolTip = 'Specifies a description of the requisition worksheet template you are creating.';
                 }
-                field(Type; Rec.Type)
-                {
-                    Visible = false;
-                }
                 field(Recurring; Rec.Recurring)
                 {
                     ApplicationArea = Planning;

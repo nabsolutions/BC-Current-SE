@@ -13,7 +13,9 @@ using Microsoft.Pricing.Calculation;
 using Microsoft.Pricing.PriceList;
 using Microsoft.Projects.Project.Job;
 using Microsoft.Projects.Project.Journal;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Resource;
 using Microsoft.Projects.TimeSheet;
 using Microsoft.Purchases.Document;
@@ -452,21 +454,25 @@ table 207 "Res. Journal Line"
         OnAfterGetLineWithPrice(LineWithPrice);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterFindResUnitCost(var ResourceCost: Record "Resource Cost")
     begin
         OnAfterFindResUnitCost(Rec, ResourceCost);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterFindResPrice(var ResourcePrice: Record "Resource Price")
     begin
         OnAfterFindResPrice(Rec, ResourcePrice);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure BeforeFindResPrice(var ResourcePrice: Record "Resource Price")
     begin
         OnBeforeFindResPrice(Rec, ResourcePrice);
     end;
-
+#endif
     procedure EmptyLine(): Boolean
     begin
         exit(("Resource No." = '') and (Quantity = 0));
@@ -575,9 +581,37 @@ table 207 "Res. Journal Line"
         OnAfterCopyResJnlLineFromSalesLine(SalesLine, Rec);
     end;
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Header', '25.0')]
+    procedure CopyFromServHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        ServiceHeader.CopyToResJournalLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Line', '25.0')]
+    procedure CopyFromServLine(ServiceLine: Record Microsoft.Service.Document."Service Line")
+    begin
+        ServiceLine.CopyToResJournalLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Line', '25.0')]
+    procedure CopyFromServShptHeader(ServShptHeader: Record Microsoft.Service.History."Service Shipment Header")
+    begin
+        ServShptHeader.CopyToResJournalLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Shipment Line', '25.0')]
+    procedure CopyFromServShptLine(ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+        ServShptLine.CopyToResJournalLine(Rec);
+    end;
+#endif
 
     procedure CopyFromJobJnlLine(JobJnlLine: Record "Job Journal Line")
     var
@@ -737,10 +771,13 @@ table 207 "Res. Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterInitResourceCost(var ResourceCost: Record "Resource Cost")
     begin
         OnAfterInitResourceCost(Rec, ResourceCost);
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterCopyResJnlLineFromSalesHeader(var SalesHeader: Record "Sales Header"; var ResJournalLine: Record "Res. Journal Line")
@@ -752,10 +789,58 @@ table 207 "Res. Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyResJnlLineFromServHeader(var ServiceHeader: Record Microsoft.Service.Document."Service Header"; var ResJournalLine: Record "Res. Journal Line")
+    begin
+        OnAfterCopyResJnlLineFromServHeader(ServiceHeader, ResJournalLine);
+    end;
+
+    [Obsolete('Moved to table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyResJnlLineFromServHeader(var ServiceHeader: Record Microsoft.Service.Document."Service Header"; var ResJournalLine: Record "Res. Journal Line")
+    begin
+    end;
+#endif
 
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyResJnlLineFromServLine(var ServLine: Record Microsoft.Service.Document."Service Line"; var ResJnlLine: Record "Res. Journal Line")
+    begin
+        OnAfterCopyResJnlLineFromServLine(ServLine, ResJnlLine);
+    end;
 
+    [Obsolete('Moved to table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyResJnlLineFromServLine(var ServLine: Record Microsoft.Service.Document."Service Line"; var ResJnlLine: Record "Res. Journal Line")
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyResJnlLineFromServShptHeader(var ServiceShipmentHeader: Record Microsoft.Service.History."Service Shipment Header"; var ResJournalLine: Record "Res. Journal Line")
+    begin
+        OnAfterCopyResJnlLineFromServShptHeader(ServiceShipmentHeader, ResJournalLine);
+    end;
+
+    [Obsolete('Moved to table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyResJnlLineFromServShptHeader(var ServiceShipmentHeader: Record Microsoft.Service.History."Service Shipment Header"; var ResJournalLine: Record "Res. Journal Line")
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnAfterCopyResJnlLineFromServShptLine(var ServShptLine: Record Microsoft.Service.History."Service Shipment Line"; var ResJnlLine: Record "Res. Journal Line")
+    begin
+        OnAfterCopyResJnlLineFromServShptLine(ServShptLine, ResJnlLine);
+    end;
+
+    [Obsolete('Moved to table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyResJnlLineFromServShptLine(var ServShptLine: Record Microsoft.Service.History."Service Shipment Line"; var ResJnlLine: Record "Res. Journal Line")
+    begin
+    end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterCopyResJnlLineFromJobJnlLine(var ResJnlLine: Record "Res. Journal Line"; var JobJnlLine: Record "Job Journal Line")
@@ -777,10 +862,13 @@ table 207 "Res. Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '19.0')]
     [IntegrationEvent(true, false)]
     local procedure OnBeforeFindResPrice(ResJournalLine: Record "Res. Journal Line"; var ResourcePrice: Record "Resource Price")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeValidateShortcutDimCode(var ResJournalLine: Record "Res. Journal Line"; xResJournalLine: Record "Res. Journal Line"; FieldNumber: Integer; var ShortcutDimCode: Code[20])
@@ -807,18 +895,24 @@ table 207 "Res. Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterInitResourceCost(var ResJournalLine: Record "Res. Journal Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterFindResUnitCost(var ResJournalLine: Record "Res. Journal Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterFindResPrice(var ResJournalLine: Record "Res. Journal Line"; var ResPrice: Record "Resource Price")
     begin
     end;
+#endif
 }
+

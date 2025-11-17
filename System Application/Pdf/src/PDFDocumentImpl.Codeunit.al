@@ -4,8 +4,8 @@
 // ------------------------------------------------------------------------------------------------
 namespace System.IO;
 
-using System;
 using System.Utilities;
+using System;
 
 /// <summary>
 /// Codeunit that provides helper functions for PDF processing.

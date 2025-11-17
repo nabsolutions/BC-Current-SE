@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
@@ -24,6 +24,9 @@ codeunit 9131 "Check Assembly Document"
     begin
         IsHandled := false;
         OnBeforeCheckAssemblyHeaders(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#if not CLEAN25
+        Item.RunOnBeforeCheckAsmHeader(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#endif
         if IsHandled then
             exit;
 
@@ -48,6 +51,9 @@ codeunit 9131 "Check Assembly Document"
     begin
         IsHandled := false;
         OnBeforeCheckAssemblyLines(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#if not CLEAN25
+        Item.RunOnBeforeCheckAsmLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#endif
         if IsHandled then
             exit;
 

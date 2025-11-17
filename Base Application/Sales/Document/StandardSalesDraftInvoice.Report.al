@@ -339,6 +339,20 @@ report 1303 "Standard Sales - Draft Invoice"
             column(VATRegistrationNo_Lbl; GetCustomerVATRegistrationNumberLbl())
             {
             }
+#if not CLEAN25
+            column(GlobalLocationNumber; '')
+            {
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Not in use anymore.';
+                ObsoleteTag = '25.0';
+            }
+            column(GlobalLocationNumber_Lbl; '')
+            {
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Not in use anymore.';
+                ObsoleteTag = '25.0';
+            }
+#endif
             column(LegalEntityType; Cust.GetLegalEntityType())
             {
             }
@@ -1293,3 +1307,4 @@ report 1303 "Standard Sales - Draft Invoice"
     begin
     end;
 }
+

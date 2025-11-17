@@ -21,6 +21,9 @@ codeunit 6480 "Serv. Item Unit of Measure"
     begin
         IsHandled := false;
         OnBeforeCheckNoOutstandingQtyServiceLine(ItemUnitOfMeasure, xItemUnitOfMeasure, ServiceLine, IsHandled);
+#if not CLEAN25
+        ItemUnitOfMeasure.RunOnBeforeCheckNoOutstandingQtyServiceLine(ItemUnitOfMeasure, xItemUnitOfMeasure, ServiceLine, IsHandled);
+#endif
         if IsHandled then
             exit;
 

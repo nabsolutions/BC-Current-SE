@@ -5,8 +5,8 @@
 
 namespace System.TestTools.TestRunner;
 
-using System.Apps;
 using System.Reflection;
+using System.Apps;
 
 codeunit 130456 "Test Suite Mgt."
 {

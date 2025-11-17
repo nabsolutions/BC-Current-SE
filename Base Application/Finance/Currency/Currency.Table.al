@@ -177,7 +177,6 @@ table 4 Currency
         field(10; "Invoice Rounding Precision"; Decimal)
         {
             AutoFormatExpression = Code;
-            AutoFormatType = 1;
             DecimalPlaces = 2 : 5;
             Caption = 'Invoice Rounding Precision';
             InitValue = 0.01;
@@ -211,8 +210,6 @@ table 4 Currency
             DecimalPlaces = 2 : 5;
             InitValue = 0.01;
             MinValue = 0;
-            AutoFormatType = 1;
-            AutoFormatExpression = Code;
 
             trigger OnValidate()
             begin
@@ -233,8 +230,6 @@ table 4 Currency
             DecimalPlaces = 0 : 9;
             InitValue = 0.00001;
             MinValue = 0;
-            AutoFormatType = 2;
-            AutoFormatExpression = Code;
         }
         /// <summary>
         /// Descriptive name for the currency (e.g., "US Dollar", "Euro", "British Pound").
@@ -581,7 +576,6 @@ table 4 Currency
             Caption = 'Currency Factor';
             DecimalPlaces = 0 : 5;
             Editable = false;
-            AutoFormatType = 0;
         }
         /// <summary>
         /// General Ledger account for posting residual currency gains.
@@ -661,7 +655,6 @@ table 4 Currency
             Editable = false;
             MaxValue = 100;
             MinValue = 0;
-            AutoFormatType = 0;
         }
         /// <summary>
         /// Maximum payment tolerance amount allowed for this currency.
@@ -682,12 +675,6 @@ table 4 Currency
         field(56; Symbol; Text[10])
         {
             Caption = 'Symbol';
-
-            trigger OnValidate()
-            begin
-                CheckDuplicateCurrencySymbol(Rec.Symbol);
-                CheckLCYSymbol(Rec.Symbol);
-            end;
         }
 
         /// <summary>
@@ -812,10 +799,8 @@ table 4 Currency
         GLSetup: Record "General Ledger Setup";
         TypeHelper: Codeunit "Type Helper";
         AccountSuggested: Boolean;
-        DuplicateSymbolNotificationId: Label '8fcf129e-4be3-43c1-991d-d2fb116623eb', Locked = true;
+        DuplicateSymbolNotificationIdLbl: Label '8fcf129e-4be3-43c1-991d-d2fb116623eb', Locked = true;
         DuplicateSymbolNoteLbl: Label 'The currency symbol "%1" is used by multiple currencies. If shown in the UI this can be confusing. Please choose a different symbol.', Comment = '%1 = currency symbol';
-        LCYSymbolNotificationId: Label '5d669b73-cfbc-4a8c-8c2e-cd9816a2591c', Locked = true;
-        LCYSymbolNoteLbl: Label 'The currency symbol "%1" is used as local currency symbol. If shown in the UI this can be confusing. Please choose a different symbol.', Comment = '%1 = local currency symbol';
 
 #pragma warning disable AA0074
 #pragma warning disable AA0470
@@ -1281,7 +1266,7 @@ table 4 Currency
         Currency: Record Currency;
         DuplicateeSymbolNotification: Notification;
     begin
-        DuplicateeSymbolNotification.Id := DuplicateSymbolNotificationId;
+        DuplicateeSymbolNotification.Id := DuplicateSymbolNotificationIdLbl;
         DuplicateeSymbolNotification.Recall();
 
         if CurrencySymbol = '' then
@@ -1291,24 +1276,6 @@ table 4 Currency
         if not Currency.IsEmpty() then begin
             DuplicateeSymbolNotification.Message(StrSubstNo(DuplicateSymbolNoteLbl, CurrencySymbol));
             DuplicateeSymbolNotification.Send();
-        end;
-    end;
-
-    local procedure CheckLCYSymbol(CurrencySymbol: Text[10])
-    var
-        GeneralLedgerSetup: Record "General Ledger Setup";
-        LCYSymbolNotification: Notification;
-    begin
-        if CurrencySymbol = '' then
-            exit;
-
-        LCYSymbolNotification.Id := LCYSymbolNotificationId;
-        LCYSymbolNotification.Recall();
-
-        GeneralLedgerSetup.Get();
-        if CurrencySymbol = GeneralLedgerSetup."Local Currency Symbol" then begin
-            LCYSymbolNotification.Message(StrSubstNo(LCYSymbolNoteLbl, CurrencySymbol));
-            LCYSymbolNotification.Send();
         end;
     end;
 

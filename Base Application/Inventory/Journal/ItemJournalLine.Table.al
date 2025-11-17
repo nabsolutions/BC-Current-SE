@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
@@ -2375,14 +2375,11 @@ table 83 "Item Journal Line"
         OnCreateDimOnBeforeUpdateGlobalDimFromDimSetID(Rec, xRec, CurrFieldNo, OldDimSetID, DefaultDimSource, InheritFromDimSetID, InheritFromTableNo);
         DimMgt.UpdateGlobalDimFromDimSetID("Dimension Set ID", "Shortcut Dimension 1 Code", "Shortcut Dimension 2 Code");
 
-        if "Entry Type" = "Entry Type"::Transfer then
-            if Rec."New Location Code" <> '' then
-                CreateNewDimFromDefaultDim(Rec.FieldNo("New Location Code"))
-            else begin
-                "New Dimension Set ID" := "Dimension Set ID";
-                "New Shortcut Dimension 1 Code" := "Shortcut Dimension 1 Code";
-                "New Shortcut Dimension 2 Code" := "Shortcut Dimension 2 Code";
-            end;
+        if "Entry Type" = "Entry Type"::Transfer then begin
+            "New Dimension Set ID" := "Dimension Set ID";
+            "New Shortcut Dimension 1 Code" := "Shortcut Dimension 1 Code";
+            "New Shortcut Dimension 2 Code" := "Shortcut Dimension 2 Code";
+        end;
     end;
 
     /// <summary>
@@ -2705,10 +2702,65 @@ table 83 "Item Journal Line"
         OnAfterCopyItemJnlLineFromPurchLine(Rec, PurchLine);
     end;
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Header', '25.0')]
+    /// <summary>
+    /// Copies fields from the provided service header record to the current item journal line.
+    /// </summary>
+    /// <param name="ServiceHeader">Service header to copy from.</param>
+    procedure CopyFromServHeader(ServiceHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        ServiceHeader.CopyToItemJnlLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Line', '25.0')]
+    /// <summary>
+    /// Copies fields from the provided service line record to the current item journal line.
+    /// </summary>
+    /// <param name="ServiceLine">Service line to copy from.</param>
+    procedure CopyFromServLine(ServiceLine: Record Microsoft.Service.Document."Service Line")
+    begin
+        ServiceLine.CopyToItemJnlLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Shipment Header', '25.0')]
+    /// <summary>
+    /// Copies fields from the provided service shipment header record to the current item journal line.
+    /// </summary>
+    /// <param name="ServShptHeader">Service shipment header to copy from.</param>
+    procedure CopyFromServShptHeader(ServShptHeader: Record Microsoft.Service.History."Service Shipment Header")
+    begin
+        ServShptHeader.CopyToItemJnlLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Shipment Line', '25.0')]
+    /// <summary>
+    /// Copies fields from the provided service shipment line record to the current item journal line.
+    /// </summary>
+    /// <param name="ServShptLine">Service shipment line to copy from.</param>
+    procedure CopyFromServShptLine(ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+        ServShptLine.CopyToItemJnlLine(Rec);
+    end;
+#endif
 
+#if not CLEAN25
+    [Obsolete('Moved to table Service Shipment Line', '25.0')]
+    /// <summary>
+    /// Copies fields from the provided service shipment line record to the current item journal line.
+    /// </summary>
+    /// <param name="ServShptLine">Service shipment line to copy from.</param>
+    procedure CopyFromServShptLineUndo(ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+        ServShptLine.CopyToItemJnlLineUndo(Rec);
+    end;
+#endif
 
     /// <summary>
     /// Copies fields from the provided job journal line record to the current item journal line.
@@ -4133,10 +4185,70 @@ table 83 "Item Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyItemJnlLineFromServHeader(var ItemJnlLine: Record "Item Journal Line"; ServHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+        OnAfterCopyItemJnlLineFromServHeader(ItemJnlLine, ServHeader);
+    end;
 
+    [Obsolete('Replaced by event OnAfterCopyToItemJnlLine in table Service Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyItemJnlLineFromServHeader(var ItemJnlLine: Record "Item Journal Line"; ServHeader: Record Microsoft.Service.Document."Service Header")
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyItemJnlLineFromServLine(var ItemJnlLine: Record "Item Journal Line"; ServLine: Record Microsoft.Service.Document."Service Line")
+    begin
+        OnAfterCopyItemJnlLineFromServLine(ItemJnlLine, ServLine);
+    end;
 
+    [Obsolete('Replaced by event OnAfterCopyToItemJnlLine in table Service Line', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyItemJnlLineFromServLine(var ItemJnlLine: Record "Item Journal Line"; ServLine: Record Microsoft.Service.Document."Service Line")
+    begin
+    end;
+#endif
 
+#if not CLEAN25
+    internal procedure RunOnAfterCopyItemJnlLineFromServShptHeader(var ItemJnlLine: Record "Item Journal Line"; ServShptHeader: Record Microsoft.Service.History."Service Shipment Header")
+    begin
+        OnAfterCopyItemJnlLineFromServShptHeader(ItemJnlLine, ServShptHeader);
+    end;
+
+    [Obsolete('Replaced by event OnAfterCopyToItemJnlLine in table Service Shipment Header', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyItemJnlLineFromServShptHeader(var ItemJnlLine: Record "Item Journal Line"; ServShptHeader: Record Microsoft.Service.History."Service Shipment Header")
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnAfterCopyItemJnlLineFromServShptLine(var ItemJnlLine: Record "Item Journal Line"; ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+        OnAfterCopyItemJnlLineFromServShptLine(ItemJnlLine, ServShptLine);
+    end;
+
+    [Obsolete('Replaced by event OnAfterCopyToItemJnlLine in table Service Shipment Line', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyItemJnlLineFromServShptLine(var ItemJnlLine: Record "Item Journal Line"; ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+    end;
+#endif
+
+#if not CLEAN25
+    internal procedure RunOnAfterCopyItemJnlLineFromServShptLineUndo(var ItemJnlLine: Record "Item Journal Line"; ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+        OnAfterCopyItemJnlLineFromServShptLineUndo(ItemJnlLine, ServShptLine);
+    end;
+
+    [Obsolete('Replaced by event OnAfterCopyToItemJnlLineUndo in table Service Shipment Line', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterCopyItemJnlLineFromServShptLineUndo(var ItemJnlLine: Record "Item Journal Line"; ServShptLine: Record Microsoft.Service.History."Service Shipment Line")
+    begin
+    end;
+#endif
 
     /// <summary>
     /// Event triggered after copying data from the "Job Journal Line" to the current record.
@@ -4884,6 +4996,18 @@ table 83 "Item Journal Line"
     begin
     end;
 
+#if not CLEAN25
+    internal procedure RunOnBeforeCopyItemJnlLineFromServLine(var ItemJournalLine: Record "Item Journal Line"; ServiceLine: Record Microsoft.Service.Document."Service Line"; var IsHandled: Boolean)
+    begin
+        OnBeforeCopyItemJnlLineFromServLine(ItemJournalLine, ServiceLine, IsHandled);
+    end;
+
+    [Obsolete('Replaced by event OnBeforeCopyToItemJnlLine in table Service Line', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeCopyItemJnlLineFromServLine(var ItemJournalLine: Record "Item Journal Line"; ServiceLine: Record Microsoft.Service.Document."Service Line"; var IsHandled: Boolean)
+    begin
+    end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeCheckItemTracking(var ItemJournalLine: Record "Item Journal Line"; var IsHandled: Boolean)

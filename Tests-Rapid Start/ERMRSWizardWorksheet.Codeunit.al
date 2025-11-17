@@ -16,7 +16,6 @@ codeunit 136606 "ERM RS Wizard & Worksheet"
         LibraryRapidStart: Codeunit "Library - Rapid Start";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
         ConfigPackageMgt: Codeunit "Config. Package Management";
-        APIMockEvents: Codeunit "API Mock Events";
         IncorrectNumOfTablesWithDataErr: Label 'Incorrect number of tables for Get Config. Tables report with IncludeWithDataOnly option.';
         IncorrectNumOfRelatedTablesErr: Label 'Incorrect number of tables for Get Config. Tables report with IncludeRelatedTables option.';
         ConfigPackageTblNotFoundErr: Label 'Config Package Table is not found.';
@@ -556,8 +555,10 @@ codeunit 136606 "ERM RS Wizard & Worksheet"
         CheckPage(DATABASE::"Purch. Rcpt. Header", PAGE::"Posted Purchase Receipts");
         CheckPage(DATABASE::"Purch. Inv. Header", PAGE::"Posted Purchase Invoices");
         CheckPage(DATABASE::"Purch. Cr. Memo Hdr.", PAGE::"Posted Purchase Credit Memos");
+#if not CLEAN25
         CheckPage(DATABASE::"Sales Price", PAGE::"Sales Prices");
         CheckPage(DATABASE::"Purchase Price", PAGE::"Purchase Prices");
+#endif
         CheckPage(DATABASE::"VAT Entry", PAGE::"VAT Entries");
         CheckPage(DATABASE::"FA Ledger Entry", PAGE::"FA Ledger Entries");
         CheckPage(DATABASE::"Value Entry", PAGE::"Value Entries");
@@ -2486,7 +2487,7 @@ codeunit 136606 "ERM RS Wizard & Worksheet"
     begin
         LibraryVariableStorage.Clear();
         LibraryRapidStart.CleanUp('');
-        APIMockEvents.SetAPIServicesEnabled(false);
+        LibraryRapidStart.SetAPIServicesEnabled(false);
     end;
 
     local procedure CleanupData(PackageCode: Code[20]; DeleteConfigLines: Boolean)

@@ -6,7 +6,9 @@ using Microsoft.Pricing.Asset;
 using Microsoft.Pricing.Source;
 using Microsoft.Pricing.Worksheet;
 using Microsoft.Projects.Resources.Journal;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Setup;
 using Microsoft.Foundation.AuditCodes;
 using Microsoft.Projects.TimeSheet;
@@ -32,8 +34,10 @@ permissionset 4969 "Resources - Admin"
                   tabledata "Reason Code" = R,
                   tabledata "Res. Journal Batch" = RIMD,
                   tabledata "Res. Journal Template" = RIMD,
+#if not CLEAN25
                   tabledata "Resource Cost" = RIMD,
                   tabledata "Resource Price" = RIMD,
+#endif
                   tabledata "Resources Setup" = RIMD,
                   tabledata "Source Code" = R,
                   tabledata "Source Code Setup" = R,

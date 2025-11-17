@@ -50,6 +50,16 @@ codeunit 6303 "Azure AD Auth Flow"
         else
             OnInitialize(RedirectUri, AuthFlow);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by AcquireTokenByAuthorizationCodeAsSecretText', '25.0')]
+    procedure AcquireTokenByAuthorizationCode(AuthorizationCode: Text; ResourceName: Text) AccessToken: Text
+    begin
+        exit(AcquireTokenByAuthorizationCodeAsSecretText(AuthorizationCode, ResourceName).Unwrap());
+    end;
+#endif
 
     [NonDebuggable]
     [Scope('OnPrem')]
@@ -65,6 +75,16 @@ codeunit 6303 "Azure AD Auth Flow"
             AccessToken := AccessTokenFromEvent;
         end;
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by AcquireTokenByAuthorizationCodeWithCredentialsAsSecretText', '25.0')]
+    procedure AcquireTokenByAuthorizationCodeWithCredentials(AuthorizationCode: Text; ClientID: Text; ApplicationKey: Text; ResourceName: Text) AccessToken: Text
+    begin
+        exit(AcquireTokenByAuthorizationCodeWithCredentialsAsSecretText(AuthorizationCode, ClientID, ApplicationKey, ResourceName).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     [NonDebuggable]
@@ -80,6 +100,16 @@ codeunit 6303 "Azure AD Auth Flow"
             AccessToken := AccessTokenFromEvent;
         end;
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by procedure AcquireTokenFromCacheAsSecretText', '25.0')]
+    procedure AcquireTokenFromCache(ResourceName: Text) AccessToken: Text
+    begin
+        exit(AcquireTokenFromCacheAsSecretText(ResourceName).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure AcquireTokenFromCacheAsSecretText(ResourceName: Text) AccessToken: SecretText
@@ -117,6 +147,16 @@ codeunit 6303 "Azure AD Auth Flow"
         else
             OnAcquireGuestToken(ResourceName, GuestTenantId, AccessToken);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by AcquireOnBehalfOfTokenAsSecretText', '25.0')]
+    procedure AcquireOnBehalfOfToken(ResourceName: Text) AccessToken: Text
+    begin
+        exit(AcquireOnBehalfOfTokenAsSecretText(ResourceName).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure AcquireOnBehalfOfTokenAsSecretText(ResourceName: Text) AccessToken: SecretText
@@ -143,6 +183,16 @@ codeunit 6303 "Azure AD Auth Flow"
         else
             OnAcquireOnBehalfOfTokenAndTokenCacheState(ResourceName, AccessToken, TokenCacheState);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by AcquireTokenFromCacheWithCredentialsAsSecretText', '25.0')]
+    procedure AcquireTokenFromCacheWithCredentials(ClientID: Text; AppKey: Text; ResourceName: Text) AccessToken: Text
+    begin
+        exit(AcquireTokenFromCacheWithCredentialsAsSecretText(ClientID, AppKey, ResourceName).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     [NonDebuggable]
@@ -185,6 +235,19 @@ codeunit 6303 "Azure AD Auth Flow"
         if CanHandle() then
             InitialTenantDomainName := AuthFlow.ALGetInitialDomainNameFromAad();
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [NonDebuggable]
+    [Obsolete('Replaced by CreateExchangeServiceWrapperWithToken(Token: SecretText; var Service: DotNet ExchangeServiceWrapper)', '25.0')]
+    procedure CreateExchangeServiceWrapperWithToken(Token: Text; var Service: DotNet ExchangeServiceWrapper)
+    var
+        TokenAsSecretText: SecretText;
+    begin
+        TokenAsSecretText := Token;
+        CreateExchangeServiceWrapperWithToken(TokenAsSecretText, Service);
+    end;
+#endif
 
     [Scope('OnPrem')]
     [NonDebuggable]
@@ -279,3 +342,4 @@ codeunit 6303 "Azure AD Auth Flow"
     begin
     end;
 }
+

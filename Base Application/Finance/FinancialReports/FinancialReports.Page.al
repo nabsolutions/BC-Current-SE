@@ -95,37 +95,6 @@ page 108 "Financial Reports"
                         ColumnLayoutName.Modify();
                     end;
                 }
-                field(SheetDefinition; Rec.SheetDefinition)
-                {
-                    ApplicationArea = Basic, Suite;
-                    ToolTip = 'Specifies the sheet definition to be used for the financial report.';
-
-                    trigger OnValidate()
-                    begin
-                        GetSheetAnalysisView();
-                    end;
-                }
-                field(SheetAnalysisView; SheetAnalysisView)
-                {
-                    ApplicationArea = Basic, Suite;
-                    Caption = 'Sheet Analysis View Name';
-                    TableRelation = "Analysis View";
-                    ToolTip = 'Specifies the name of the analysis view you want the sheet definitions to be based on. Using an analysis view is optional.';
-
-                    trigger OnValidate()
-                    var
-                        AnalysisView: Record "Analysis View";
-                        SheetDefName: Record "Sheet Definition Name";
-                    begin
-                        SheetDefName.Get(Rec.SheetDefinition);
-                        if SheetAnalysisView <> '' then begin
-                            AnalysisView.Get(SheetAnalysisView);
-                            SheetDefName."Analysis View Name" := AnalysisView.Code;
-                        end else
-                            Clear(SheetDefName."Analysis View Name");
-                        SheetDefName.Modify();
-                    end;
-                }
                 field("Internal Description"; Rec."Internal Description")
                 {
                     ApplicationArea = Basic, Suite;
@@ -201,38 +170,6 @@ page 108 "Financial Reports"
                     ColumnLayout.Run();
                 end;
             }
-            action(EditSheetDefinition)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Edit Sheet Definition';
-                Image = Edit;
-                ToolTip = 'Edit the selected sheet definition.';
-
-                trigger OnAction()
-                var
-                    SheetDefLine: Record "Sheet Definition Line";
-                begin
-                    Rec.TestField(SheetDefinition);
-                    SheetDefLine.SetRange(Name, Rec.SheetDefinition);
-                    Page.Run(0, SheetDefLine);
-                end;
-            }
-            action(ShowAllRowDefinitions)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Show All Row Definitions';
-                Image = List;
-                ToolTip = 'Open the Row Definitions list page.';
-                RunObject = page "Account Schedule Names";
-            }
-            action(ShowAllColumnDefinitions)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Show All Column Definitions';
-                Image = List;
-                ToolTip = 'Open the Column Definitions list page.';
-                RunObject = page "Column Layout Names";
-            }
             action(CopyFinancialReport)
             {
                 ApplicationArea = Basic, Suite;
@@ -300,21 +237,6 @@ page 108 "Financial Reports"
                     AccSchedOverview.Run();
                 end;
             }
-            action(Schedules)
-            {
-                ApplicationArea = Basic, Suite;
-                Caption = 'Schedules';
-                ToolTip = 'View or edit when the financial report is scheduled to be exported or emailed.';
-                Image = CheckList;
-
-                trigger OnAction()
-                var
-                    FinancialReportSchedule: Record "Financial Report Schedule";
-                begin
-                    FinancialReportSchedule.SetRange("Financial Report Name", Rec.Name);
-                    Page.Run(0, FinancialReportSchedule);
-                end;
-            }
         }
         area(reporting)
         {
@@ -346,10 +268,6 @@ page 108 "Financial Reports"
                 actionref(Overview_Promoted; Overview) { }
                 actionref(EditRowGroup_Promoted; EditRowGroup) { }
                 actionref(EditColumnGroup_Promoted; EditColumnGroup) { }
-                actionref(EditSheetDefinition_Promoted; EditSheetDefinition) { }
-                actionref(ShowAllRowDefinitions_Promoted; ShowAllRowDefinitions) { }
-                actionref(ShowAllColumnDefinitions_Promoted; ShowAllColumnDefinitions) { }
-                actionref(Schedules_Promoted; Schedules) { }
             }
             group(CopyExportImport)
             {
@@ -366,11 +284,6 @@ page 108 "Financial Reports"
         FinancialReportMgt: Codeunit "Financial Report Mgt.";
     begin
         FinancialReportMgt.Initialize();
-    end;
-
-    trigger OnNewRecord(BelowxRec: Boolean)
-    begin
-        Clear(SheetAnalysisView);
     end;
 
     trigger OnAfterGetCurrRecord()
@@ -397,22 +310,9 @@ page 108 "Financial Reports"
         if Rec."Financial Report Column Group" <> '' then
             if ColumnLayoutName.Get(Rec."Financial Report Column Group") then
                 AnalysisViewColumn := ColumnLayoutName."Analysis View Name";
-
-        GetSheetAnalysisView();
-    end;
-
-    local procedure GetSheetAnalysisView()
-    var
-        SheetDefName: Record "Sheet Definition Name";
-    begin
-        Clear(SheetAnalysisView);
-        if Rec.SheetDefinition <> '' then
-            if SheetDefName.Get(Rec.SheetDefinition) then
-                SheetAnalysisView := SheetDefName."Analysis View Name";
     end;
 
     var
         AnalysisViewRow: Text;
         AnalysisViewColumn: Text;
-        SheetAnalysisView: Text;
 }

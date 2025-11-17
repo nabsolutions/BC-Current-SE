@@ -1004,6 +1004,15 @@ codeunit 408 DimensionManagement
         OnAfterTypeToTableID4(Type, TableId);
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by procedure ServiceLineTypeToTableID() in codeunit Serv. Dimension Management', '25.0')]
+    procedure TypeToTableID5(Type: Option " ",Item,Resource,Cost,"G/L Account") TableId: Integer
+    var
+        ServDimensionManagement: Codeunit Microsoft.Service.Document."Serv. Dimension Management";
+    begin
+        exit(ServDimensionManagement.ServiceLineTypeTotableId(Microsoft.Service.Document."Service Line Type".FromInteger(Type)));
+    end;
+#endif
 
     procedure DeleteDefaultDim(TableID: Integer; No: Code[20])
     var
@@ -1267,7 +1276,6 @@ codeunit 408 DimensionManagement
     begin
         DefaultDimObjectNoWithoutGlobalDimsList(TempAllObjWithCaption);
         DefaultDimObjectNoWithGlobalDimsList(TempAllObjWithCaption);
-        OnAfterDefaultDimObjectNoList(TempAllObjWithCaption);
     end;
 
     procedure DefaultDimObjectNoWithGlobalDimsList(var TempAllObjWithCaption: Record AllObjWithCaption temporary)
@@ -2300,7 +2308,7 @@ codeunit 408 DimensionManagement
             until TempDimSetEntry.Next() = 0;
     end;
 
-    procedure ChunkDimSetFilters(var TempDimensionSetEntry: Record "Dimension Set Entry" temporary): List of [Text]
+    internal procedure ChunkDimSetFilters(var TempDimensionSetEntry: Record "Dimension Set Entry" temporary): List of [Text]
     var
         DimSetFilters: List of [Text];
         CurrentDimSetFilter: Text;
@@ -3408,11 +3416,6 @@ codeunit 408 DimensionManagement
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterEditDimensionSet(var DimSetID: Integer)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnAfterDefaultDimObjectNoList(var TempAllObjWithCaption: Record AllObjWithCaption temporary)
     begin
     end;
 }

@@ -5,7 +5,6 @@
 namespace Microsoft.Sales.History;
 
 using Microsoft.Finance.Dimension;
-using Microsoft.Utilities;
 
 page 527 "Posted Sales Credit Memo Lines"
 {
@@ -191,11 +190,9 @@ page 527 "Posted Sales Credit Memo Lines"
                     ToolTip = 'Open the document that the selected line exists on.';
 
                     trigger OnAction()
-                    var
-                        PageManagement: Codeunit "Page Management";
                     begin
                         SalesCrMemoHeader.Get(Rec."Document No.");
-                        PageManagement.PageRun(SalesCrMemoHeader);
+                        PAGE.Run(PAGE::"Posted Sales Credit Memo", SalesCrMemoHeader);
                     end;
                 }
                 action(Dimensions)

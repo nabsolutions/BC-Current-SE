@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
@@ -752,6 +752,20 @@ page 44 "Sales Credit Memo"
                 SubPageLink = "No." = field("No."),
                               "Document Type" = field("Document Type");
             }
+#if not CLEAN25
+            part("Attached Documents"; "Document Attachment Factbox")
+            {
+                ObsoleteTag = '25.0';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'The "Document Attachment FactBox" has been replaced by "Doc. Attachment List Factbox", which supports multiple files upload.';
+                ApplicationArea = All;
+                Visible = false;
+                Caption = 'Attachments';
+                SubPageLink = "Table ID" = const(Database::"Sales Header"),
+                              "No." = field("No."),
+                              "Document Type" = field("Document Type");
+            }
+#endif
             part("Attached Documents List"; "Doc. Attachment List Factbox")
             {
                 ApplicationArea = All;
@@ -1690,7 +1704,6 @@ page 44 "Sales Credit Memo"
         SalesCrMemoHeader: Record "Sales Cr.Memo Header";
         OfficeMgt: Codeunit "Office Management";
         InstructionMgt: Codeunit "Instruction Mgt.";
-        PageManagement: Codeunit "Page Management";
         PreAssignedNo: Code[20];
         xLastPostingNo: Code[20];
         IsScheduledPosting: Boolean;
@@ -1729,7 +1742,7 @@ page 44 "Sales Credit Memo"
             OnPostDocumentOnBeforeOpenPage(SalesCrMemoHeader, IsHandled);
             if not IsHandled then
                 if SalesCrMemoHeader.FindFirst() then
-                    PageManagement.PageRun(SalesCrMemoHeader);
+                    PAGE.Run(PAGE::"Posted Sales Credit Memo", SalesCrMemoHeader);
         end else
             if InstructionMgt.IsEnabled(InstructionMgt.ShowPostedConfirmationMessageCode()) then
                 ShowPostedConfirmationMessage(PreAssignedNo, xLastPostingNo);

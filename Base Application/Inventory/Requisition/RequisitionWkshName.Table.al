@@ -5,7 +5,6 @@
 namespace Microsoft.Inventory.Requisition;
 
 using Microsoft.Inventory.Planning;
-using System.Automation;
 
 table 245 "Requisition Wksh. Name"
 {
@@ -61,8 +60,6 @@ table 245 "Requisition Wksh. Name"
 
     trigger OnDelete()
     begin
-        ApprovalsMgmt.PreventDeletingRecordWithOpenApprovalEntry(Rec);
-
         ReqLine.SetRange("Worksheet Template Name", "Worksheet Template Name");
         ReqLine.SetRange("Journal Batch Name", Name);
         ReqLine.DeleteAll(true);
@@ -78,15 +75,8 @@ table 245 "Requisition Wksh. Name"
         ReqWkshTmpl.Get("Worksheet Template Name");
     end;
 
-    trigger OnModify()
-    begin
-        ApprovalsMgmt.PreventModifyRecIfOpenApprovalEntryExistForCurrentUser(Rec);
-    end;
-
     trigger OnRename()
     begin
-        ApprovalsMgmt.OnRenameRecordInApprovalRequest(xRec.RecordId, RecordId);
-
         ReqLine.SetRange("Worksheet Template Name", xRec."Worksheet Template Name");
         ReqLine.SetRange("Journal Batch Name", xRec.Name);
         while ReqLine.FindFirst() do
@@ -102,6 +92,5 @@ table 245 "Requisition Wksh. Name"
         ReqWkshTmpl: Record "Req. Wksh. Template";
         ReqLine: Record "Requisition Line";
         PlanningErrorLog: Record "Planning Error Log";
-        ApprovalsMgmt: Codeunit "Approvals Mgmt.";
 }
 

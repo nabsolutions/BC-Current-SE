@@ -1,4 +1,5 @@
-﻿// ------------------------------------------------------------------------------------------------
+#if not CLEAN25
+// ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // ------------------------------------------------------------------------------------------------
@@ -23,6 +24,9 @@ using Microsoft.Sales.Document;
 
 codeunit 7010 "Purch. Price Calc. Mgt."
 {
+    ObsoleteState = Pending;
+    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+    ObsoleteTag = '16.0';
 
     trigger OnRun()
     begin
@@ -66,7 +70,7 @@ codeunit 7010 "Purch. Price Calc. Mgt."
             exit;
 
         SetCurrency(PurchHeader."Currency Code", PurchHeader."Currency Factor", PurchHeaderExchDate(PurchHeader));
-        SetVAT(PurchHeader."Prices Including VAT", PurchLine.GetVATPct(), PurchLine."VAT Bus. Posting Group");
+        SetVAT(PurchHeader."Prices Including VAT", PurchLine."VAT %", PurchLine."VAT Bus. Posting Group");
         SetUoM(Abs(PurchLine.Quantity), PurchLine."Qty. per Unit of Measure");
         SetLineDisc(PurchLine."Line Discount %");
 
@@ -78,9 +82,8 @@ codeunit 7010 "Purch. Price Calc. Mgt."
             PurchLine.Type::Item:
                 begin
                     Item.Get(PurchLine."No.");
-                    if (PurchHeader."Pay-to Vendor No." <> '') or (PurchHeader."Document Type" <> PurchHeader."Document Type"::Quote) then
-                        if not Vend.Get(PurchHeader."Pay-to Vendor No.") then
-                            Vend.Get(PurchLine."Pay-to Vendor No.");
+                    if not Vend.Get(PurchHeader."Pay-to Vendor No.") then
+                        Vend.Get(PurchLine."Pay-to Vendor No.");
                     PriceInSKU := SKU.Get(PurchLine."Location Code", PurchLine."No.", PurchLine."Variant Code");
                     PurchLinePriceExists(PurchHeader, PurchLine, false);
                     CalcBestDirectUnitCost(TempPurchPrice);
@@ -1164,3 +1167,4 @@ codeunit 7010 "Purch. Price Calc. Mgt."
     begin
     end;
 }
+#endif

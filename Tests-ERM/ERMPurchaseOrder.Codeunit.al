@@ -19,18 +19,21 @@
         LibrarySales: Codeunit "Library - Sales";
         LibraryWarehouse: Codeunit "Library - Warehouse";
         LibraryUtility: Codeunit "Library - Utility";
-        LibraryUtilityOnPrem: Codeunit "Library - Utility OnPrem";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
         LibraryDimension: Codeunit "Library - Dimension";
         LibraryFixedAsset: Codeunit "Library - Fixed Asset";
+#if not CLEAN25
         LibraryPriceCalculation: Codeunit "Library - Price Calculation";
+#endif
         LibraryRandom: Codeunit "Library - Random";
         LibraryJob: Codeunit "Library - Job";
         LibrarySetupStorage: Codeunit "Library - Setup Storage";
         LibraryApplicationArea: Codeunit "Library - Application Area";
         LibraryPlanning: Codeunit "Library - Planning";
+#if not CLEAN25
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
+#endif
         LibraryResource: Codeunit "Library - Resource";
         LibraryTemplates: Codeunit "Library - Templates";
         LibraryReportDataset: Codeunit "Library - Report Dataset";
@@ -46,8 +49,10 @@
         ColumnWrongVisibilityErr: Label 'Column[%1] has wrong visibility';
         IncorrectFieldValueErr: Label 'Incorrect %1 field value.';
         WrongQtyToReceiveErr: Label 'Qty. to Receive should not be non zero because Quantity was not changed.';
+#if not CLEAN25
         IncorrectDimSetIDErr: Label 'Incorrect Dimension Set ID in %1.';
         JobUnitPriceErr: Label 'Job Unit Price is incorrect.';
+#endif
         WrongDimValueErr: Label 'Wrong dimension value in Sales Header %1.';
         WrongValuePurchaseHeaderInvoiceErr: Label 'The value of field Invoice in copied Purchase Order must be ''No''.';
         WrongValuePurchaseHeaderReceiveErr: Label 'The value of field Receive in copied Purchase Order must be ''No''.';
@@ -94,7 +99,6 @@
         SourceCurrencyErr: Label '%1 must be negative.', Comment = '%1=Field Caption.';
         PurchaseLineQtyErr: Label 'Purchase Line %1 must be equal to %2', Comment = '%1= Field ,%2= Value';
         ItemFilterOnAnalysisViewCardMatchesCreatedItemErr: Label 'The created item should be selected in the analysis view card.';
-        OptionString: Option PostedReturnReceipt,PostedInvoices,PostedShipments,PostedCrMemo;
 
     [Test]
     [Scope('OnPrem')]
@@ -273,7 +277,7 @@
         Order.SaveAsExcel(FilePath);
 
         // Verify: Verify that Saved files have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -357,7 +361,7 @@
         PurchaseInvoice.SaveAsExcel(FilePath);
 
         // Verify: Verify that Saved files have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -525,6 +529,7 @@
         Assert.IsTrue(PurchaseOrder."Pay-to Post Code".Editable(), PayToAddressFieldsEditableErr);
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure LineDiscountOnPurhcaseOrder()
@@ -555,7 +560,7 @@
         // Verify: Verify Purchase Line and Posted G/L Entry for Line Discount Amount.
         VerifyLineDiscountAmount(PurchaseLine, PostedDocumentNo, DiscountAmount);
     end;
-
+#endif
     [Test]
     [Scope('OnPrem')]
     procedure InvoiceDiscountOnPurchaseOrder()
@@ -1321,6 +1326,7 @@
           StrSubstNo(AmountError, PurchaseLine.FieldCaption("Job Unit Price"), PurchaseLine."Job Unit Price", PurchaseLine.TableCaption()));
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure PurchaseOrderWithJobUnitCostFactor()
@@ -1342,6 +1348,7 @@
         // Verify: Job Unit Price is not cleared after setting Quantity.
         Assert.AreEqual(Item."Unit Cost" * UnitCostFactor, PurchaseLine."Job Unit Price", JobUnitPriceErr);
     end;
+#endif
 
     [Test]
     [HandlerFunctions('ConfirmHandler')]
@@ -2628,6 +2635,7 @@
         VerifyRemainingAmountLCY(PurchaseHeader."Buy-from Vendor No.", AmountLCY);
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure CombinedDimOnPurchInvoiceWithItemChargeAssignedOnReceipt()
@@ -2660,7 +2668,7 @@
           DimensionMgt.GetCombinedDimensionSetID(DimSetID, ExpShortcutDimCode1, ExpShortcutDimCode2);
         VerifyDimSetIDOnItemLedgEntry(ExpectedDimSetID);
     end;
-
+#endif
     [Test]
     [Scope('OnPrem')]
     procedure GetReceiptLinesOnItemChargeAssignedOnMultipleShpts()
@@ -6745,7 +6753,9 @@
         LibraryVariableStorage.AssertEmpty();
     end;
 
+#if not CLEAN25
     [Test]
+    [Obsolete('Not Used', '23.0')]
     [Scope('OnPrem')]
     procedure PurchaseOrderWithResourceAndResourceCost()
     var
@@ -6780,6 +6790,7 @@
     end;
 
     [Test]
+    [Obsolete('Not Used', '23.0')]
     [HandlerFunctions('ImplementStandardCostChangesHandler,MessageHandler')]
     procedure T280_ImplementResourceStandardCostChanges()
     var
@@ -6809,6 +6820,7 @@
         ResourceCost.TestField("Direct Unit Cost", Resource."Direct Unit Cost");
         ResourceCost.TestField("Unit Cost", NewStdCost);
     end;
+#endif
 
     [Test]
     [HandlerFunctions('ExplodeBOMHandler')]
@@ -8893,55 +8905,6 @@
         LibraryVariableStorage.AssertEmpty();
     end;
 
-    [Test]
-    [HandlerFunctions('ConfirmHandler,PostedPurchaseDocumentLinesHandler')]
-    procedure VerifyManuallyCreatedPurchaseCrMemoUpdateExistingPurchaseOrder()
-    var
-        Item: Record Item;
-        PurchaseHeader: Record "Purchase Header";
-        PurchaseHeader2: Record "Purchase Header";
-        PurchaseLine: Record "Purchase Line";
-        Vendor: Record Vendor;
-        PurchCreditMemo: TestPage "Purchase Credit Memo";
-    begin
-        // [SCENARIO 578769] Verify manually created Purchase Credit Memo with get posted document lines to reverse should update the existing Purchase Order.
-        Initialize();
-
-        // [GIVEN] Create an Item.
-        LibraryInventory.CreateItem(Item);
-
-        // [GIVEN] Create Vendor.
-        LibraryPurchase.CreateVendor(Vendor);
-
-        // [GIVEN] Create Purchase Header.
-        LibraryPurchase.CreatePurchHeader(PurchaseHeader, PurchaseHeader."Document Type"::Order, Vendor."No.");
-
-        // [GIVEN] Create Purchase Line with Quanity as 10.
-        LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::Item, Item."No.", LibraryRandom.RandIntInRange(10, 10));
-
-        // [GIVEN] Update Qty To Receive in Purchase Line.
-        PurchaseLine.Validate("Qty. to Receive", LibraryRandom.RandIntInRange(5, 5));
-        PurchaseLine.Modify(true);
-
-        // [GIVEN] Post the Purchase Order.
-        LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, true);
-
-        // [GIVEN] Create Purchase Credit Memo
-        LibraryPurchase.CreatePurchHeader(PurchaseHeader2, PurchaseHeader2."Document Type"::"Credit Memo", Vendor."No.");
-
-        // [GIVEN] Run Get Document Lines to Reverse and copy from posted purchase invoice
-        GetPostedDocumentLines(PurchaseHeader2."No.", OptionString::PostedInvoices);
-        FindPurchaseLine(PurchaseLine, PurchaseHeader2."Document Type", PurchaseHeader2."No.", PurchaseLine.Type::Item);
-
-        // [WHEN] Post the Credit Memo
-        PurchCreditMemo.OpenView();
-        PurchCreditMemo.GotoRecord(PurchaseHeader2);
-        PurchCreditMemo.Post.Invoke();
-
-        // [THEN] Verify Purchase Order Qty. to Receive and Qty. to Invoice are updated as 10 in the Purchase line.
-        VerifyPurchaseOrderQuantityforManualPurchaseCreditMemo(PurchaseHeader."No.", 10);
-    end;
-
     local procedure Initialize()
     var
         PurchaseHeader: Record "Purchase Header";
@@ -9432,6 +9395,7 @@
         ModifyPurchaseLineJobNo(PurchaseLine, Job."No.", JobTask."Job Task No.", UnitOfMeasureCode);
     end;
 
+#if not CLEAN25
     local procedure CreatePurchOrderWithJobAndJobItemPrice(var PurchaseHeader: Record "Purchase Header"; var PurchaseLine: Record "Purchase Line"; ItemNo: Code[20]; UnitOfMeasureCode: Code[10]; var UnitCostFactor: Decimal)
     var
         Job: Record Job;
@@ -9492,7 +9456,7 @@
         LibraryPurchase.PostPurchaseDocument(PurchHeader, true, true);
         exit(PurchLine."Dimension Set ID");
     end;
-
+#endif
     local procedure CreatePostPurchInvWithGetReceiptLines(ChargePurchHeader: Record "Purchase Header")
     var
         PurchHeader: Record "Purchase Header";
@@ -9621,6 +9585,7 @@
         Item.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateItemCharge(): Code[20]
     var
         ItemCharge: Record "Item Charge";
@@ -9639,7 +9604,7 @@
         Item.Modify(true);
         LibraryInventory.CreateItemUnitOfMeasureCode(ItemUnitOfMeasure, Item."No.", 1);
     end;
-
+#endif
     local procedure CreateItemWithAutoExtendedText(): Code[20]
     var
         Item: Record Item;
@@ -9740,7 +9705,7 @@
         VendorInvoiceDisc.Modify(true);
         exit(VendorInvoiceDisc.Code);
     end;
-
+#if not CLEAN25
     local procedure CreateDimValue(var DimensionValue: Record "Dimension Value")
     var
         Dimension: Record Dimension;
@@ -9775,7 +9740,7 @@
             TempDimSetEntry.Modify();
         DimSetID := DimensionMgt.GetDimensionSetID(TempDimSetEntry);
     end;
-
+#endif
     local procedure CreatePurchOrderWithPurchCode(var StandardPurchaseLine: Record "Standard Purchase Line"; var PurchaseHeader: Record "Purchase Header"; ShortCutDimension1: Code[20]; ShortCutDimension2: Code[20])
     var
         StandardPurchaseCode: Record "Standard Purchase Code";
@@ -10414,7 +10379,7 @@
         PurchaseLine.Modify(true);
         exit(PurchaseLine."Direct Unit Cost");
     end;
-
+#if not CLEAN25
     local procedure ModifyDimOnPurchaseLine(var PurchLine: Record "Purchase Line"; BaseDimValue: Record "Dimension Value"; DimensionCode: Code[20]; DimValueCode: Code[20])
     var
         DimValue: Record "Dimension Value";
@@ -10423,7 +10388,7 @@
         DimValue.Get(DimensionCode, DimValueCode);
         CreateDimSetIDFromDimValue(PurchLine."Dimension Set ID", DimValue);
     end;
-
+#endif
     local procedure ModifyItemIndirectCost(var Item: Record Item)
     begin
         Item.Validate("Indirect Cost %", 10);
@@ -10446,7 +10411,7 @@
         InvPurchLine.Validate("Qty. to Invoice", Round(InvPurchLine.Quantity / LibraryRandom.RandIntInRange(3, 5)));
         InvPurchLine.Modify(true);
     end;
-
+#if not CLEAN25
     local procedure AssignItemChargeToReceipt(OrderNo: Code[20]; PurchLine: Record "Purchase Line")
     var
         PurchRcptLine: Record "Purch. Rcpt. Line";
@@ -10457,7 +10422,7 @@
           ItemChargeAssignmentPurch, PurchLine, ItemChargeAssignmentPurch."Applies-to Doc. Type"::Receipt,
           PurchRcptLine."Document No.", PurchRcptLine."Line No.", PurchRcptLine."No.");
     end;
-
+#endif
     local procedure AssignItemChargeToShipment(OrderNo: Code[20]; PurchLine: Record "Purchase Line")
     var
         SalesShptLine: Record "Sales Shipment Line";
@@ -10549,6 +10514,7 @@
         LibraryERM.ClearGenJournalLines(GenJournalBatch)
     end;
 
+#if not CLEAN25
     local procedure SetupLineDiscount(var PurchaseLineDiscount: Record "Purchase Line Discount")
     var
         Item: Record Item;
@@ -10560,7 +10526,7 @@
         PurchaseLineDiscount.Validate("Line Discount %", LibraryRandom.RandInt(10));
         PurchaseLineDiscount.Modify(true);
     end;
-
+#endif
     local procedure SetPurchSetupCopyLineDescrToGLEntry(CopyLineDescrToGLEntry: Boolean)
     var
         PurchSetup: Record "Purchases & Payables Setup";
@@ -11157,7 +11123,7 @@
         ItemChargeAssignmentPurch.TestField("Qty. to Assign", PurchaseLine.Quantity);
         ItemChargeAssignmentPurch.TestField("Amount to Assign", PurchaseLine."Line Amount");
     end;
-
+#if not CLEAN25
     local procedure VerifyLineDiscountAmount(PurchaseLine: Record "Purchase Line"; DocumentNo: Code[20]; LineDiscountAmount: Decimal)
     var
         GeneralLedgerSetup: Record "General Ledger Setup";
@@ -11174,7 +11140,7 @@
           LineDiscountAmount, PurchaseLine."Line Discount Amount", GeneralLedgerSetup."Amount Rounding Precision",
           StrSubstNo(AmountError, PurchaseLine.FieldCaption("Line Discount Amount"), LineDiscountAmount, PurchaseLine.TableCaption()));
     end;
-
+#endif
     local procedure VerifyVendorLedgerEntry(DocumentNo: Code[20]; Amount: Decimal)
     var
         VendorLedgerEntry: Record "Vendor Ledger Entry";
@@ -11483,7 +11449,7 @@
         PurchaseLine.FindFirst();
         PurchaseLine.TestField("Dimension Set ID", GetDimensionSetId(PostedDocumentNo));
     end;
-
+#if not CLEAN25
     local procedure VerifyDimSetIDOnItemLedgEntry(ExpectedDimSetID: Integer)
     var
         ItemLedgEntry: Record "Item Ledger Entry";
@@ -11496,7 +11462,7 @@
         Assert.AreEqual(
           ExpectedDimSetID, ValueEntry."Dimension Set ID", StrSubstNo(IncorrectDimSetIDErr, ItemLedgEntry.TableCaption()));
     end;
-
+#endif
     local procedure VerifyChargeValueEntry(DocNo: array[2] of Code[20]; ItemChargeNo: Code[20]; ShipmentCount: Integer)
     var
         ItemLedgEntry: Record "Item Ledger Entry";
@@ -12275,6 +12241,7 @@
             StrSubstNo(QuantityMustBeZeroLbl, ItemChargeAssignmentPurch.FieldCaption("Qty. to Handle")));
     end;
 
+#if not CLEAN25
     local procedure CreateStandardCostWorksheet(var StandardCostWorksheetPage: TestPage "Standard Cost Worksheet"; ResourceNo: Code[20]; StandardCost: Decimal; NewStandardCost: Decimal)
     var
         StandardCostWorksheet: Record "Standard Cost Worksheet";
@@ -12299,6 +12266,7 @@
     end;
 
     [RequestPageHandler]
+    [Obsolete('Not Used', '23.0')]
     procedure ImplementStandardCostChangesHandler(var ImplementStandardCostChange: TestRequestPage "Implement Standard Cost Change")
     var
         ItemJournalTemplate: Record "Item Journal Template";
@@ -12310,6 +12278,7 @@
         ImplementStandardCostChange.ItemJournalBatchName.SetValue(ItemJournalBatch.Name);
         ImplementStandardCostChange.OK().Invoke();
     end;
+#endif
 
     local procedure CreateLocationWithDimension(var Location: Record Location; var DimensionValue: Record "Dimension Value"; DimensionCode: Code[20]; ValuePosting: Enum "Default Dimension Value Posting Type")
     var
@@ -12370,39 +12339,6 @@
         WarehouseReceiptLine.FindFirst();
         WarehouseReceiptLine.Validate("Qty. to Receive", Qty);
         WarehouseReceiptLine.Modify(true);
-    end;
-
-    local procedure GetPostedDocumentLines(No: Code[20]; OptionStr: Option)
-    var
-        PurchCreditMemo: TestPage "Purchase Credit Memo";
-    begin
-        LibraryVariableStorage.Enqueue(OptionStr);
-        PurchCreditMemo.OpenEdit();
-        PurchCreditMemo.FILTER.SetFilter("No.", No);
-        PurchCreditMemo.GetPostedDocumentLinesToReverse.Invoke();
-    end;
-
-    local procedure FindPurchaseLine(var PurchaseLine: Record "Purchase Line"; DocumentType: Enum "Purchase Document Type"; DocumentNo: Code[20]; Type: Enum "Purchase Line Type")
-    begin
-        PurchaseLine.SetRange("Document Type", DocumentType);
-        PurchaseLine.SetRange("Document No.", DocumentNo);
-        PurchaseLine.SetRange(Type, Type);
-        PurchaseLine.FindFirst();
-    end;
-
-    local procedure VerifyPurchaseOrderQuantityforManualPurchaseCreditMemo(PurchaseHeaderNo: Code[20]; ExpectedQuantity: Decimal)
-    var
-        PurchaseLine: Record "Purchase Line";
-    begin
-        PurchaseLine.SetRange("Document No.", PurchaseHeaderNo);
-        PurchaseLine.SetRange("Document Type", PurchaseLine."Document Type"::Order);
-        PurchaseLine.FindSet();
-        repeat
-            Assert.AreEqual(ExpectedQuantity, PurchaseLine."Qty. to Receive", StrSubstNo(
-                PurchaseLineQtyErr, PurchaseLine.FieldName("Qty. to Receive"), ExpectedQuantity));
-            Assert.AreEqual(ExpectedQuantity, PurchaseLine."Qty. to Invoice", StrSubstNo(
-                PurchaseLineQtyErr, PurchaseLine.FieldName("Qty. to Invoice"), ExpectedQuantity));
-        until PurchaseLine.Next() = 0;
     end;
 
     [ModalPageHandler]
@@ -12840,23 +12776,5 @@
     begin
         ItemList.Filter.SetFilter("No.", LibraryVariableStorage.DequeueText());
         ItemList.Cancel().Invoke();
-    end;
-
-    [ModalPageHandler]
-    procedure PostedPurchaseDocumentLinesHandler(var PostedPurchaseDocumentLines: TestPage "Posted Purchase Document Lines")
-    var
-        DocumentType: Option "Posted Shipments","Posted Invoices","Posted Return Receipts","Posted Cr. Memos";
-    begin
-        case LibraryVariableStorage.DequeueInteger() of
-            OptionString::PostedReturnReceipt:
-                PostedPurchaseDocumentLines.PostedReceiptsBtn.SetValue(Format(DocumentType::"Posted Return Receipts"));
-            OptionString::PostedInvoices:
-                PostedPurchaseDocumentLines.PostedReceiptsBtn.SetValue(Format(DocumentType::"Posted Invoices"));
-            OptionString::PostedShipments:
-                PostedPurchaseDocumentLines.PostedReceiptsBtn.SetValue(Format(DocumentType::"Posted Shipments"));
-            OptionString::PostedCrMemo:
-                PostedPurchaseDocumentLines.PostedReceiptsBtn.SetValue(Format(DocumentType::"Posted Cr. Memos"));
-        end;
-        PostedPurchaseDocumentLines.OK().Invoke();
     end;
 }

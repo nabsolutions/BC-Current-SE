@@ -13,6 +13,7 @@ using Microsoft.Utilities;
 using System.DataAdministration;
 using System.Threading;
 using System.Automation;
+using System.Feedback;
 
 codeunit 8912 "Environment Cleanup Subs"
 {
@@ -73,9 +74,11 @@ codeunit 8912 "Environment Cleanup Subs"
     local procedure ClearDatabaseConfigGeneral(SourceEnv: Enum "Environment Type"; DestinationEnv: Enum "Environment Type")
     var
         FlowServiceConfiguration: Record "Flow Service Configuration";
+        SatisfactionSurveyMgt: Codeunit "Satisfaction Survey Mgt.";
     begin
         // For behavior in all cases of copying a new env.
 
+        SatisfactionSurveyMgt.ResetState();
         FlowServiceConfiguration.ModifyAll("Flow Service", FlowServiceConfiguration."Flow Service"::"Testing Service (TIP 1)");
         Commit();
     end;

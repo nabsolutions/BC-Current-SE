@@ -52,7 +52,6 @@ codeunit 8 AccSchedManagement
         MatrixMgt: Codeunit "Matrix Management";
         AccountingPeriodMgt: Codeunit "Accounting Period Mgt.";
         AnalysisViewRead: Boolean;
-        SheetDefinitionRead: Boolean;
         StartDate: Date;
         EndDate: Date;
         FiscalStartDate: Date;
@@ -76,7 +75,7 @@ codeunit 8 AccSchedManagement
 #pragma warning disable AA0470
         Text022: Label 'You cannot have more than %1 lines with %2 of %3.';
         Text023: Label 'Formulas ending with a percent sign require %2 %1 on a line before it.';
-        Text024: Label 'The %1 %3 on the %2 must equal the %4 %6 on the %5 when any Dimension Totaling is used in any %7.';
+        Text024: Label 'The %1 %3 on the %2 must equal the %4 %6 on the %5 when any Dimension Totaling is used in any Column.';
 #pragma warning restore AA0470
 #pragma warning restore AA0074
 #pragma warning disable AA0470
@@ -89,7 +88,6 @@ codeunit 8 AccSchedManagement
         WeekTxt: Label 'W%1', Comment = '%1 = Week number';
         Recalculate: Boolean;
         SystemGeneratedAccSchedQst: Label 'This account schedule may be automatically updated by the system, so any changes you make may be lost. Do you want to make a copy?';
-        SheetDimensionMismatchErr: Label 'The %1 on %2 must be one of the dimension codes specified on the %3 %4.', Comment = '%1 = Sheet Type, %2 = Sheet Definition Name, %3 = Analysis View, %4 = Analysis View Name';
 
     procedure OpenSchedule(var CurrentSchedName: Code[10]; var AccSchedLine: Record "Acc. Schedule Line")
     begin
@@ -114,16 +112,6 @@ codeunit 8 AccSchedManagement
                 CopyAccountSchedule.RunModal();
                 CurrentSchedName := CopyAccountSchedule.GetNewAccountScheduleName();
             end;
-    end;
-
-    procedure GetAccountScheduleCaption(CurrentSchedName: Code[10]): Text
-    var
-        AccScheduleName: Record "Acc. Schedule Name";
-    begin
-        if CurrentSchedName <> '' then
-            if AccScheduleName.Get(CurrentSchedName) and (AccScheduleName.Description <> '') then
-                exit(StrSubstNo('%1 (%2)', AccScheduleName.Description, AccScheduleName.Name));
-        exit(CurrentSchedName);
     end;
 
     local procedure CurrentScheduleAlreadyDefinedInGLSetup(ScheduleName: Code[10]): Boolean
@@ -214,16 +202,6 @@ codeunit 8 AccSchedManagement
         ColumnLayout.SetRange("Column Layout Name", CurrentColumnName);
         ColumnLayout.FilterGroup(0);
         OnAfterOpenColumns(CurrentColumnName, ColumnLayout);
-    end;
-
-    procedure GetColumnLayoutCaption(CurrentColumnName: Code[10]): Text;
-    var
-        ColLayoutName: Record "Column Layout Name";
-    begin
-        if CurrentColumnName <> '' then
-            if ColLayoutName.Get(CurrentColumnName) and (ColLayoutName.Description <> '') then
-                exit(StrSubstNo('%1 (%2)', ColLayoutName.Description, ColLayoutName.Name));
-        exit(CurrentColumnName);
     end;
 
     local procedure CheckColumnTemplateName(var CurrentColumnName: Code[10])
@@ -346,74 +324,11 @@ codeunit 8 AccSchedManagement
                       AccSchedName."Analysis View Name",
                       ColumnLayoutName.FieldCaption("Analysis View Name"),
                       ColumnLayoutName.TableCaption(),
-                      ColumnLayoutName."Analysis View Name",
-                      ColumnLayout2.TableCaption());
+                      ColumnLayoutName."Analysis View Name");
             end;
         end;
 
         OnAfterCheckAnalysisView(AccSchedName, ColumnLayoutName, AnalysisView);
-    end;
-
-    procedure CheckSheetAnalysisView(CurrentSchedName: Code[10]; CurrentSheetName: Code[10])
-    var
-        SheetDefName: Record "Sheet Definition Name";
-        SheetDefLine: Record "Sheet Definition Line";
-        AnySheetDimensions: Boolean;
-    begin
-        if not SheetDefinitionRead then begin
-            SheetDefinitionRead := true;
-            if CurrentSchedName <> AccSchedName.Name then begin
-                CheckTemplateName(CurrentSchedName);
-                AccSchedName.Get(CurrentSchedName);
-            end;
-            SheetDefName.Get(CurrentSheetName);
-            if AccSchedName."Analysis View Name" = '' then begin
-                GetGLSetup();
-                AnalysisView.Init();
-                AnalysisView."Dimension 1 Code" := GLSetup."Global Dimension 1 Code";
-                AnalysisView."Dimension 2 Code" := GLSetup."Global Dimension 2 Code";
-            end else
-                AnalysisView.Get(AccSchedName."Analysis View Name");
-
-            if AccSchedName."Analysis View Name" <> SheetDefName."Analysis View Name" then begin
-                SheetDefLine.SetRange(Name, CurrentSheetName);
-                if SheetDefLine.FindSet() then
-                    repeat
-                        AnySheetDimensions :=
-                          (SheetDefLine."Dimension 1 Totaling" <> '') or
-                          (SheetDefLine."Dimension 2 Totaling" <> '') or
-                          (SheetDefLine."Dimension 3 Totaling" <> '') or
-                          (SheetDefLine."Dimension 4 Totaling" <> '');
-                    until AnySheetDimensions or (SheetDefLine.Next() = 0);
-                if AnySheetDimensions then
-                    Error(
-                      Text024,
-                      AccSchedName.FieldCaption("Analysis View Name"),
-                      AccSchedName.TableCaption(),
-                      AccSchedName."Analysis View Name",
-                      SheetDefName.FieldCaption("Analysis View Name"),
-                      SheetDefName.TableCaption(),
-                      SheetDefName."Analysis View Name",
-                      SheetDefLine.TableCaption());
-            end;
-
-            if (SheetDefName."Sheet Type" <> SheetDefName."Sheet Type"::Custom) and
-                (SheetDefName."Analysis View Name" <> '')
-            then
-                case SheetDefName."Sheet Type" of
-                    "Sheet Type"::Dimension5,
-                    "Sheet Type"::Dimension6,
-                    "Sheet Type"::Dimension7,
-                    "Sheet Type"::Dimension8,
-                    "Sheet Type"::BusinessUnit:
-                        Error(
-                            SheetDimensionMismatchErr,
-                            SheetDefName.FieldCaption("Sheet Type"),
-                            SheetDefName.TableCaption(),
-                            SheetDefName.FieldCaption("Analysis View Name"),
-                            SheetDefName."Analysis View Name");
-                end;
-        end;
     end;
 
     procedure AccPeriodStartEnd(ColumnLayout: Record "Column Layout"; Date: Date; var StartDate: Date; var EndDate: Date)
@@ -506,7 +421,7 @@ codeunit 8 AccSchedManagement
         if not IsHandled then begin
             if ColumnLayout."Show in ACY" then
                 CalcAddCurr := true;
-
+            
             AccountScheduleLine."Dimension 1 Totaling" := AccSchedLine."Dimension 1 Totaling";
             AccountScheduleLine."Dimension 2 Totaling" := AccSchedLine."Dimension 2 Totaling";
             AccountScheduleLine.CopyFilters(AccSchedLine);
@@ -2600,7 +2515,7 @@ codeunit 8 AccSchedManagement
             ColumnLayout."Include Date In Header"::Weekday:
                 DateText := Format(ToDate, 0, '<Weekday Text>');
             ColumnLayout."Include Date In Header"::Week:
-                DateText := StrSubstNo(WeekTxt, Format(ToDate, 0, '<Week>'));
+                DateText := StrSubstNo(WeekTxt, Format(ToDate, 0, '<Week Year>'));
             ColumnLayout."Include Date In Header"::Month:
                 DateText := Format(ToDate, 0, '<Month Text>');
             ColumnLayout."Include Date In Header"::MonthAndYear:

@@ -21,13 +21,14 @@ codeunit 136309 "Job Posting"
         LibraryResource: Codeunit "Library - Resource";
         LibrarySales: Codeunit "Library - Sales";
         LibraryCosting: Codeunit "Library - Costing";
-        LibraryPostInventoryToGL: Codeunit "Library - Post Inventory To GL";
         LibraryUtility: Codeunit "Library - Utility";
         LibraryWarehouse: Codeunit "Library - Warehouse";
         LibraryRandom: Codeunit "Library - Random";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
         LibrarySetupStorage: Codeunit "Library - Setup Storage";
+#if not CLEAN25
         CopyFromToPriceListLine: Codeunit CopyFromToPriceListLine;
+#endif
         LibraryNoSeries: Codeunit "Library - No. Series";
         Any: Codeunit Any;
         TargetJobNo: Code[20];
@@ -908,6 +909,7 @@ codeunit 136309 "Job Posting"
             JobLedgerEntry.TableCaption()));
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure JobPlanningLineUnitPriceWithItemSalesPrice()
@@ -938,6 +940,7 @@ codeunit 136309 "Job Posting"
         // 3. Verify: Verify Unit Price on Job Planning Line.
         JobPlanningLine.TestField("Unit Price", SalesPrice."Unit Price");
     end;
+#endif
 
     [Test]
     [Scope('OnPrem')]
@@ -1863,7 +1866,7 @@ codeunit 136309 "Job Posting"
         // [GIVEN] Cost is adjusted in order not to include the positive adjustment entry to the next run of Post Cost to G/L job.
         LibraryInventory.CreateItem(Item);
         CreateAndPostInvtAdjustmentWithUnitCost(Item."No.", LibraryRandom.RandIntInRange(20, 40), LibraryRandom.RandDec(10, 2));
-        LibraryPostInventoryToGL.PostInvtCostToGL(false, WorkDate(), '');
+        LibraryCosting.PostInvtCostToGL(false, WorkDate(), '');
 
         // [GIVEN] Job "J" and a job planning line with the item.
         // [GIVEN] Posted job journal line with the item.
@@ -1874,7 +1877,7 @@ codeunit 136309 "Job Posting"
 
         // [WHEN] Run "Post Inventory Cost to G/L" batch job with "Per Posting Group" option.
         DocumentNo := LibraryUtility.GenerateGUID();
-        LibraryPostInventoryToGL.PostInvtCostToGL(true, WorkDate(), DocumentNo);
+        LibraryCosting.PostInvtCostToGL(true, WorkDate(), DocumentNo);
 
         // [THEN] Two G/L entries are created.
         GLRegister.FindLast();
@@ -1911,7 +1914,7 @@ codeunit 136309 "Job Posting"
         LibraryCosting.AdjustCostItemEntries(Item."No.", '');
 
         // [WHEN] Run "Post Inventory Cost to G/L" batch job with "Per Entry" option.
-        LibraryPostInventoryToGL.PostInvtCostToGL(false, WorkDate(), '');
+        LibraryCosting.PostInvtCostToGL(false, WorkDate(), '');
 
         // [THEN] Two G/L entries are created.
         GLEntry.SetRange("Document No.", JobJournalLine."Document No.");

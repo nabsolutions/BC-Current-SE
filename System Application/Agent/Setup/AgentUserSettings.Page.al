@@ -5,10 +5,10 @@
 
 namespace System.Agents;
 
-using System.DateTime;
-using System.Environment.Configuration;
 using System.Globalization;
+using System.DateTime;
 using System.Security.AccessControl;
+using System.Environment.Configuration;
 
 /// <summary>
 /// Page that shows the settings of a given user.
@@ -104,11 +104,7 @@ page 4317 "Agent User Settings"
     }
 
     trigger OnOpenPage()
-    var
-        AgentUtilities: Codeunit "Agent Utilities";
     begin
-        AgentUtilities.BlockPageFromBeingOpenedByAgent();
-
         if not Rec.Initialized then
             UserSettings.GetUserSettings(Rec."User Security ID", Rec);
 

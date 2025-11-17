@@ -5,11 +5,11 @@
 
 namespace System.Email;
 
-using System.Environment;
-using System.Integration.Word;
-using System.IO;
 using System.Telemetry;
+using System.IO;
 using System.Utilities;
+using System.Integration.Word;
+using System.Environment;
 
 codeunit 8906 "Email Editor"
 {

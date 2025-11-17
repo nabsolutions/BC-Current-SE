@@ -8,7 +8,9 @@ using Microsoft.Pricing.Asset;
 using Microsoft.Pricing.Calculation;
 using Microsoft.Pricing.PriceList;
 using Microsoft.Pricing.Source;
+#if not CLEAN25
 using Microsoft.Projects.Project.Pricing;
+#endif
 
 page 9098 "Job No. of Prices FactBox"
 {
@@ -31,12 +33,16 @@ page 9098 "Job No. of Prices FactBox"
                     ShowDetails();
                 end;
             }
+#if not CLEAN25
             field(NoOfResourcePrices; NoOfResourcePrices)
             {
                 ApplicationArea = Jobs;
                 Caption = 'Resource';
                 Visible = not ExtendedPriceEnabled;
                 ToolTip = 'Specifies prices for the resource.';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                ObsoleteTag = '16.0';
 
                 trigger OnDrillDown()
                 var
@@ -53,6 +59,9 @@ page 9098 "Job No. of Prices FactBox"
                 Caption = 'Item';
                 Visible = not ExtendedPriceEnabled;
                 ToolTip = 'Specifies the total usage cost of items associated with this project.';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                ObsoleteTag = '16.0';
 
                 trigger OnDrillDown()
                 var
@@ -69,6 +78,9 @@ page 9098 "Job No. of Prices FactBox"
                 Caption = 'G/L Account';
                 Visible = not ExtendedPriceEnabled;
                 ToolTip = 'Specifies the sum of values in the Project G/L Account Prices window.';
+                ObsoleteState = Pending;
+                ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                ObsoleteTag = '16.0';
 
                 trigger OnDrillDown()
                 var
@@ -79,6 +91,7 @@ page 9098 "Job No. of Prices FactBox"
                     PAGE.Run(PAGE::"Job G/L Account Prices", JobAccPrice);
                 end;
             }
+#endif
             field(NoOfResPrices; NoOfResourcePrices)
             {
                 ApplicationArea = Jobs;
@@ -158,9 +171,10 @@ page 9098 "Job No. of Prices FactBox"
     var
         PriceListLine: Record "Price List Line";
     begin
+#if not CLEAN25
         if CalcOldNoOfRecords() then
             exit;
-
+#endif
         PriceListLine.SetRange(Status, "Price Status"::Active);
         PriceListLine.SetRange("Source Type", "Price Source Type"::Job);
         PriceListLine.SetRange("Source No.", Rec."No.");
@@ -175,6 +189,7 @@ page 9098 "Job No. of Prices FactBox"
         NoOfAccountPrices := PriceListLine.Count();
     end;
 
+#if not CLEAN25
     local procedure CalcOldNoOfRecords(): Boolean;
     var
         JobResourcePrice: Record "Job Resource Price";
@@ -197,5 +212,6 @@ page 9098 "Job No. of Prices FactBox"
         NoOfAccountPrices := JobAccountPrice.Count();
         exit(true);
     end;
+#endif
 }
 

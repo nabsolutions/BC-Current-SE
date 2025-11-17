@@ -1,3 +1,4 @@
+#if not CLEAN25
 // ------------------------------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -12,6 +13,9 @@ report 1191 "Suggest Res. Price Chg. (Res.)"
 {
     Caption = 'Suggest Res. Price Chg. (Res.)';
     ProcessingOnly = true;
+    ObsoleteState = Pending;
+    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+    ObsoleteTag = '16.0';
 
     dataset
     {
@@ -203,3 +207,4 @@ report 1191 "Suggest Res. Price Chg. (Res.)"
         CreateNewPrices := CreateNewPricesFrom;
     end;
 }
+#endif

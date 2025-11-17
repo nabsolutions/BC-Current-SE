@@ -13,7 +13,7 @@ codeunit 135206 "Image Analysis Management Test"
         Assert: Codeunit Assert;
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryLowerPermissions: Codeunit "Library - Lower Permissions";
-        LibraryUtilityOnPrem: Codeunit "Library - Utility OnPrem";
+        LibraryUtility: Codeunit "Library - Utility";
         EnvironmentInfoTestLibrary: Codeunit "Environment Info Test Library";
         HttpMessageHandler: DotNet MockHttpMessageHandler;
         SetMediaErr: Label 'There was a problem uploading the image file. Please try again.';
@@ -197,6 +197,14 @@ codeunit 135206 "Image Analysis Management Test"
 
         // [THEN] No error is raised if wrong color number is used
         Assert.AreEqual('', ImageAnalysisResult.DominantColor(3), 'Wrong color returned.');
+#if not CLEAN25
+        // [THEN] The correct number of faces are found
+        Assert.AreEqual(0, ImageAnalysisResult.FaceCount(), 'Wrong number of faces found.');
+
+        // [THEN] No error is raised if wrong face number is used
+        Assert.AreEqual('', ImageAnalysisResult.FaceGender(1), 'Wrong face gender returned.');
+        Assert.AreEqual(0, ImageAnalysisResult.FaceAge(1), 'Wrong face gender returned.');
+#endif
 
         // [THEN] The usage count is incremented
         Assert.AreEqual(
@@ -258,12 +266,91 @@ codeunit 135206 "Image Analysis Management Test"
 
         // [THEN] No error is raised if wrong color number is used
         Assert.AreEqual('', ImageAnalysisResult.DominantColor(3), 'Wrong color returned.');
+#if not CLEAN25
+        // [THEN] The correct number of faces are found
+        Assert.AreEqual(0, ImageAnalysisResult.FaceCount(), 'Wrong number of faces found.');
+
+        // [THEN] No error is raised if wrong face number is used
+        Assert.AreEqual('', ImageAnalysisResult.FaceGender(1), 'Wrong face gender returned.');
+        Assert.AreEqual(0, ImageAnalysisResult.FaceAge(1), 'Wrong face gender returned.');
+#endif
 
         // [THEN] The usage count is incremented
         Assert.AreEqual(
           1, AzureAIUsageCodeunit.GetTotalProcessingTime(AzureAIService::"Computer Vision"),
           'Number of calls not incremented.');
     end;
+#if not CLEAN25
+    [Test]
+    [Scope('OnPrem')]
+    [Obsolete('Image analysis for face is being removed. There is no replacement.', '25.0')]
+    procedure TestAnalyzeFaces()
+    var
+        TempBlob: Codeunit "Temp Blob";
+        ImageAnalysisManagement: Codeunit "Image Analysis Management";
+        ImageAnalysisResult: Codeunit "Image Analysis Result";
+        FileManagement: Codeunit "File Management";
+    begin
+        // [SCENARIO] Image Analysis is invoked on a proper image with a face
+
+        // [GIVEN] A BLOB with an image of a face
+        // Import needs to happen before setting to saas
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
+        FileManagement.BLOBImportFromServerFile(TempBlob, GetFaceImagePath());
+        InitializeMockKeyvault('fakekey', 'https://fakeuri', '1000', 'Hour');
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
+        LibraryLowerPermissions.SetO365Basic();
+
+        ImageAnalysisManagement.Initialize();
+
+        ImageAnalysisManagement.SetBlob(TempBlob);
+        ImageAnalysisManagement.SetHttpMessageHandler(
+          HttpMessageHandler.MockHttpMessageHandler(GetFaceAnalysisResponsePath()));
+
+        // [WHEN] Analyze is invoked
+        ImageAnalysisManagement.AnalyzeFaces(ImageAnalysisResult);
+
+        // [THEN] The correct face characteristics are found
+        Assert.AreEqual(1, ImageAnalysisResult.FaceCount(), 'Wrong number of faces found.');
+        Assert.AreEqual('Female', ImageAnalysisResult.FaceGender(1), 'Wrong gender of face found.');
+        Assert.AreEqual(28, ImageAnalysisResult.FaceAge(1), 'Wrong age of face found.');
+    end;
+
+    [Test]
+    [Scope('OnPrem')]
+    [Obsolete('Image analysis for face is being removed. There is no replacement.', '25.0')]
+    procedure TestAnalyzeFacesForMinors()
+    var
+        TempBlob: Codeunit "Temp Blob";
+        ImageAnalysisManagement: Codeunit "Image Analysis Management";
+        ImageAnalysisResult: Codeunit "Image Analysis Result";
+        FileManagement: Codeunit "File Management";
+    begin
+        // [SCENARIO] Image Analysis is invoked on a proper image with a face for a minor (< 16 years)
+
+        // [GIVEN] A BLOB with an image of a face of a minor
+        // This import needs to happen before setting to saas
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(false);
+        FileManagement.BLOBImportFromServerFile(TempBlob, GetFaceImagePath());
+        EnvironmentInfoTestLibrary.SetTestabilitySoftwareAsAService(true);
+        InitializeMockKeyvault('fakekey', 'https://fakeuri', '1000', 'Hour');
+        LibraryLowerPermissions.SetO365Basic();
+
+        ImageAnalysisManagement.Initialize();
+
+        ImageAnalysisManagement.SetBlob(TempBlob);
+        ImageAnalysisManagement.SetHttpMessageHandler(
+          HttpMessageHandler.MockHttpMessageHandler(GetFaceMinorAnalysisResponsePath()));
+
+        // [WHEN] Analyze is invoked
+        ImageAnalysisManagement.AnalyzeFaces(ImageAnalysisResult);
+
+        // [THEN] The no face characteristics are found
+        Assert.AreEqual(1, ImageAnalysisResult.FaceCount(), 'Wrong number of faces found.');
+        Assert.AreEqual('', ImageAnalysisResult.FaceGender(1), 'The gender may not be specified for a minor.');
+        Assert.AreEqual(0, ImageAnalysisResult.FaceAge(1), 'The age may not be specified for a minor.');
+    end;
+#endif
 
     [Test]
     [TestPermissions(TestPermissions::Disabled)]
@@ -661,44 +748,67 @@ codeunit 135206 "Image Analysis Management Test"
     [Normal]
     local procedure GetImagePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\AllowedImage.jpg');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\AllowedImage.jpg');
     end;
+#if not CLEAN25
+    [Normal]
+    [Obsolete('Image analysis for face is being removed. There is no replacement.', '25.0')]
+    local procedure GetFaceImagePath(): Text
+    begin
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\Debra Core.jpg');
+    end;
+#endif
 
     [Normal]
     local procedure GetImageAnalysisColorResponsePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisColorResponse.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisColorResponse.txt');
     end;
 
     [Normal]
     local procedure GetImageAnalysisTagsResponsePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisTagsResponse.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisTagsResponse.txt');
     end;
 
     [Normal]
     local procedure GetCustomImageAnalysisTagsResponsePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisTagsResponse.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisTagsResponse.txt');
     end;
 
     [Normal]
     local procedure GetCustomImageAnalysisTagsResponsePathV2(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisTagsResponseV2.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisTagsResponseV2.txt');
     end;
 
     [Normal]
     local procedure GetCustomImageAnalysisErrorResponsePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisErrorResponse.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\CustomImageAnalysisErrorResponse.txt');
     end;
 
     [Normal]
     local procedure GetImageAnalysisErrorResponsePath(): Text
     begin
-        exit(LibraryUtilityOnPrem.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisErrorResponse.txt');
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\ImageAnalysisErrorResponse.txt');
     end;
+#if not CLEAN25
+    [Normal]
+    [Obsolete('Image analysis for face is being removed. There is no replacement.', '25.0')]
+    local procedure GetFaceAnalysisResponsePath(): Text
+    begin
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\FaceImageAnalysisResponse.txt');
+    end;
+
+    [Normal]
+    [Obsolete('Image analysis for face is being removed. There is no replacement.', '25.0')]
+    local procedure GetFaceMinorAnalysisResponsePath(): Text
+    begin
+        exit(LibraryUtility.GetInetRoot() + '\App\Test\Files\ImageAnalysis\FaceMinorImageAnalysisResponse.txt');
+    end;
+#endif
 
     local procedure InitializeMockKeyvault(ApiKey: Text; ApiEndpoint: Text; ImageAnalysisLimit: Text; ImageAnalysisPeriodType: Text)
     var
@@ -711,3 +821,4 @@ codeunit 135206 "Image Analysis Management Test"
         AzureKeyVaultTestLibrary.SetAzureKeyVaultSecretProvider(MockAzureKeyvaultSecretProvider);
     end;
 }
+

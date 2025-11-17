@@ -53,7 +53,6 @@ codeunit 136114 "Service Order Check"
         LibrarySales: Codeunit "Library - Sales";
         LibraryService: Codeunit "Library - Service";
         LibraryUtility: Codeunit "Library - Utility";
-        LibraryUtilityOnPrem: Codeunit "Library - Utility OnPrem";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryReportValidation: Codeunit "Library - Report Validation";
         LibraryReportDataset: Codeunit "Library - Report Dataset";
@@ -151,7 +150,7 @@ codeunit 136114 "Service Order Check"
         ServiceItemWorksheet.SaveAsExcel(FilePath);
 
         // 4. Verify: Verify that Saved files have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
     end;
 
     [Test]
@@ -313,7 +312,7 @@ codeunit 136114 "Service Order Check"
 
         // 3. Verify: Check Service Ledger Entry, Warranty Ledger Entry, Service Shipment Line, Service Document Log Event, Document
         // Dimension for Posted Shipment and Save Service Shipment Report with XML and XLSX format also verify that Saved files have some data.
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
         VerifyServiceLedgerEntry(ServiceLine);
         VerifyWarrantyLedgerEntry(ServiceLine);
         VerifyServiceShipmentLine(ServiceLine);
@@ -355,7 +354,7 @@ codeunit 136114 "Service Order Check"
 
         // 3. Verify: Verify that Saved files have some data, Service Document log, G/L Entry, VAT Entry, Customer Ledger Entry, Resource Ledger Entry and Service Ledger Entry.
         GetServiceLines(ServiceLine, ServiceHeader."No.", ServiceHeader."Document Type");
-        LibraryUtilityOnPrem.CheckFileNotEmpty(FilePath);
+        LibraryUtility.CheckFileNotEmpty(FilePath);
         VerifyServiceDocumentLogEvent(ServiceInvoiceHeader."No.", ServiceDocumentLog."Document Type"::"Posted Invoice", 9);
         VerifyGLEntry(ServiceInvoiceHeader);
         VerifyVATEntry(ServiceInvoiceHeader);
@@ -450,6 +449,7 @@ codeunit 136114 "Service Order Check"
         VerifyGetShipmentLines(OrderNo, ServiceHeader."No.");
     end;
 
+#if not CLEAN25
     [Test]
     [Scope('OnPrem')]
     procedure ServiceOrderDiscounts()
@@ -485,7 +485,7 @@ codeunit 136114 "Service Order Check"
         // 3. Verify: Service Discounts are correctly transfered to Invoice.
         VerifyServiceInvoice(TempServiceLine);
     end;
-
+#endif
     [Test]
     [HandlerFunctions('FormHandlerGetShipment')]
     [Scope('OnPrem')]
@@ -1611,6 +1611,7 @@ codeunit 136114 "Service Order Check"
         ServiceLine.Modify(true);
     end;
 
+#if not CLEAN25
     local procedure CreateCustomerLineDiscount(Item: Record Item; CustomerNo: Code[20])
     var
         SalesLineDiscount: Record "Sales Line Discount";
@@ -1622,7 +1623,7 @@ codeunit 136114 "Service Order Check"
         SalesLineDiscount.Validate("Line Discount %", LibraryRandom.RandInt(10));
         SalesLineDiscount.Modify(true);
     end;
-
+#endif
     local procedure CreateCustomerInvoiceDiscount(var CustInvoiceDisc: Record "Cust. Invoice Disc."; CustomerNo: Code[20]; MinimumAmount: Decimal; ServiceCharge: Decimal)
     begin
         LibraryERM.CreateInvDiscForCustomer(CustInvoiceDisc, CustomerNo, '', MinimumAmount);

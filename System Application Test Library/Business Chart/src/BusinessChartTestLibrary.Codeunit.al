@@ -5,8 +5,8 @@
 
 namespace System.TestLibraries.Visualization;
 
-using System;
 using System.Visualization;
+using System;
 
 /// <summary>
 /// Test library for the Business Chart module.

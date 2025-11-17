@@ -60,6 +60,7 @@ page 512 "Customer Disc. Groups"
             {
                 Caption = 'Cust. &Disc. Groups';
                 Image = Group;
+#if not CLEAN25
                 action(SalesLineDiscounts)
                 {
                     ApplicationArea = Basic, Suite;
@@ -67,6 +68,9 @@ page 512 "Customer Disc. Groups"
                     Image = SalesLineDisc;
                     Visible = not ExtendedPriceEnabled;
                     ToolTip = 'View the sales line discounts that are available. These discount agreements can be for individual customers, for a group of customers, for all customers or for a campaign.';
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
 
                     trigger OnAction()
                     var
@@ -78,6 +82,7 @@ page 512 "Customer Disc. Groups"
                         Page.Run(Page::"Sales Line Discounts", SalesLineDiscount);
                     end;
                 }
+#endif
                 action(PriceLists)
                 {
                     AccessByPermission = TableData "Sales Discount Access" = R;
@@ -123,9 +128,14 @@ page 512 "Customer Disc. Groups"
             group(Category_Category4)
             {
                 Caption = 'Navigate', Comment = 'Generated from the PromotedActionCategories property index 3.';
+#if not CLEAN25
                 actionref(SalesLineDiscounts_Promoted; SalesLineDiscounts)
                 {
+                    ObsoleteState = Pending;
+                    ObsoleteReason = 'Replaced by the new implementation (V16) of price calculation.';
+                    ObsoleteTag = '17.0';
                 }
+#endif
                 actionref(PriceLists_Promoted; PriceLists)
                 {
                 }

@@ -13,7 +13,6 @@ using Microsoft.Foundation.Company;
 using Microsoft.HumanResources.Employee;
 using Microsoft.Intercompany.Journal;
 using Microsoft.Inventory.Analysis;
-using Microsoft.Inventory.Requisition;
 using Microsoft.Projects.Project.Journal;
 using Microsoft.Projects.Resources.Journal;
 using Microsoft.Purchases.Archive;
@@ -212,10 +211,6 @@ codeunit 700 "Page Management"
                 exit(GetGenJournalBatchPageID(RecRef));
             Database::"Gen. Journal Line":
                 exit(GetGenJournalLinePageID(RecRef));
-            Database::"Requisition Wksh. Name":
-                exit(GetRequisitionWkshBatchPageID(RecRef));
-            Database::"Requisition Line":
-                exit(GetRequisitionWkshLinePageID(RecRef));
             Database::"User Setup":
                 exit(PAGE::"User Setup");
             Database::"General Ledger Setup":
@@ -287,16 +282,11 @@ codeunit 700 "Page Management"
 #endif
     var
         SalesHeader: Record "Sales Header";
-        DocumentType: Enum "Sales Document Type";
     begin
         RecRef.SetTable(SalesHeader);
-        if IsNullGuid(SalesHeader.SystemId) then begin
-            if not Evaluate(DocumentType, SalesHeader.GetFilter("Document Type")) then
-                exit(0);
-        end else
-            DocumentType := SalesHeader."Document Type";
-
-        case DocumentType of
+        if IsNullGuid(SalesHeader.SystemId) then
+            exit(0);
+        case SalesHeader."Document Type" of
             SalesHeader."Document Type"::Quote:
                 exit(PAGE::"Sales Quote");
             SalesHeader."Document Type"::Order:
@@ -319,16 +309,11 @@ codeunit 700 "Page Management"
     local procedure GetPurchaseHeaderPageID(RecRef: RecordRef) Result: Integer
     var
         PurchaseHeader: Record "Purchase Header";
-        DocumentType: Enum "Purchase Document Type";
     begin
         RecRef.SetTable(PurchaseHeader);
-        if IsNullGuid(PurchaseHeader.SystemId) then begin
-            if not Evaluate(DocumentType, PurchaseHeader.GetFilter("Document Type")) then
-                exit(0);
-        end else
-            DocumentType := PurchaseHeader."Document Type";
-
-        case DocumentType of
+        if IsNullGuid(PurchaseHeader.SystemId) then
+            exit(0);
+        case PurchaseHeader."Document Type" of
             PurchaseHeader."Document Type"::Quote:
                 Result := PAGE::"Purchase Quote";
             PurchaseHeader."Document Type"::Order:
@@ -348,17 +333,10 @@ codeunit 700 "Page Management"
     local procedure GetPurchaseHeaderPageID(RecRef: RecordRef): Integer
     var
         PurchaseHeader: Record "Purchase Header";
-
-        DocumentType: Enum "Purchase Document Type";
     begin
         RecRef.SetTable(PurchaseHeader);
-        if IsNullGuid(PurchaseHeader.SystemId) then begin
-            if not Evaluate(DocumentType, PurchaseHeader.GetFilter("Document Type")) then
-                exit(0);
-        end else
-            DocumentType := PurchaseHeader."Document Type";
 
-        case DocumentType of
+        case PurchaseHeader."Document Type" of
             PurchaseHeader."Document Type"::Quote:
                 exit(PAGE::"Purchase Quote");
             PurchaseHeader."Document Type"::Order:
@@ -588,55 +566,6 @@ codeunit 700 "Page Management"
         exit(PageMetadata.Caption);
     end;
 
-    local procedure GetRequisitionWkshBatchPageID(RecRef: RecordRef): Integer
-    var
-        RequisitionWkshName: Record "Requisition Wksh. Name";
-        RequisitionLine: Record "Requisition Line";
-    begin
-        RecRef.SetTable(RequisitionWkshName);
-
-        RequisitionLine.SetRange(RequisitionLine."Worksheet Template Name", RequisitionWkshName."Worksheet Template Name");
-        RequisitionLine.SetRange(RequisitionLine."Journal Batch Name", RequisitionWkshName.Name);
-        if not RequisitionLine.FindFirst() then begin
-            RequisitionLine."Worksheet Template Name" := RequisitionWkshName."Worksheet Template Name";
-            RequisitionLine."Journal Batch Name" := RequisitionWkshName.Name;
-            RecRef.GetTable(RequisitionLine);
-
-            exit(Page::"Req. Worksheet");
-        end;
-
-        RecRef.GetTable(RequisitionLine);
-        exit(GetRequisitionWkshLinePageID(RecRef));
-    end;
-
-    local procedure GetRequisitionWkshLinePageID(RecRef: RecordRef): Integer
-    var
-        RequisitionLine: Record "Requisition Line";
-        ReqWkshTemplate: Record "Req. Wksh. Template";
-        CardPageID: Integer;
-    begin
-        RecRef.SetTable(RequisitionLine);
-        ReqWkshTemplate.Get(RequisitionLine."Worksheet Template Name");
-
-        if ReqWkshTemplate."Page ID" <> 0 then
-            exit(ReqWkshTemplate."Page ID");
-
-        if ReqWkshTemplate.Recurring then
-            exit(Page::"Recurring Req. Worksheet");
-
-        case ReqWkshTemplate.Type of
-            ReqWkshTemplate.Type::Planning:
-                exit(Page::"Planning Worksheet");
-            ReqWkshTemplate.Type::"Req.":
-                exit(Page::"Req. Worksheet");
-            else begin
-                OnGetReqWkshTemplatePageID(ReqWkshTemplate, RecRef, CardPageID);
-
-                exit(CardPageID);
-            end;
-        end;
-    end;
-
     [IntegrationEvent(false, false)]
     local procedure OnBeforeGetConditionalListPageID(RecRef: RecordRef; var PageID: Integer; var IsHandled: Boolean; CheckDocumentTypeFilter: Boolean);
     begin
@@ -665,6 +594,19 @@ codeunit 700 "Page Management"
     begin
     end;
 #endif
+#if not CLEAN25
+
+    internal procedure RunOnAfterGetServiceHeaderPageID(RecRef: RecordRef; ServiceHeader: Record Microsoft.Service.Document."Service Header"; var Result: Integer)
+    begin
+        OnAfterGetServiceHeaderPageID(RecRef, ServiceHeader, Result);
+    end;
+
+    [Obsolete('Replaced by same procedure in codeunit Serv. Page Management', '25.0')]
+    [IntegrationEvent(false, false)]
+    local procedure OnAfterGetServiceHeaderPageID(RecRef: RecordRef; ServiceHeader: Record Microsoft.Service.Document."Service Header"; var Result: Integer)
+    begin
+    end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeGetDefaultLookupPageID(TableID: Integer; var PageID: Integer)
@@ -690,9 +632,5 @@ codeunit 700 "Page Management"
     local procedure OnBeforeVerifyPageID(TableID: Integer; PageID: Integer; var Result: Boolean; var IsHandled: Boolean)
     begin
     end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnGetReqWkshTemplatePageID(ReqWkshTemplate: Record "Req. Wksh. Template"; RecordRef: RecordRef; var CardPageID: Integer)
-    begin
-    end;
 }
+

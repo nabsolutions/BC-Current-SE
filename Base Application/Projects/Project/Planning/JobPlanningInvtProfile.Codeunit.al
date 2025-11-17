@@ -6,7 +6,6 @@ namespace Microsoft.Projects.Project.Planning;
 
 using Microsoft.Inventory.Item;
 using Microsoft.Inventory.Tracking;
-using Microsoft.Purchases.Document;
 
 codeunit 1035 "Job Planning Invt. Profile"
 {
@@ -41,6 +40,9 @@ codeunit 1035 "Job Planning Invt. Profile"
         InventoryProfile."Planning Flexibility" := InventoryProfile."Planning Flexibility"::None;
 
         OnAfterTransferInventoryProfileFromJobPlanningLine(InventoryProfile, JobPlanningLine);
+#if not CLEAN25
+        InventoryProfile.RunOnAfterTransferFromJobPlanningLine(InventoryProfile, JobPlanningLine);
+#endif
     end;
 
     [IntegrationEvent(false, false)]
@@ -81,14 +83,18 @@ codeunit 1035 "Job Planning Invt. Profile"
     local procedure TransJobPlanningLineToProfile(var InventoryProfile: Record "Inventory Profile"; var Item: Record Item; var TempReservationEntry: Record "Reservation Entry" temporary; var NextLineNo: Integer)
     var
         JobPlanningLine: Record "Job Planning Line";
+#if not CLEAN25
+        InventoryProfileOffsetting: Codeunit "Inventory Profile Offsetting";
+#endif
         ShouldProcess: Boolean;
     begin
         if JobPlanningLine.FindLinesWithItemToPlan(Item) then
             repeat
                 ShouldProcess := JobPlanningLine."Planning Date" <> 0D;
-                if ShouldProcess then
-                    ShouldProcess := not ShouldReducePurchaseOrderReceiptQuantity(JobPlanningLine);
                 OnTransJobPlanningLineToProfileOnBeforeProcessLine(JobPlanningLine, ShouldProcess);
+#if not CLEAN25
+                InventoryProfileOffsetting.RunOnTransJobPlanningLineToProfileOnBeforeProcessLine(JobPlanningLine, ShouldProcess);
+#endif
                 if ShouldProcess then begin
                     InventoryProfile.
                Init();
@@ -100,18 +106,6 @@ codeunit 1035 "Job Planning Invt. Profile"
                     InventoryProfile.Insert();
                 end;
             until JobPlanningLine.Next() = 0;
-    end;
-
-    local procedure ShouldReducePurchaseOrderReceiptQuantity(JobPlanningLine: Record "Job Planning Line"): Boolean
-    var
-        PurchaseLine: Record "Purchase Line";
-    begin
-        JobPlanningLine.SetPurchLineFilters(PurchaseLine);
-        PurchaseLine.SetRange("No.", JobPlanningLine."No.");
-        PurchaseLine.SetRange(Type, PurchaseLine.Type::Item);
-        PurchaseLine.CalcSums("Qty. Rcd. Not Invoiced (Base)");
-
-        exit(PurchaseLine."Qty. Rcd. Not Invoiced (Base)" = JobPlanningLine."Remaining Qty. (Base)");
     end;
 
     [IntegrationEvent(false, false)]

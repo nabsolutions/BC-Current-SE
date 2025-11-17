@@ -73,8 +73,10 @@ table 18 Customer
                   tabledata "Payment Terms" = R,
                   TableData "Price List Header" = rd,
                   TableData "Price List Line" = rd,
+#if not CLEAN25
                   TableData "Sales Price" = rd,
                   TableData "Sales Line Discount" = rd,
+#endif
                   TableData "Sales Price Access" = rd,
                   TableData "Sales Discount Access" = rd,
                   tabledata "Customer Templ." = rm,
@@ -1053,6 +1055,21 @@ table 18 Customer
             TableRelation = "Reminder Terms";
             ToolTip = 'Specifies how reminders about late payments are handled for this customer.';
 
+#if not CLEAN25
+            trigger OnLookup()
+            var
+                ReminderTermsRecord: Record "Reminder Terms";
+                ReminderTerms: Page "Reminder Terms List";
+            begin
+                ReminderTerms.LookupMode(true);
+                if ReminderTerms.RunModal() <> ACTION::LookupOK then
+                    exit;
+
+                ReminderTerms.SetSelectionFilter(ReminderTermsRecord);
+                ReminderTermsRecord.FindFirst();
+                Rec."Reminder Terms Code" := ReminderTermsRecord.Code;
+            end;
+#endif
         }
         field(105; "Reminder Amounts"; Decimal)
         {
@@ -1436,8 +1453,7 @@ table 18 Customer
                 if "Primary Contact No." <> '' then begin
                     Cont.Get("Primary Contact No.");
 
-                    if Rec."Contact Type" = Rec."Contact Type"::Company then
-                        CheckCustomerContactRelation(Cont);
+                    CheckCustomerContactRelation(Cont);
 
                     if Cont.Type = Cont.Type::Person then begin
                         Contact := Cont.Name;
@@ -3468,8 +3484,6 @@ table 18 Customer
         OnAfterGetVATRegistrationNo(Rec, VATRegNo);
     end;
 
-#if not CLEAN28
-    [Obsolete('It is no longer used in GetTotalAmountLCYCommon procedure.', '28.0')]
     procedure GetShippedOutstandingInvoicesAmountLCY(): Decimal
     var
         SalesLine: Record "Sales Line";
@@ -3482,7 +3496,6 @@ table 18 Customer
         exit(SalesLine."Outstanding Amount (LCY)");
     end;
 
-    [Obsolete('It is no longer used in GetTotalAmountLCYCommon procedure.', '28.0')]
     procedure GetShippedFromOrderLCYAmountLCY(): Decimal
     var
         SalesShippedNotInvoicedLCY: Query "Sales Shipped Not Invoiced LCY";
@@ -3503,7 +3516,6 @@ table 18 Customer
             end;
         exit(ShippedFromOrderLCY);
     end;
-#endif
 
     procedure GetDefaultLocation() ReturnLocationCode: Code[10]
     var

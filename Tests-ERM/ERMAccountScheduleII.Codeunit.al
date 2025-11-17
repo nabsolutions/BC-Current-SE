@@ -36,7 +36,6 @@
         InvalidRowErr: Label 'Row %1 with is visible with the value %2.';
         RowNotFoundErr: Label 'Row %1 is not visible.';
         WrongValueErr: Label 'Wrong value of the field %1 in table %2.', Comment = '%1 = Field name, %2 = Table name';
-        MissingSheetDataErr: Label 'Sheet %1 is either missing or does not contain the correct data.', Comment = '%1 = Sheet number';
         IsInitialized: Boolean;
 
     [Test]
@@ -951,84 +950,6 @@
     end;
 
     [Test]
-    procedure ExportAccScheduleToExcelWithSheetDefinition()
-    var
-        AccScheduleName: Record "Acc. Schedule Name";
-        AccScheduleLine: Record "Acc. Schedule Line";
-        ColumnLayoutName: Record "Column Layout Name";
-        ColumnLayout: Record "Column Layout";
-        FinancialReport: Record "Financial Report";
-        GenJournalLine: Record "Gen. Journal Line";
-        GLAccount: Record "G/L Account";
-        SheetDefName: Record "Sheet Definition Name";
-        SheetDefLine: Record "Sheet Definition Line";
-        DimensionValue: array[2] of Record "Dimension Value";
-        ExpectedCellValue: Decimal;
-        i: Integer;
-    begin
-        // [FEATURE] [Excel]
-        // [SCENARIO] Financial Report export to excel must create and filter by the Sheet Definition
-        Initialize();
-
-        // [GIVEN] Sheet Definition for two global dimension 1 values
-        SheetDefName.Init();
-        SheetDefName.Name := LibraryUtility.GenerateRandomCode(SheetDefName.FieldNo(Name), Database::"Sheet Definition Name");
-        SheetDefName."Sheet Type" := SheetDefName."Sheet Type"::Custom;
-        SheetDefName.Insert();
-
-        // [GIVEN] A G/L Account with transactions under each dimension value
-        LibraryERM.CreateGLAccount(GLAccount);
-        for i := 1 to 2 do begin
-            LibraryDimension.CreateDimensionValue(DimensionValue[i], LibraryERM.GetGlobalDimensionCode(1));
-            LibraryJournals.CreateGenJournalLineWithBatch(
-                GenJournalLine, GenJournalLine."Document Type"::" ", GenJournalLine."Account Type"::"G/L Account",
-                GLAccount."No.", LibraryRandom.RandDec(10, 2));
-            GenJournalLine.Validate("Shortcut Dimension 1 Code", DimensionValue[i].Code);
-            GenJournalLine.Modify(true);
-            LibraryERM.PostGeneralJnlLine(GenJournalLine);
-
-            SheetDefLine.Init();
-            SheetDefLine.Name := SheetDefName.Name;
-            SheetDefLine."Line No." := i * 10000;
-            SheetDefLine."Sheet Header" := DimensionValue[i].Code;
-            SheetDefLine."Dimension 1 Totaling" := DimensionValue[i].Code;
-            SheetDefLine.Insert();
-        end;
-
-        // [GIVEN] Financial Report using said Sheet Definition
-        LibraryERM.CreateAccScheduleName(AccScheduleName);
-        CreateAccScheduleLineWithGLAcc(AccScheduleLine, AccScheduleName.Name, GenJournalLine."Account No.", AccScheduleLine.Show::Yes);
-        LibraryERM.CreateColumnLayoutName(ColumnLayoutName);
-        CreateColumnLayoutLine(ColumnLayout, ColumnLayoutName.Name, ColumnLayout."Column Type"::"Net Change", '');
-        FinancialReport.Get(AccScheduleLine."Schedule Name");
-        FinancialReport."Financial Report Column Group" := ColumnLayout."Column Layout Name";
-        FinancialReport.SheetDefinition := SheetDefName.Name;
-        FinancialReport.Modify();
-
-        // [WHEN] The report is exported to Excel
-        AccScheduleLine.SetRange("Schedule Name", AccScheduleName.Name);
-        AccScheduleLine.SetRange("Date Filter", CalcDate('<-CY>', WorkDate()), CalcDate('<CY>', WorkDate()));
-        LibraryReportValidation.SetFileName(AccScheduleName.Name);
-        RunExportAccSchedule(AccScheduleLine, AccScheduleName);
-
-        // [THEN] The Excel contains 3 worksheets, one for unfiltered data and one for each dimension value filter
-        LibraryReportValidation.OpenExcelFile();
-        Assert.AreEqual(3, LibraryReportValidation.CountWorksheets(), 'There should be 3 worksheets, 1 for unfiltered data, 1 for each dimension value filter.');
-
-        // [THEN] The first worksheet contains the unfiltered data
-        GLAccount.CalcFields("Net Change");
-        ExpectedCellValue := GLAccount."Net Change";
-        LibraryReportValidation.VerifyCellValue(7, 3, Format(ExpectedCellValue, 0, 9));
-
-        // [THEN] The following worksheets contain the filtered data for each dimension value
-        for i := 1 to 2 do begin
-            GLAccount.SetRange("Global Dimension 1 Filter", DimensionValue[i].Code);
-            GLAccount.CalcFields("Net Change");
-            Assert.IsTrue(LibraryReportValidation.CheckIfValueExistsOnSpecifiedWorksheet(i + 1, Format(GLAccount."Net Change")), StrSubstNo(MissingSheetDataErr, i + 1));
-        end;
-    end;
-
-    [Test]
     [HandlerFunctions('CopyAccountScheduleWithNewNameRequestPageHandler,CopyAccountScheduleSuccessMessageHandler')]
     [Scope('OnPrem')]
     procedure StanCanCopyExistingAccountScheduleWithNewName()
@@ -1260,38 +1181,6 @@
     end;
 
     [Test]
-    [Scope('OnPrem')]
-    procedure AccScheduleCaptionIncludesNameAndDescription()
-    var
-        AccScheduleName: Record "Acc. Schedule Name";
-        AccScheduleMgt: Codeunit AccSchedManagement;
-    begin
-        // [SCENARIO] Account Schedule caption will include name and description if possible
-        Initialize();
-
-        // [GIVEN] Account schedule with only name
-        LibraryERM.CreateAccScheduleName(AccScheduleName);
-        AccScheduleName.Description := '';
-        AccScheduleName.Modify();
-
-        // [THEN] Caption includes name only
-        Assert.AreEqual(
-            AccScheduleName.Name,
-            AccScheduleMgt.GetAccountScheduleCaption(AccScheduleName.Name),
-            'Caption should include name only when description is empty.');
-
-        // [GIVEN] Account schedule with name and description
-        AccScheduleName.Description := CopyStr(LibraryRandom.RandText(MaxStrLen(AccScheduleName.Description)), 1, MaxStrLen(AccScheduleName.Description));
-        AccScheduleName.Modify();
-
-        // [THEN] Caption includes name and description
-        Assert.AreEqual(
-            StrSubstNo('%1 (%2)', AccScheduleName.Description, AccScheduleName.Name),
-            AccScheduleMgt.GetAccountScheduleCaption(AccScheduleName.Name),
-            'Caption should include name and description when description has a value.');
-    end;
-
-    [Test]
     [HandlerFunctions('RHAccountSchedule')]
     [Scope('OnPrem')]
     procedure TotalingDimensionValuesCanBeUsedAsFiltersInAccountScheduleWithAnalysisViewReport()
@@ -1496,7 +1385,7 @@
         // [SCENARIO 316070] Account Schedule report prints lines with empty Totaling and Show=Yes when SkipEmptyLines = true
         Initialize();
 
-        // [GIVEN] Account Schedule Name
+        // [GIVEN] Account Schedule Name 
         CreateColumnLayout(ColumnLayout);
         LibraryERM.CreateAccScheduleName(AccScheduleName);
         // [GIVEN] Line 10000 with empty Totaling and Show=Yes
@@ -1964,7 +1853,7 @@
         AccScheduleOverview.Trap();
         FinancialReports.Overview.Invoke();
 
-        // [GIVEN] As "AS1" has empty "Default Column Layout", Current Column Name = "Default" (w1)
+        // [GIVEN] As "AS1" has empty "Default Column Layout", Current Column Name = "Default" (w1) 
         AccountSchedule1CurrentColumnName := AccScheduleOverview.CurrentColumnName.Value();
         AccScheduleOverview.Close();
 
@@ -1973,7 +1862,7 @@
         AccScheduleOverview.Trap();
         FinancialReports.Overview.Invoke();
 
-        // [THEN] As "AS2" has empty "Default Column Layout", Current Column Name = "CL" (w1)
+        // [THEN] As "AS2" has empty "Default Column Layout", Current Column Name = "CL" (w1) 
         AccScheduleOverview.CurrentColumnName.AssertEquals(ColumnLayoutName.Name);
         AccScheduleOverview.Close();
 
@@ -1982,7 +1871,7 @@
         AccScheduleOverview.Trap();
         FinancialReports.Overview.Invoke();
 
-        // [GIVEN] Current Column Name has not changed and is equal to previous value = "Default" (w1)
+        // [GIVEN] Current Column Name has not changed and is equal to previous value = "Default" (w1) 
         AccScheduleOverview.CurrentColumnName.AssertEquals(AccountSchedule1CurrentColumnName);
         AccScheduleOverview.Close();
     end;
@@ -2043,38 +1932,6 @@
 
         // Verify
         VerifyColumnLayoutNameCopied(NewColumnLayoutName, ColumnLayoutName.Name);
-    end;
-
-    [Test]
-    [Scope('OnPrem')]
-    procedure ColumnLayoutCaptionIncludesNameAndDescription()
-    var
-        ColumnLayoutName: Record "Column Layout Name";
-        AccScheduleMgt: Codeunit AccSchedManagement;
-    begin
-        // [SCENARIO] Column Layout caption will include name and description if possible
-        Initialize();
-
-        // [GIVEN] Column layout with only name
-        LibraryERM.CreateColumnLayoutName(ColumnLayoutName);
-        ColumnLayoutName.Description := '';
-        ColumnLayoutName.Modify();
-
-        // [THEN] Caption includes name only
-        Assert.AreEqual(
-            ColumnLayoutName.Name,
-            AccScheduleMgt.GetColumnLayoutCaption(ColumnLayoutName.Name),
-            'Caption should include name only when description is empty.');
-
-        // [GIVEN] Column layout with name and description
-        ColumnLayoutName.Description := CopyStr(LibraryRandom.RandText(MaxStrLen(ColumnLayoutName.Description)), 1, MaxStrLen(ColumnLayoutName.Description));
-        ColumnLayoutName.Modify();
-
-        // [THEN] Caption includes name and description
-        Assert.AreEqual(
-            StrSubstNo('%1 (%2)', ColumnLayoutName.Description, ColumnLayoutName.Name),
-            AccScheduleMgt.GetColumnLayoutCaption(ColumnLayoutName.Name),
-            'Caption should include name and description when description has a value.');
     end;
 
     [Test]
@@ -2143,7 +2000,7 @@
         Amount: Decimal;
     begin
         // [FEATURE] [Report]
-        // [SCENARIO 365423] Account Schedule report shows Currency Symbol for column formula
+        // [SCENARIO 365423] Account Schedule report shows Currency Symbol for column formula 
         // Clear
         Initialize();
         // [GIVEN] GLSetup with local currency symbol '$' specified
@@ -2152,7 +2009,7 @@
         Amount := LibraryRandom.RandDec(100, 2);
         AccountNo := CreateGLAccountWithNetChange(Amount);
         // [GIVEN] Create financial report for account "A"
-        // Note that the CreateAccScheduleName procedure creates a Financial Report
+        // Note that the CreateAccScheduleName procedure creates a Financial Report 
         // with the same name as sets the Account Schedule Name as a Row Group
         LibraryERM.CreateAccScheduleName(AccScheduleName);
         LibraryERM.CreateAccScheduleLine(AccScheduleLine, AccScheduleName.Name);
@@ -2208,7 +2065,7 @@
         // [GIVEN] Create G/L Account account "A" and post entry with amount 100
         Amount := LibraryRandom.RandDec(100, 2);
         AccountNo := CreateGLAccountWithNetChange(Amount);
-        // [GIVEN] Create account schedule line for account "A"
+        // [GIVEN] Create account schedule line for account "A" 
         LibraryERM.CreateAccScheduleName(AccScheduleName);
         LibraryERM.CreateAccScheduleLine(AccScheduleLine, AccScheduleName.Name);
         FinancialReport.Get(AccScheduleName.Name);
@@ -2271,7 +2128,7 @@
         // [GIVEN] Open "Financial Reports" page
         FinancialReports.OpenView();
 
-        // [GIVEN] Position to created "Financial Report"
+        // [GIVEN] Position to created "Financial Report"        
         FinancialReports.GoToKey(AccScheduleName.Name);
 
         // [WHEN] Run "Edit Row Definition" action
@@ -2410,7 +2267,6 @@
     end;
 
     [Test]
-    [Scope('OnPrem')]
     procedure VerifyFinancialReportEmptyCellForNoEntry()
     var
         AccScheduleLine: Record "Acc. Schedule Line";
@@ -2469,98 +2325,6 @@
         // [THEN] Verify exported Excel file GL Account That Has No Entry shows empty cell.
         LibraryReportValidation.OpenExcelFile();
         LibraryReportValidation.VerifyCellValue(11, 1, '');
-    end;
-
-    [Test]
-    [Scope('OnPrem')]
-    procedure OpenGLAccountWhereUsedInAccScheduleLine()
-    var
-        GLAccount: Record "G/L Account";
-        AccScheduleName: Record "Acc. Schedule Name";
-        AccScheduleLine: Record "Acc. Schedule Line";
-        TempGLAccWhereUsed: Record "G/L Account Where-Used" temporary;
-        FinReportMgt: Codeunit "Financial Report Mgt.";
-    begin
-        // [SCENARIO] Where-used for G/L Account will correctly find usage in Acc. Schedule Line
-        Initialize();
-
-        // [GIVEN] G/L Account that's used in an Acc. Schedule Line
-        LibraryERM.CreateGLAccount(GLAccount);
-        LibraryERM.CreateAccScheduleName(AccScheduleName);
-        CreateAccScheduleLineWithGLAcc(
-            AccScheduleLine, AccScheduleName.Name, GLAccount."No.", AccScheduleLine.Show::Yes);
-
-        // [WHEN] Finding where-used for the G/L Account
-        // [THEN] The usage in the Acc. Schedule Line is found and points to the correct record
-        Assert.IsTrue(FinReportMgt.FindGLAccountWhereUsedInAccScheduleLine(GLAccount."No.", TempGLAccWhereUsed), 'Where-used should be found in Acc. Schedule Line');
-        Assert.AreEqual(1, TempGLAccWhereUsed.Count(), 'There should be one where-used entry.');
-        Assert.AreEqual(AccScheduleLine."Schedule Name", TempGLAccWhereUsed."Key 1", 'Where-used entry should contain the schedule name as key 1.');
-        Assert.AreEqual(Format(AccScheduleLine."Line No."), TempGLAccWhereUsed."Key 2", 'Where-used entry should contain the line no. as key 2.');
-    end;
-
-    [Test]
-    [Scope('OnPrem')]
-    procedure ChangeDateFilterWithDynamicColumnHeading()
-    var
-        AccScheduleName: Record "Acc. Schedule Name";
-        FinancialReport: Record "Financial Report";
-        ColumnLayoutName: Record "Column Layout Name";
-        ColumnLayout: array[3] of Record "Column Layout";
-        FilterDateFormula: array[2] of DateFormula;
-        AccScheduleOverview: TestPage "Acc. Schedule Overview";
-        FinancialReports: TestPage "Financial Reports";
-        FilterDate: array[4] of Date;
-    begin
-        // [SCENARIO] Changing the period on financial report should update the dynamic column headings
-        Initialize();
-
-        FilterDate[1] := 20251101D;
-        FilterDate[2] := 20251130D;
-        FilterDate[3] := 20251201D;
-        FilterDate[4] := 20251231D;
-        Evaluate(FilterDateFormula[1], '<1M>');
-        Evaluate(FilterDateFormula[2], '<2M>');
-
-        // [GIVEN] Financial report with 3 columns, current, next month, and month after next
-        LibraryERM.CreateColumnLayoutName(ColumnLayoutName);
-        LibraryERM.CreateColumnLayout(ColumnLayout[1], ColumnLayoutName.Name);
-        ColumnLayout[1]."Include Date In Header" := ColumnLayout[1]."Include Date In Header"::Month;
-        ColumnLayout[1].Modify();
-        LibraryERM.CreateColumnLayout(ColumnLayout[2], ColumnLayoutName.Name);
-        ColumnLayout[2]."Include Date In Header" := ColumnLayout[2]."Include Date In Header"::Month;
-        ColumnLayout[2]."Comparison Date Formula" := FilterDateFormula[1];
-        ColumnLayout[2].Modify();
-        LibraryERM.CreateColumnLayout(ColumnLayout[3], ColumnLayoutName.Name);
-        ColumnLayout[3]."Include Date In Header" := ColumnLayout[3]."Include Date In Header"::Month;
-        ColumnLayout[3]."Comparison Date Formula" := FilterDateFormula[2];
-        ColumnLayout[3].Modify();
-
-        LibraryERM.CreateAccScheduleName(AccScheduleName);
-        FinancialReport.Get(AccScheduleName.Name);
-        FinancialReport.Validate("Financial Report Column Group", ColumnLayoutName.Name);
-        FinancialReport.Modify();
-
-        FinancialReports.OpenEdit();
-        FinancialReports.Filter.SetFilter(Name, AccScheduleName.Name);
-        AccScheduleOverview.Trap();
-        FinancialReports.Overview.Invoke();
-
-        // [WHEN] Period type is set to month and filtered to the first period
-        AccScheduleOverview.PeriodTypeDefault.SetValue(Enum::"Financial Report Period Type"::Month);
-        AccScheduleOverview.DateFilter.SetValue(StrSubstNo('%1..%2', Format(FilterDate[1], 0, 9), Format(FilterDate[2], 0, 9)));
-
-        // [THEN] Column headings should show current month, +1 month, and +2 month
-        Assert.AreEqual(Format(FilterDate[2], 0, '<Month Text>'), AccScheduleOverview.ColumnValues1.Caption, 'Heading for current period is incorrect.');
-        Assert.AreEqual(Format(CalcDate(FilterDateFormula[1], FilterDate[2]), 0, '<Month Text>'), AccScheduleOverview.ColumnValues2.Caption, 'Heading for 1M comparison period is incorrect.');
-        Assert.AreEqual(Format(CalcDate(FilterDateFormula[2], FilterDate[2]), 0, '<Month Text>'), AccScheduleOverview.ColumnValues3.Caption, 'Heading for 2M comparison period is incorrect.');
-
-        // [WHEN] Next Period is selected
-        AccScheduleOverview.NextPeriod.Invoke();
-
-        // [THEN] Column headings should update to show the +1 month, +2 month, and +3 month
-        Assert.AreEqual(Format(FilterDate[4], 0, '<Month Text>'), AccScheduleOverview.ColumnValues1.Caption, 'Heading for current period is incorrect after Next Period.');
-        Assert.AreEqual(Format(CalcDate(FilterDateFormula[1], FilterDate[4]), 0, '<Month Text>'), AccScheduleOverview.ColumnValues2.Caption, 'Heading for 1M comparison period is incorrect after Next Period.');
-        Assert.AreEqual(Format(CalcDate(FilterDateFormula[2], FilterDate[4]), 0, '<Month Text>'), AccScheduleOverview.ColumnValues3.Caption, 'Heading for 2M comparison period is incorrect after Next Period.');
     end;
 
     local procedure Initialize()
@@ -2724,11 +2488,14 @@
     local procedure CopyColumnLayoutFromColumnLayoutPage(SourceColumnLayoutName: Code[10])
     var
         ColumnLayoutNames: TestPage "Column Layout Names";
+        ColumnLayout: TestPage "Column Layout";
     begin
         Commit();
         ColumnLayoutNames.OpenView();
         ColumnLayoutNames.GoToKey(SourceColumnLayoutName);
-        ColumnLayoutNames.CopyColumnLayout.Invoke();
+        ColumnLayout.Trap();
+        ColumnLayoutNames.EditColumnLayoutSetup.Invoke();
+        ColumnLayout.CopyColumnLayout.Invoke();
     end;
 
     local procedure RunAccountScheduleReport(ScheduleName: Code[10]; ColumnLayoutName: Code[10])
@@ -2787,7 +2554,7 @@
     begin
         FinancialReport.Get(AccScheduleName.Name);
         ExportAccSchedToExcel.SetFileNameSilent(LibraryReportValidation.GetFileName());
-        ExportAccSchedToExcel.SetOptions(AccScheduleLine, FinancialReport."Financial Report Column Group", false, FinancialReport.Name, FinancialReport.SheetDefinition);
+        ExportAccSchedToExcel.SetOptions(AccScheduleLine, FinancialReport."Financial Report Column Group", false, AccScheduleName.Name);
         ExportAccSchedToExcel.SetTestMode(true);
         ExportAccSchedToExcel.UseRequestPage(false);
         ExportAccSchedToExcel.Run();

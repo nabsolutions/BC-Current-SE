@@ -401,6 +401,30 @@ page 118 "General Ledger Setup"
             group(Reporting)
             {
                 Caption = 'Reporting';
+                field("Acc. Sched. for Balance Sheet"; Rec."Fin. Rep. for Balance Sheet")
+                {
+                    ApplicationArea = Basic, Suite;
+                    Caption = 'Financial Report for Balance Sheet';
+                    ToolTip = 'Specifies which financial report is used to generate the Balance Sheet report.';
+                }
+                field("Acc. Sched. for Income Stmt."; Rec."Fin. Rep. for Income Stmt.")
+                {
+                    ApplicationArea = Basic, Suite;
+                    Caption = 'Financial Report for Income Stmt.';
+                    ToolTip = 'Specifies which financial report is used to generate the Income Statement report.';
+                }
+                field("Acc. Sched. for Cash Flow Stmt"; Rec."Fin. Rep. for Cash Flow Stmt")
+                {
+                    ApplicationArea = Suite;
+                    Caption = 'Financial Report for Cash Flow Stmt.';
+                    ToolTip = 'Specifies which financial report is used to generate the Cash Flow Statement report.';
+                }
+                field("Acc. Sched. for Retained Earn."; Rec."Fin. Rep. for Retained Earn.")
+                {
+                    ApplicationArea = Basic, Suite;
+                    Caption = 'Financial Report for Retained Earn.';
+                    ToolTip = 'Specifies which financial report is used to generate the Retained Earnings report.';
+                }
                 field("Additional Reporting Currency"; Rec."Additional Reporting Currency")
                 {
                     ApplicationArea = Suite;
@@ -435,79 +459,6 @@ page 118 "General Ledger Setup"
                 {
                     ApplicationArea = Suite;
                     Tooltip = 'Specifies the G/L Account Category that will be used for the Account Payables accounts.';
-                }
-                group("Financial Reports")
-                {
-                    Caption = 'Financial Reports';
-
-                    field("Acc. Sched. for Balance Sheet"; Rec."Fin. Rep. for Balance Sheet")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Balance Sheet Report';
-                    }
-                    field("Acc. Sched. for Income Stmt."; Rec."Fin. Rep. for Income Stmt.")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Income Statement Report';
-                    }
-                    field("Acc. Sched. for Cash Flow Stmt"; Rec."Fin. Rep. for Cash Flow Stmt")
-                    {
-                        ApplicationArea = Suite;
-                        Caption = 'Cash Flow Statement Report';
-                    }
-                    field("Acc. Sched. for Retained Earn."; Rec."Fin. Rep. for Retained Earn.")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Retained Earnings Report';
-                    }
-                    field("Fin. Rep. Bal. Sheet Row"; Rec."Fin. Rep. Bal. Sheet Row")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Row Definition for Balance Sheet';
-                    }
-                    field("Fin. Rep. Income Stmt. Row"; Rec."Fin. Rep. Income Stmt. Row")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Row Definition for Income Statement';
-                    }
-                    field("Fin. Rep. Cash Flow Stmt. Row"; Rec."Fin. Rep. Cash Flow Stmt. Row")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Row Definition for Cash Flow Statement';
-                    }
-                    field("Fin. Rep. Retained Earn. Row"; Rec."Fin. Rep. Retained Earn. Row")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Row Definition for Retained Earnings';
-                    }
-                    field("Fin. Rep. Bal. Sheet Column"; Rec."Fin. Rep. Bal. Sheet Column")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Column Definition for Balance Sheet';
-                    }
-                    field("Fin. Rep. Net Change Column"; Rec."Fin. Rep. Net Change Column")
-                    {
-                        ApplicationArea = Basic, Suite;
-                        Caption = 'Column Definition for Net Change';
-                    }
-                    field("Fin. Rep. Period Type"; Rec."Fin. Rep. Period Type")
-                    {
-                        Caption = 'Default View by';
-#if not CLEAN27
-                        Visible = FinancialReportDefaultsEnabled;
-#endif
-                    }
-                    field("Fin. Rep. Neg. Amount Format"; Rec."Fin. Rep. Neg. Amount Format")
-                    {
-                        Caption = 'Default Negative Amount Format';
-#if not CLEAN27
-                        Visible = FinancialReportDefaultsEnabled;
-#endif
-                    }
-                    field("Fin. Rep. Company Logo Pos."; Rec."Fin. Rep. Company Logo Pos.")
-                    {
-                        Caption = 'Default Company Logo Position';
-                    }
                 }
             }
             group(Application)
@@ -923,12 +874,6 @@ page 118 "General Ledger Setup"
     end;
 
     trigger OnOpenPage()
-    var
-#if not CLEAN27
-#pragma warning disable AL0432
-        FeatureFinancialReportDef: Codeunit "Feature - Fin. Report Default";
-#pragma warning restore AL0432
-#endif
     begin
         Rec.Reset();
         if not Rec.Get() then begin
@@ -938,18 +883,11 @@ page 118 "General Ledger Setup"
         xGeneralLedgerSetup := Rec;
 
         IsJournalTemplatesVisible := Rec."Journal Templ. Name Mandatory";
-
-#if not CLEAN27
-        FinancialReportDefaultsEnabled := FeatureFinancialReportDef.IsDefaultsFeatureEnabled();
-#endif
     end;
 
     var
         xGeneralLedgerSetup: Record "General Ledger Setup";
         IsJournalTemplatesVisible: Boolean;
-#if not CLEAN27
-        FinancialReportDefaultsEnabled: Boolean;
-#endif
 
 #pragma warning disable AA0074
         Text001: Label 'Do you want to change all open entries for every customer and vendor that are not blocked?';

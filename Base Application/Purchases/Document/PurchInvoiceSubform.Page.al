@@ -1478,7 +1478,7 @@ page 55 "Purch. Invoice Subform"
             CurrPageIsEditable and not PurchasesPayablesSetup."Calc. Inv. Discount" and
             (TotalPurchaseHeader.Status = TotalPurchaseHeader.Status::Open);
 
-        OnAfterUpdateEditableOnRow(Rec, IsCommentLine, IsBlankNumber, InvDiscAmountEditable, CurrPageIsEditable, TotalPurchaseHeader, UnitofMeasureCodeIsChangeable);
+        OnAfterUpdateEditableOnRow(Rec, IsCommentLine, IsBlankNumber, InvDiscAmountEditable, CurrPageIsEditable, TotalPurchaseHeader);
     end;
 
     procedure RedistributeTotalsOnAfterValidate()
@@ -1605,7 +1605,7 @@ page 55 "Purch. Invoice Subform"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnAfterUpdateEditableOnRow(PurchaseLine: Record "Purchase Line"; var IsCommentLine: Boolean; var IsBlankNumber: Boolean; var InvDiscAmountEditable: Boolean; CurrPageIsEditable: Boolean; TotalPurchaseHeader: Record "Purchase Header"; var UnitofMeasureCodeIsChangeable: Boolean);
+    local procedure OnAfterUpdateEditableOnRow(PurchaseLine: Record "Purchase Line"; var IsCommentLine: Boolean; var IsBlankNumber: Boolean; var InvDiscAmountEditable: Boolean; CurrPageIsEditable: Boolean; TotalPurchaseHeader: Record "Purchase Header");
     begin
     end;
 

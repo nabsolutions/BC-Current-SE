@@ -5,8 +5,8 @@
 
 namespace System.Environment.Configuration;
 
-using System.Reflection;
 using System.Security.AccessControl;
+using System.Reflection;
 
 /// <summary>
 /// Manage the checklist presented to users by inserting and deleting checklist items and controling the visibility of the checklist.

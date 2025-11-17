@@ -700,6 +700,16 @@ codeunit 1410 "Doc. Exch. Service Mgt."
 
         exit(ClientId);
     end;
+#if not CLEAN25
+
+    [Scope('OnPrem')]
+    [Obsolete('Replaced by GetClientSecretAsSecretText', '25.0')]
+    [NonDebuggable]
+    procedure GetClientSecret(Sandbox: Boolean): Text
+    begin
+        exit(GetClientSecretAsSecretText(Sandbox).Unwrap());
+    end;
+#endif
 
     [Scope('OnPrem')]
     procedure GetClientSecretAsSecretText(Sandbox: Boolean): SecretText
@@ -1745,3 +1755,4 @@ codeunit 1410 "Doc. Exch. Service Mgt."
     begin
     end;
 }
+

@@ -46,7 +46,9 @@ using Microsoft.Pricing.PriceList;
 using Microsoft.Projects.Project.Job;
 using Microsoft.Projects.Project.Planning;
 using Microsoft.Projects.Project.Posting;
+#if not CLEAN25
 using Microsoft.Projects.Resources.Pricing;
+#endif
 using Microsoft.Projects.Resources.Resource;
 using Microsoft.Purchases.Document;
 using Microsoft.Sales.Comment;
@@ -358,7 +360,7 @@ table 37 "Sales Line"
                         DeleteChargeChargeAssgnt("Document Type", "Document No.", "Line No.");
                 end;
 
-                UpdateItemReference(FieldNo("No."));
+                UpdateItemReference();
 
                 UpdateUnitPriceByField(FieldNo("No."));
 
@@ -2432,7 +2434,7 @@ table 37 "Sales Line"
                     SalesWarehouseMgt.SalesLineVerifyChange(Rec, xRec);
                 end;
 
-                UpdateItemReference(FieldNo("Variant Code"));
+                UpdateItemReference();
 
                 UpdateUnitPriceByField(FieldNo("Variant Code"));
             end;
@@ -3567,9 +3569,6 @@ table 37 "Sales Line"
     trigger OnInsert()
     begin
         TestStatusOpen();
-        if not HasSalesHeader then
-            Error(CannotInsertSalesLineWithoutHeaderErr);
-
         if Quantity <> 0 then begin
             OnBeforeVerifyReservedQty(Rec, xRec, 0);
             SalesLineReserve.VerifyQuantity(Rec, xRec);
@@ -3655,7 +3654,6 @@ table 37 "Sales Line"
         HasBeenShown: Boolean;
         PlannedShipmentDateCalculated: Boolean;
         PlannedDeliveryDateCalculated: Boolean;
-        HasSalesHeader: Boolean;
 #pragma warning disable AA0074
 #pragma warning disable AA0470
         Text000: Label 'You cannot delete the order line because it is associated with purchase order %1 line %2.';
@@ -3747,7 +3745,6 @@ table 37 "Sales Line"
         CannotChangePrepmtAmtDiffVAtPctErr: Label 'You cannot change the prepayment amount because the prepayment invoice has been posted with a different VAT percentage. Please check the settings on the prepayment G/L account.';
         NonInvReserveTypeErr: Label 'Non-inventory and service items must have the reserve type Never. The current reserve type for item %1 is %2.', Comment = '%1 is Item No., %2 is Reserve';
         ChangeExtendedTextErr: Label 'You cannot change %1 for Extended Text Line.', Comment = '%1= Field Caption';
-        CannotInsertSalesLineWithoutHeaderErr: Label 'You cannot insert a sales line without a sales header.';
 
     protected var
         HideValidationDialog: Boolean;
@@ -4337,7 +4334,6 @@ table 37 "Sales Line"
     procedure SetSalesHeader(NewSalesHeader: Record "Sales Header")
     begin
         SalesHeader := NewSalesHeader;
-        HasSalesHeader := true;
         OnBeforeSetSalesHeader(SalesHeader);
 
         if SalesHeader."Currency Code" = '' then
@@ -4378,8 +4374,7 @@ table 37 "Sales Line"
 
         TestField("Document No.");
         if ("Document Type" <> SalesHeader."Document Type") or ("Document No." <> SalesHeader."No.") then
-            if SalesHeader.Get("Document Type", "Document No.") then begin
-                HasSalesHeader := true;
+            if SalesHeader.Get("Document Type", "Document No.") then
                 if SalesHeader."Currency Code" = '' then
                     Currency.InitRoundingPrecision()
                 else begin
@@ -4387,7 +4382,7 @@ table 37 "Sales Line"
                     Currency.Get(SalesHeader."Currency Code");
                     Currency.TestField("Amount Rounding Precision");
                 end
-            end else
+            else
                 Clear(SalesHeader);
 
         OnAfterGetSalesHeader(Rec, SalesHeader, Currency);
@@ -4861,6 +4856,8 @@ table 37 "Sales Line"
         end;
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '16.0')]
     procedure FindResUnitCost()
     var
         ResCost: Record "Resource Cost";
@@ -4874,15 +4871,18 @@ table 37 "Sales Line"
         Validate("Unit Cost (LCY)", ResCost."Unit Cost" * "Qty. per Unit of Measure");
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure FindResUnitCostOnAfterInitResCost(var ResourceCost: Record "Resource Cost")
     begin
         OnFindResUnitCostOnAfterInitResCost(Rec, ResourceCost);
     end;
 
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '17.0')]
     procedure AfterFindResUnitCost(var ResourceCost: Record "Resource Cost")
     begin
         OnAfterFindResUnitCost(Rec, ResourceCost);
     end;
+#endif
 
     /// <summary>
     /// Updates the prepayment VAT fields on the sales line based on the VAT posting setup
@@ -4906,7 +4906,7 @@ table 37 "Sales Line"
             if CurrFieldNo = FieldNo("Prepayment %") then
                 if "System-Created Entry" and not IsServiceChargeLine() then
                     FieldError("Prepmt. Line Amount", StrSubstNo(Text045, 0));
-            if "System-Created Entry" and not IsServiceChargeLine() and (CurrFieldNo <> 0) then
+            if "System-Created Entry" and not IsServiceChargeLine() then
                 "Prepayment %" := 0;
             GenPostingSetup.Get("Gen. Bus. Posting Group", "Gen. Prod. Posting Group");
             if GenPostingSetup."Sales Prepayments Account" <> '' then begin
@@ -5600,7 +5600,7 @@ table 37 "Sales Line"
         end;
     end;
 
-    procedure CheckCustomerBaseCalendarCodeExist(): Boolean
+    local procedure CheckCustomerBaseCalendarCodeExist(): Boolean
     var
         Customer: Record customer;
     begin
@@ -6339,7 +6339,7 @@ table 37 "Sales Line"
         IsHandled: Boolean;
     begin
         IsHandled := false;
-        OnBeforeDeleteItemChargeAssignment(DocType, DocNo, DocLineNo, IsHandled, CurrFieldNo);
+        OnBeforeDeleteItemChargeAssignment(DocType, DocNo, DocLineNo, IsHandled);
         if not IsHandled then begin
             ItemChargeAssgntSales.SetRange("Applies-to Doc. Type", DocType);
             ItemChargeAssgntSales.SetRange("Applies-to Doc. No.", DocNo);
@@ -7269,15 +7269,8 @@ table 37 "Sales Line"
             "Document No.", '', 0, "Line No."));
     end;
 
-    local procedure UpdateItemReference(CalledByFieldNo: Integer)
-    var
-        IsHandled: Boolean;
+    local procedure UpdateItemReference()
     begin
-        IsHandled := false;
-        OnBeforeUpdateItemReference(Rec, xRec, CalledByFieldNo, IsHandled);
-        if IsHandled then
-            exit;
-
         ItemReferenceMgt.EnterSalesItemReference(Rec);
         UpdateICPartner();
 
@@ -7293,7 +7286,7 @@ table 37 "Sales Line"
         IsHandled: Boolean;
     begin
         IsHandled := false;
-        OnBeforeGetDefaultBin(Rec, IsHandled, CurrFieldNo);
+        OnBeforeGetDefaultBin(Rec, IsHandled);
         if IsHandled then
             exit;
 
@@ -7544,7 +7537,7 @@ table 37 "Sales Line"
         IsHandled: Boolean;
     begin
         IsHandled := false;
-        OnBeforeCheckApplFromItemLedgEntry(Rec, xRec, ItemLedgEntry, IsHandled, CurrFieldNo);
+        OnBeforeCheckApplFromItemLedgEntry(Rec, xRec, ItemLedgEntry, IsHandled);
         if IsHandled then
             exit;
 
@@ -10238,7 +10231,7 @@ table 37 "Sales Line"
         OnAfterClearVATDifference(Rec);
     end;
 
-    procedure GetVATPct() VATPct: Decimal
+    internal procedure GetVATPct() VATPct: Decimal
     begin
         VATPct := "VAT %";
         OnAfterGetVATPct(Rec, VATPct);
@@ -10405,10 +10398,13 @@ table 37 "Sales Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '16.0')]
     [IntegrationEvent(false, false)]
     local procedure OnAfterFindResUnitCost(var SalesLine: Record "Sales Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
+#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterGetFAPostingGroup(var SalesLine: Record "Sales Line"; GLAccount: Record "G/L Account")
@@ -10581,7 +10577,7 @@ table 37 "Sales Line"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnBeforeCheckApplFromItemLedgEntry(var SalesLine: Record "Sales Line"; xSalesLine: Record "Sales Line"; var ItemLedgerEntry: Record "Item Ledger Entry"; var IsHandled: Boolean; CurrentFieldNo: Integer)
+    local procedure OnBeforeCheckApplFromItemLedgEntry(var SalesLine: Record "Sales Line"; xSalesLine: Record "Sales Line"; var ItemLedgerEntry: Record "Item Ledger Entry"; var IsHandled: Boolean)
     begin
     end;
 
@@ -10646,7 +10642,7 @@ table 37 "Sales Line"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnBeforeGetDefaultBin(var SalesLine: Record "Sales Line"; var IsHandled: Boolean; CurrentFieldNo: Integer)
+    local procedure OnBeforeGetDefaultBin(var SalesLine: Record "Sales Line"; var IsHandled: Boolean)
     begin
     end;
 
@@ -11077,11 +11073,6 @@ table 37 "Sales Line"
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterUpdateDates(var SalesLine: Record "Sales Line")
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnBeforeUpdateItemReference(var SalesLine: Record "Sales Line"; xSalesLine: Record "Sales Line"; CalledByFieldNo: Integer; var IsHandled: Boolean)
     begin
     end;
 
@@ -11555,10 +11546,13 @@ table 37 "Sales Line"
     begin
     end;
 
+#if not CLEAN25
+    [Obsolete('Replaced by the new implementation (V16) of price calculation.', '19.0')]
     [IntegrationEvent(false, false)]
     local procedure OnFindResUnitCostOnAfterInitResCost(var SalesLine: Record "Sales Line"; var ResourceCost: Record "Resource Cost")
     begin
     end;
+#endif
 
     [IntegrationEvent(true, false)]
     local procedure OnLookUpICPartnerReferenceTypeCaseElse()
@@ -12160,7 +12154,7 @@ table 37 "Sales Line"
 
     [IntegrationEvent(false, false)]
     local procedure OnBeforeDeleteItemChargeAssignment(DocType: Enum "Sales Document Type"; DocNo: Code[20];
-                                                                    DocLineNo: Integer; var IsHandled: Boolean; CurrentFieldNo: Integer)
+                                                                    DocLineNo: Integer; var IsHandled: Boolean)
     begin
     end;
 

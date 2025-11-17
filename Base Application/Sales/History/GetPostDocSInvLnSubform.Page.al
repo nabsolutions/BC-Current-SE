@@ -6,7 +6,6 @@ namespace Microsoft.Sales.History;
 
 using Microsoft.Finance.Dimension;
 using Microsoft.Inventory.Item.Catalog;
-using Microsoft.Utilities;
 using Microsoft.Sales.Document;
 
 page 5852 "Get Post.Doc - S.InvLn Subform"
@@ -509,12 +508,10 @@ page 5852 "Get Post.Doc - S.InvLn Subform"
     end;
 
     local procedure ShowDocument()
-    var
-        PageManagement: Codeunit "Page Management";
     begin
         if not SalesInvHeader.Get(Rec."Document No.") then
             exit;
-        PageManagement.PageRun(SalesInvHeader);
+        PAGE.Run(PAGE::"Posted Sales Invoice", SalesInvHeader);
     end;
 
     local procedure ItemTrackingLines()

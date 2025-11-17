@@ -146,7 +146,7 @@ page 5176 "Job Archive List"
                 action("Job Task &Lines")
                 {
                     ApplicationArea = Jobs;
-                    Caption = 'Project Task Archive &Lines';
+                    Caption = 'Project Task &Lines';
                     Image = TaskList;
                     RunObject = Page "Job Task Archive Lines";
                     RunPageLink = "Job No." = field("No."), "Version No." = field("Version No.");

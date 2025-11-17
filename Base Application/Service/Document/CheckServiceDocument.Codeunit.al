@@ -42,6 +42,9 @@ codeunit 9065 "Check Service Document"
     begin
         IsHandled := false;
         OnBeforeCheckServiceLines(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#if not CLEAN25
+        Item.RunOnBeforeCheckServLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#endif
         if IsHandled then
             exit;
 
@@ -68,6 +71,9 @@ codeunit 9065 "Check Service Document"
     begin
         IsHandled := false;
         OnBeforeCheckServiceContractLines(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#if not CLEAN25
+        Item.RunOnBeforeCheckServContractLine(Item, CurrentFieldNo, CheckFieldNo, CheckFieldCaption, IsHandled);
+#endif
         if IsHandled then
             exit;
 

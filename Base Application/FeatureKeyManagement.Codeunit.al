@@ -4,7 +4,9 @@
 // ------------------------------------------------------------------------------------------------
 namespace System.Environment.Configuration;
 
+#if not CLEAN25
 using Microsoft.Pricing.Calculation;
+#endif
 
 codeunit 265 "Feature Key Management"
 {
@@ -16,6 +18,9 @@ codeunit 265 "Feature Key Management"
         FeatureTelemetry: Codeunit System.Telemetry."Feature Telemetry";
         AutomaticAccountCodesTxt: Label 'AutomaticAccountCodes', Locked = true;
         SIEAuditFileExportTxt: Label 'SIEAuditFileExport', Locked = true;
+#if not CLEAN25
+        GLCurrencyRevaluationTxt: Label 'GLCurrencyRevaluation', Locked = true;
+#endif
 #if not CLEAN26
         ManufacturingFlushingMethodActivateManualWithoutPickLbl: Label 'Manufacturing_FlushingMethod_ActivateManualWoPick', Locked = true;
         ManufacturingFlushingMethodActivateManualWithoutPick, ManufacturingFlushingMethodActivateManualWithoutPickRead, MockEnabledManufacturingFlushingMethodActivateManualWithoutPick : Boolean;
@@ -30,6 +35,12 @@ codeunit 265 "Feature Key Management"
         ConcurrentResourcePosting: Boolean;
         ConcurrentResourcePostingRead: Boolean;
 
+#if not CLEAN25
+    procedure IsGLCurrencyRevaluationEnabled(): Boolean
+    begin
+        exit(FeatureManagementFacade.IsEnabled(GetGLCurrencyRevaluationFeatureKey()));
+    end;
+#endif
 
     procedure IsAutomaticAccountCodesEnabled(): Boolean
     begin
@@ -97,6 +108,12 @@ codeunit 265 "Feature Key Management"
     end;
 #endif
 
+#if not CLEAN25
+    local procedure GetGLCurrencyRevaluationFeatureKey(): Text[50]
+    begin
+        exit(GLCurrencyRevaluationTxt);
+    end;
+#endif
 
     local procedure GetAutomaticAccountCodesFeatureKey(): Text[50]
     begin
@@ -113,6 +130,10 @@ codeunit 265 "Feature Key Management"
     begin
         // Log feature uptake
         case FeatureKey.ID of
+#if not CLEAN25
+            GLCurrencyRevaluationTxt:
+                FeatureTelemetry.LogUptake('0000JRR', GLCurrencyRevaluationTxt, Enum::System.Telemetry."Feature Uptake Status"::Discovered);
+#endif
 #if not CLEAN26
             GetManufacturingFlushingMethodActivateManualWithoutPickFeatureKey():
                 FeatureTelemetry.LogUptake('0000OQS', ManufacturingFlushingMethodActivateManualWithoutPickLbl, Enum::System.Telemetry."Feature Uptake Status"::Discovered);
@@ -140,6 +161,7 @@ codeunit 265 "Feature Key Management"
         end;
     end;
 
+#if not CLEAN25
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Feature Management Facade", 'OnAfterUpdateData', '', false, false)]
     local procedure HandleOnAfterUpdateData(var FeatureDataUpdateStatus: Record "Feature Data Update Status")
     var
@@ -154,6 +176,7 @@ codeunit 265 "Feature Key Management"
                 FeatureTelemetry.LogUptake('0000LLR', PriceCalculationMgt.GetFeatureTelemetryName(), Enum::System.Telemetry."Feature Uptake Status"::Discovered);
         end;
     end;
+#endif
 
     [InternalEvent(false)]
     local procedure OnAfterIsConcurrentInventoryPostingEnabled(var ConcurrentInventoryPosting: Boolean)

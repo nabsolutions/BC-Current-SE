@@ -1,4 +1,4 @@
-codeunit 134897 "ERM Source Currency"
+﻿codeunit 134897 "ERM Source Currency"
 {
     Subtype = Test;
     TestPermissions = NonRestrictive;

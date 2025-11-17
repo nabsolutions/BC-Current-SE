@@ -248,6 +248,14 @@ codeunit 99000815 "Reservation-Check Date Confl."
         ReservMgt.AutoTrack(TransferLine."Outstanding Qty. (Base)");
     end;
 
+#if not CLEAN25
+    [Obsolete('Moved to codeunit ServiceLineReserve', '25.0')]
+    procedure ServiceInvLineCheck(ServiceLine: Record Microsoft.Service.Document."Service Line"; ForceRequest: Boolean)
+        ServiceLineReserve: Codeunit Microsoft.Service.Document."Service Line-Reserve";
+    begin
+        ServiceLineReserve.ServiceInvLineCheck(ServiceLine, ForceRequest)
+    end;
+#endif
 
     procedure JobPlanningLineCheck(JobPlanningLine: Record "Job Planning Line"; ForceRequest: Boolean)
     var
@@ -294,7 +302,6 @@ codeunit 99000815 "Reservation-Check Date Confl."
             exit;
 
         repeat
-            ForceModifyShipmentDate := false;
             OnUpdateDateFilterReservEntryLoop(FilterReservationEntry, ForceModifyShipmentDate, Date);
             if FilterReservationEntry."Quantity (Base)" < 0 then
                 if (FilterReservationEntry."Expected Receipt Date" <> 0D) and
@@ -313,7 +320,7 @@ codeunit 99000815 "Reservation-Check Date Confl."
                     ReservationEngineMgt.ModifyShipmentDate(FilterReservationEntry, Date)
             else
                 if ((FilterReservationEntry."Shipment Date" <> 0D) and
-                    (FilterReservationEntry."Shipment Date" < Date)) and not ForceModifyShipmentDate
+                    (FilterReservationEntry."Shipment Date" < Date))
                 then
                     if (FilterReservationEntry.Binding <> FilterReservationEntry.Binding::"Order-to-Order") and
                        FilterReservationEntry.TrackingExists()
@@ -346,8 +353,6 @@ codeunit 99000815 "Reservation-Check Date Confl."
         else
             if Date <> 0D then
                 ReservationEntry2.SetRange("Shipment Date", 00000101D, Date - 1);
-
-        OnDateConflictOnAfterSetReservationEntry2Filters(ReservationEntry2, Date, ForceRequest);
 
         if ReservationEntry2.IsEmpty() then
             exit(false);
@@ -626,9 +631,5 @@ codeunit 99000815 "Reservation-Check Date Confl."
     local procedure OnReqLineCheckOnBeforeClearSurplus(var ReservMgt: Codeunit "Reservation Management"; var IsHandled: Boolean)
     begin
     end;
-
-    [IntegrationEvent(false, false)]
-    local procedure OnDateConflictOnAfterSetReservationEntry2Filters(var ReservationEntry2: Record "Reservation Entry"; Date: Date; var ForceRequest: Boolean)
-    begin
-    end;
 }
+

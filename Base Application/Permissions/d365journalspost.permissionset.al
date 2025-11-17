@@ -16,7 +16,6 @@ using Microsoft.Foundation.BatchProcessing;
 using Microsoft.Sales.Pricing;
 using Microsoft.Finance.VAT.Ledger;
 using Microsoft.Projects.Project.Ledger;
-using Microsoft.Finance.VAT.Reporting;
 
 permissionset 681 "D365 JOURNALS, POST"
 {
@@ -48,7 +47,6 @@ permissionset 681 "D365 JOURNALS, POST"
                   tabledata "Notification Entry" = RIMD,
                   tabledata "Sent Notification Entry" = RIMD,
                   tabledata "VAT Entry" = Rimd,
-                  tabledata "VAT Return Period" = R,
                   tabledata "Vendor Ledger Entry" = imd,
                   tabledata "Warehouse Register" = r;
 }

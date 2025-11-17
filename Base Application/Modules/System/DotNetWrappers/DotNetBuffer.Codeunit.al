@@ -4,8 +4,6 @@ using System;
 
 codeunit 3035 DotNet_Buffer
 {
-    InherentEntitlements = X;
-    InherentPermissions = X;
 
     trigger OnRun()
     begin
