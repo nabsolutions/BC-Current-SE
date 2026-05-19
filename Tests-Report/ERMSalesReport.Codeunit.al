@@ -1,4 +1,4 @@
-﻿codeunit 134976 "ERM Sales Report"
+codeunit 134976 "ERM Sales Report"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -46,6 +46,7 @@
         EmptyReportDatasetTxt: Label 'There is nothing to print for the selected filters.';
         WrongDecimalErr: Label 'Wrong count of decimals', Locked = true;
         DescriptionVATClauseLineLbl: Label 'Description_VATClauseLine';
+        CustWithDiffShipmentDateNotExpectedErr: Label 'Customer with shipment date different from %1 should not be shown in report.', Comment = '%1 = Shipment Date';
 
     [Test]
     [HandlerFunctions('CustomerTrialBalanceRequestPageHandler')]
@@ -231,67 +232,11 @@
         LibraryReportDataset.AssertCurrentRowValueEquals('CustBalanceDueLCY_5__Control37', InvoiceAmount);
     end;
 
-    [Test]
-    [HandlerFunctions('CustomerTopTenListRequestPageHandler')]
-    [Scope('OnPrem')]
-    procedure TopTenListSalesLCY()
-    var
-        GenJournalLine: Record "Gen. Journal Line";
-        Customer: Record Customer;
-        ShowType: Option "Sales (LCY)","Balance (LCY)";
-        SalesLCY: Decimal;
-    begin
-        // Setup: Create Customer, Make and Post Invoice Entry from General Journal Line.
-        Initialize();
-        LibrarySales.CreateCustomer(Customer);
-        SalesLCY := GetCustomerSalesLCY() + LibraryRandom.RandDec(100, 2);
-        CreatePostGeneralJournalLine(GenJournalLine, GenJournalLine."Document Type"::Invoice, Customer."No.", '', SalesLCY, WorkDate());
-
-        // Exercise: Generate Customer Summary Aging Simp Report as Output file and save as XML.
-        LibraryVariableStorage.Enqueue(ShowType::"Sales (LCY)");
-        LibraryVariableStorage.Enqueue(Customer."No.");
-        REPORT.Run(REPORT::"Customer - Top 10 List");
-
-        // Verify: Verify Customer Top 10 List Report for Sales LCY.
-        LibraryReportDataset.LoadDataSetFile();
-        LibraryReportDataset.SetRange('No_Customer', Customer."No.");
-        if not LibraryReportDataset.GetNextRow() then
-            Error(RowNotFoundErr, 'No_Customer', Customer."No.");
-        LibraryReportDataset.AssertCurrentRowValueEquals('SalesLCY_Customer', SalesLCY);
-    end;
-
-    [Test]
-    [HandlerFunctions('CustomerTopTenListRequestPageHandler')]
-    [Scope('OnPrem')]
-    procedure TopTenListBalanceLCY()
-    var
-        GenJournalLine: Record "Gen. Journal Line";
-        Customer: Record Customer;
-        ShowType: Option "Sales (LCY)","Balance (LCY)";
-        BalanceLCY: Decimal;
-    begin
-        // Setup: Create Customer, Make and Post Invoice Entry from General Journal Line.
-        Initialize();
-        LibrarySales.CreateCustomer(Customer);
-        BalanceLCY := GetCustomerBalanceLCY() + LibraryRandom.RandDec(100, 2);
-        CreatePostGeneralJournalLine(GenJournalLine, GenJournalLine."Document Type"::Invoice, Customer."No.", '', BalanceLCY, WorkDate());
-
-        // Exercise: Generate Customer Summary Aging Simp Report as Output file and save as XML.
-        LibraryVariableStorage.Enqueue(ShowType::"Balance (LCY)");
-        LibraryVariableStorage.Enqueue(Customer."No.");
-        REPORT.Run(REPORT::"Customer - Top 10 List");
-
-        // Verify: Verify Customer Top 10 List Report for Balance LCY.
-        LibraryReportDataset.LoadDataSetFile();
-        LibraryReportDataset.SetRange('No_Customer', Customer."No.");
-        if not LibraryReportDataset.GetNextRow() then
-            Error(RowNotFoundErr, 'No_Customer', Customer."No.");
-        LibraryReportDataset.AssertCurrentRowValueEquals('BalanceLCY_Customer', BalanceLCY);
-    end;
-
+#if not CLEAN28
     [Test]
     [HandlerFunctions('CustomerListRequestPageHandler')]
     [Scope('OnPrem')]
+    [Obsolete('Customer - List report is deprecated.', '28.0')]
     procedure CustomerList()
     var
         Customer: Record Customer;
@@ -319,6 +264,7 @@
     [Test]
     [HandlerFunctions('CustomerListRequestPageHandler')]
     [Scope('OnPrem')]
+    [Obsolete('Customer - List report is deprecated.', '28.0')]
     procedure CustomerListFilterStringWithGlobalDimCaptions()
     var
         Customer: Record Customer;
@@ -351,6 +297,7 @@
         LibraryReportDataset.GetNextRow();
         LibraryReportDataset.AssertCurrentRowValueEquals('CustFilter', ExpectedFilterString);
     end;
+#endif
 
     [Test]
     [HandlerFunctions('CustomerRegisterRequestPageHandler')]
@@ -619,9 +566,11 @@
         Clear(LibraryReportDataset);
     end;
 
+#if not CLEAN28
     [Test]
     [HandlerFunctions('CustomerSalesListRequestPageHandler')]
     [Scope('OnPrem')]
+    [Obsolete('Customer - Sales List report is deprecated.', '28.0')]
     procedure CustomerSalesListWithAmount()
     var
         SalesHeader: Record "Sales Header";
@@ -653,6 +602,7 @@
     [Test]
     [HandlerFunctions('CustomerSalesListRequestPageHandler')]
     [Scope('OnPrem')]
+    [Obsolete('Customer - Sales List report is deprecated.', '28.0')]
     procedure CustomerSalesListWithAddress()
     var
         SalesHeader: Record "Sales Header";
@@ -678,6 +628,7 @@
         SalesInvoiceHeader.Get(PostedDocumentNo);
         LibraryReportDataset.AssertCurrentRowValueEquals('CustAddr_2_', SalesInvoiceHeader."Sell-to Address");
     end;
+#endif
 
     [Test]
     [HandlerFunctions('StatementReportRequestPageHandler')]
@@ -2704,9 +2655,11 @@
         VerifyDueMonthsForDueDate(DueDate[4], 14);
     end;
 
+#if not CLEAN28
     [Test]
     [HandlerFunctions('SalesStatisticsRequestPageHandler')]
     [Scope('OnPrem')]
+    [Obsolete('Sales Statistics report is deprecated.', '28.0')]
     procedure SalesStatisticsReportForNonInventoryItem()
     var
         Item: Record Item;
@@ -2741,6 +2694,7 @@
         LibraryReportDataset.AssertElementWithValueExists('CustProfitLCY2', Item."Unit Price" - Item."Unit Cost");
         LibraryReportDataset.AssertElementWithValueExists('CustSalProfAdjmtCostLCY2', Item."Unit Cost");
     end;
+#endif
 
     [Test]
     [HandlerFunctions('CustomerItemSalesEmptyRequestPageHandler')]
@@ -3484,6 +3438,78 @@
         VerifyCustomerBalanceToDateTwoEntriesExist(Customer."No.", InvoiceAmount[1], InvoiceAmount[1], InvoiceAmount[1] + InvoiceAmount[2]);
     end;
 
+    [Test]
+    [HandlerFunctions('CustomerOrderDetailRequestPageHandler')]
+    procedure OrderDetailShowsSalesLineWithDiffShortcutDim1Code()
+    var
+        Customer: Record Customer;
+        DimensionValue: Record "Dimension Value";
+        GeneralLedgerSetup: Record "General Ledger Setup";
+        SalesHeader: Record "Sales Header";
+        SalesLine: Record "Sales Line";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 625992] Report shows sales line when Shortcut Dimension 1 Code differs from customer Global Dimension 1 Code.
+        Initialize();
+
+        // [GIVEN] Create customer with Global Dimension 1 Code.
+        GeneralLedgerSetup.Get();
+        LibrarySales.CreateCustomer(Customer);
+        LibraryDimension.CreateDimensionValue(DimensionValue, GeneralLedgerSetup."Global Dimension 1 Code");
+        Customer.Validate("Global Dimension 1 Code", DimensionValue.Code);
+        Customer.Modify(true);
+
+        // [GIVEN] Create Sales Order with Sales Line with different Shortcut Dimension 1 Code.
+        CreateSalesDocumentWithLine(SalesHeader, SalesLine, SalesHeader."Document Type"::Order, Customer."No.");
+        LibraryDimension.CreateDimensionValue(DimensionValue, GeneralLedgerSetup."Global Dimension 1 Code");
+        SalesLine.Validate("Shortcut Dimension 1 Code", DimensionValue.Code);
+        SalesLine.Modify(true);
+
+        // [WHEN] Run Customer - Order Detail report for the customer.
+        RunCustomerOrderDetailReport(Customer."No.", false);
+
+        // [THEN] Verify Sales Line amount is shown in the report.
+        VerifyLineAmtCustomerOrderDetailReport(SalesLine."No.", SalesLine."Line Amount");
+    end;
+
+    [Test]
+    [HandlerFunctions('CustomerOrderDetailWithShipmentDateRequestPageHandler')]
+    procedure OrderDetailFiltersCustomersByShipmentDate()
+    var
+        SalesHeader: array[2] of Record "Sales Header";
+        SalesLine: array[2] of Record "Sales Line";
+        CustomerNo: array[2] of Code[20];
+        ShipmentDate: Date;
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 631546] Report filtered by Shipment Date only shows customers with matching shipment transactions.
+        Initialize();
+
+        // [GIVEN] Sales Order for  first Customer with Shipment Date = WorkDate.
+        ShipmentDate := WorkDate();
+        CustomerNo[1] := CreateCustomer();
+        CreateSalesOrder(SalesHeader[1], SalesLine[1], '', CustomerNo[1]);
+        SalesLine[1].Validate("Shipment Date", ShipmentDate);
+        SalesLine[1].Modify(true);
+
+        // [GIVEN] Sales Order for second Customer with Shipment Date = WorkDate + 30D.
+        CustomerNo[2] := CreateCustomer();
+        CreateSalesOrder(SalesHeader[2], SalesLine[2], '', CustomerNo[2]);
+        SalesLine[2].Validate("Shipment Date", ShipmentDate + 30);
+        SalesLine[2].Modify(true);
+
+        // [WHEN] Run Customer - Order Detail report filtered to Shipment Date = WorkDate.
+        RunCustomerOrderDetailReportWithShipmentDate('', Format(ShipmentDate));
+
+        // [THEN] First Customer with matching shipment date is shown in the report.
+        VerifyLineAmtCustomerOrderDetailReport(SalesLine[1]."No.", SalesLine[1]."Line Amount");
+
+        // [THEN] Second Customer with non-matching shipment date is not shown in the report.
+        LibraryReportDataset.SetRange('No_Customer', CustomerNo[2]);
+        Assert.AreEqual(0, LibraryReportDataset.RowCount(), StrSubstNo(CustWithDiffShipmentDateNotExpectedErr, ShipmentDate));
+        LibraryVariableStorage.AssertEmpty();
+    end;
+
     local procedure Initialize()
     begin
         LibraryApplicationArea.DisableApplicationAreaSetup();
@@ -3595,6 +3621,7 @@
         exit(Customer."No.");
     end;
 
+#if not CLEAN28
     local procedure CreateCustomerWithDefaultGlobalDimValues(var Customer: Record Customer; var DimValueCode: array[2] of Code[20])
     var
         DimensionValue: Record "Dimension Value";
@@ -3609,6 +3636,7 @@
             DimValueCode[i] := DimensionValue.Code;
         end;
     end;
+#endif
 
     local procedure CreateCustomerItemReferenceNo(var Customer: Record Customer; var Item: Record Item): Code[20]
     var
@@ -3942,32 +3970,6 @@
         exit(GLEntry."Transaction No.");
     end;
 
-    local procedure GetCustomerBalanceLCY() TotalBalance: Decimal
-    var
-        Customer: Record Customer;
-    begin
-        TotalBalance := 0;
-        Customer.SetFilter("Balance (LCY)", '>0');
-        if Customer.FindSet() then
-            repeat
-                Customer.CalcFields("Balance (LCY)");
-                TotalBalance += Customer."Balance (LCY)";
-            until Customer.Next() = 0;
-    end;
-
-    local procedure GetCustomerSalesLCY() TotalSalesLCY: Decimal
-    var
-        Customer: Record Customer;
-    begin
-        TotalSalesLCY := 0;
-        Customer.SetFilter("Sales (LCY)", '>0');
-        if Customer.FindSet() then
-            repeat
-                Customer.CalcFields("Sales (LCY)");
-                TotalSalesLCY += Customer."Sales (LCY)";
-            until Customer.Next() = 0;
-    end;
-
     local procedure GetPostingDate(): Date
     var
         DateComprRegister: Record "Date Compr. Register";
@@ -4033,6 +4035,7 @@
         GenJournalLine.Modify();
     end;
 
+#if not CLEAN28
     local procedure UpdateGlobalDims()
     var
         Dimension: array[2] of Record Dimension;
@@ -4043,6 +4046,7 @@
             LibraryDimension.RunChangeGlobalDimensions(Dimension[1].Code, Dimension[2].Code);
         end;
     end;
+#endif
 
     local procedure PostJournalLines(var GenJournalLine: Record "Gen. Journal Line"; CustomerNo: Code[20]; DebitAmount: Decimal; CreditAmount: Decimal)
     begin
@@ -4157,7 +4161,9 @@
         Customer: Record Customer;
     begin
         LibraryVariableStorage.Enqueue(ShowAmountInLCY);
+#if not CLEAN28
         LibraryVariableStorage.Enqueue(false);
+#endif
         Customer.SetRange("No.", SellToCustomerNo);
         Commit();  // Due to limitation in page testability, commit is needed in this test case.
         REPORT.Run(REPORT::"Customer - Order Detail", true, false, Customer);
@@ -4192,12 +4198,15 @@
         REPORT.Run(REPORT::"Customer - Trial Balance", true, false, Customer);
     end;
 
+#if not CLEAN28
+    [Obsolete('Customer - List report is deprecated.', '28.0')]
     local procedure RunCustomerListReport(var Customer: Record Customer)
     begin
         Commit();
         Customer.SetRange("No.", Customer."No.");
         REPORT.Run(REPORT::"Customer - List", true, false, Customer);
     end;
+#endif
 
     local procedure RunStandardSalesOrderConfirmationReport(SalesHeaderNo: Code[20])
     var
@@ -4508,12 +4517,15 @@
         CustomerDetailedAging.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
 
+#if not CLEAN28
     [RequestPageHandler]
     [Scope('OnPrem')]
+    [Obsolete('Customer - List report is deprecated.', '28.0')]
     procedure CustomerListRequestPageHandler(var CustomerList: TestRequestPage "Customer - List")
     begin
         CustomerList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [RequestPageHandler]
     [Scope('OnPrem')]
@@ -4546,20 +4558,6 @@
 
     [RequestPageHandler]
     [Scope('OnPrem')]
-    procedure CustomerTopTenListRequestPageHandler(var CustomerTop10List: TestRequestPage "Customer - Top 10 List")
-    var
-        CustomerNo: Variant;
-        ShowType: Variant;
-    begin
-        LibraryVariableStorage.Dequeue(ShowType);
-        LibraryVariableStorage.Dequeue(CustomerNo);
-        CustomerTop10List.Show.SetValue(ShowType);
-        CustomerTop10List.Customer.SetFilter("No.", CustomerNo);
-        CustomerTop10List.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
-    end;
-
-    [RequestPageHandler]
-    [Scope('OnPrem')]
     procedure CustomerTrialBalanceRequestPageHandler(var CustomerTrialBalance: TestRequestPage "Customer - Trial Balance")
     begin
         CustomerTrialBalance.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
@@ -4570,12 +4568,18 @@
     procedure CustomerOrderDetailRequestPageHandler(var CustomerOrderDetail: TestRequestPage "Customer - Order Detail")
     var
         ShowAmountInLCY: Variant;
+#if not CLEAN28
         PrintOnlyPerPage: Variant;
+#endif
     begin
         LibraryVariableStorage.Dequeue(ShowAmountInLCY);
+#if not CLEAN28
         LibraryVariableStorage.Dequeue(PrintOnlyPerPage);
+#endif
         CustomerOrderDetail.ShowAmountsInLCY.SetValue(ShowAmountInLCY);
+#if not CLEAN28
         CustomerOrderDetail.NewPagePerCustomer.SetValue(PrintOnlyPerPage);
+#endif
         CustomerOrderDetail.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
 
@@ -4683,8 +4687,10 @@
     begin
     end;
 
+#if not CLEAN28
     [RequestPageHandler]
     [Scope('OnPrem')]
+    [Obsolete('Customer - Sales List report is deprecated.', '28.0')]
     procedure CustomerSalesListRequestPageHandler(var CustomerSalesList: TestRequestPage "Customer - Sales List")
     var
         CustomerNo: Variant;
@@ -4693,6 +4699,7 @@
         CustomerSalesList.Customer.SetFilter("No.", CustomerNo);
         CustomerSalesList.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [RequestPageHandler]
     [Scope('OnPrem')]
@@ -4915,6 +4922,16 @@
         LibraryReportDataset.AssertElementWithValueExists('Totals_Profit', (SubtotalsProfit + SubtotalsProfit2));
     end;
 
+    local procedure RunCustomerOrderDetailReportWithShipmentDate(CustomerNoFilter: Code[100]; ShipmentDateFilter: Text)
+    var
+        Customer: Record Customer;
+    begin
+        LibraryVariableStorage.Enqueue(ShipmentDateFilter);
+        Customer.SetFilter("No.", CustomerNoFilter);
+        Commit();
+        Report.Run(Report::"Customer - Order Detail", true, false, Customer);
+    end;
+
     [RequestPageHandler]
     [Scope('OnPrem')]
     procedure StandardSalesInvoiceRequestPageHandler(var StandardSalesInvoice: TestRequestPage "Standard Sales - Invoice")
@@ -5033,12 +5050,15 @@
         StandardSalesCreditMemo.SaveAsExcel(LibraryReportValidation.GetFileName());
     end;
 
+#if not CLEAN28
     [RequestPageHandler]
     [Scope('OnPrem')]
+    [Obsolete('Sales Statistics report is deprecated.', '28.0')]
     procedure SalesStatisticsRequestPageHandler(var SalesStatistics: TestRequestPage "Sales Statistics")
     begin
         SalesStatistics.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
+#endif
 
     [RequestPageHandler]
     [Scope('OnPrem')]
@@ -5075,5 +5095,16 @@
     begin
         CustomerBalanceToDate.ShowEntriesWithZeroBalance.SetValue(true);
         CustomerBalanceToDate.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
+    end;
+
+    [RequestPageHandler]
+    procedure CustomerOrderDetailWithShipmentDateRequestPageHandler(var CustomerOrderDetail: TestRequestPage "Customer - Order Detail")
+    var
+        ShipmentDateFilter: Text;
+    begin
+        ShipmentDateFilter := LibraryVariableStorage.DequeueText();
+        if ShipmentDateFilter <> '' then
+            CustomerOrderDetail."Sales Line".SetFilter("Shipment Date", ShipmentDateFilter);
+        CustomerOrderDetail.SaveAsXml(LibraryReportDataset.GetParametersFileName(), LibraryReportDataset.GetFileName());
     end;
 }

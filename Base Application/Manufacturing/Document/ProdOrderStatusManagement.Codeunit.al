@@ -8,6 +8,7 @@ using Microsoft.Finance.Currency;
 using Microsoft.Finance.Dimension;
 using Microsoft.Finance.GeneralLedger.Setup;
 using Microsoft.Foundation.AuditCodes;
+using Microsoft.Foundation.Enums;
 using Microsoft.Foundation.UOM;
 using Microsoft.Inventory.Costing;
 using Microsoft.Inventory.Item;
@@ -19,7 +20,6 @@ using Microsoft.Inventory.Setup;
 using Microsoft.Inventory.Tracking;
 using Microsoft.Manufacturing.Capacity;
 using Microsoft.Manufacturing.Setup;
-using Microsoft.Foundation.Enums;
 using Microsoft.Purchases.Document;
 using Microsoft.Utilities;
 using Microsoft.Warehouse.Activity;
@@ -113,6 +113,7 @@ codeunit 5407 "Prod. Order Status Management"
 
     procedure ChangeProdOrderStatus(ProdOrder: Record "Production Order"; NewStatus: Enum "Production Order Status"; NewPostingDate: Date; NewUpdateUnitCost: Boolean)
     var
+        xProductionOrder: Record "Production Order";
         SuppressCommit: Boolean;
         IsHandled: Boolean;
     begin
@@ -121,6 +122,8 @@ codeunit 5407 "Prod. Order Status Management"
         OnBeforeChangeStatusOnProdOrder(ProdOrder, NewStatus.AsInteger(), IsHandled, NewPostingDate, NewUpdateUnitCost);
         if IsHandled then
             exit;
+
+        xProductionOrder := ProdOrder;
         if (NewStatus = Enum::"Production Order Status"::Released) and (ProdOrder."Source Type" = ProdOrder."Source Type"::Item) then
             Item.CheckItemAndVariantForProdBlocked(ProdOrder."Source No.", '', Enum::"Item Production Blocked"::Output);
         if NewStatus = NewStatus::Finished then begin
@@ -147,7 +150,7 @@ codeunit 5407 "Prod. Order Status Management"
             WhseProdRelease.Release(ProdOrder);
         end;
         SuppressCommit := false;
-        OnAfterChangeStatusOnProdOrder(ProdOrder, ToProdOrder, NewStatus, NewPostingDate, NewUpdateUnitCost, SuppressCommit);
+        OnAfterChangeStatusOnProdOrder(ProdOrder, ToProdOrder, NewStatus, NewPostingDate, NewUpdateUnitCost, SuppressCommit, xProductionOrder);
 
         if not SuppressCommit then
             Commit();
@@ -207,7 +210,13 @@ codeunit 5407 "Prod. Order Status Management"
     local procedure ShowReleasedProdOrderDocument(var ProdOrder: Record "Production Order")
     var
         NewProductionOrder: Record "Production Order";
+        IsHandled: Boolean;
     begin
+        IsHandled := false;
+        OnBeforeShowReleasedProdOrderDocument(ProdOrder, IsHandled);
+        if IsHandled then
+            exit;
+
         if not Confirm(StrSubstNo(OpenReleasedProdOrderQst, ProdOrder."No.")) then
             exit;
 
@@ -1034,17 +1043,20 @@ codeunit 5407 "Prod. Order Status Management"
         OnFlushProdOrderOnAfterProdOrderCompSetFilters(ProdOrder, ProdOrderComp);
         if ProdOrderComp.FindSet() then begin
             NoOfRecords := ProdOrderComp.Count;
-            Window.Open(
-              Text002 +
-              Text003);
+            if GuiAllowed() then
+                Window.Open(
+                    Text002 +
+                    Text003);
             LineCount := 0;
 
             repeat
                 LineCount := LineCount + 1;
                 Item.Get(ProdOrderComp."Item No.");
                 Item.TestField("Rounding Precision");
-                Window.Update(1, LineCount);
-                Window.Update(2, Round(LineCount / NoOfRecords * 10000, 1));
+                if GuiAllowed() then begin
+                    Window.Update(1, LineCount);
+                    Window.Update(2, Round(LineCount / NoOfRecords * 10000, 1));
+                end;
                 ProdOrderLine.Get(ProdOrderComp.Status, ProdOrder."No.", ProdOrderComp."Prod. Order Line No.");
                 if NewStatus = NewStatus::Released then
                     QtyToPost := ProdOrderComp.GetNeededQty(1, false)
@@ -1074,7 +1086,8 @@ codeunit 5407 "Prod. Order Status Management"
                     OnFlushProdOrderOnAfterPostFlushItemJnlLine(ItemJnlLine);
                 end;
             until ProdOrderComp.Next() = 0;
-            Window.Close();
+            if GuiAllowed() then
+                Window.Close();
         end;
     end;
 
@@ -1256,7 +1269,7 @@ codeunit 5407 "Prod. Order Status Management"
         OnAfterInitItemJnlLineFromProdOrderComp(ItemJnlLine, ProdOrder, ProdOrderLine, ProdOrderComp);
     end;
 
-    local procedure CheckBeforeFinishProdOrder(ProdOrder: Record "Production Order")
+    procedure CheckBeforeFinishProdOrder(ProdOrder: Record "Production Order")
     var
         ProdOrderLine: Record "Prod. Order Line";
         ProdOrderComp: Record "Prod. Order Component";
@@ -1691,7 +1704,7 @@ codeunit 5407 "Prod. Order Status Management"
     end;
 
     [IntegrationEvent(false, false)]
-    local procedure OnAfterChangeStatusOnProdOrder(var ProdOrder: Record "Production Order"; var ToProdOrder: Record "Production Order"; NewStatus: Enum "Production Order Status"; NewPostingDate: Date; NewUpdateUnitCost: Boolean; var SuppressCommit: Boolean)
+    local procedure OnAfterChangeStatusOnProdOrder(var ProdOrder: Record "Production Order"; var ToProdOrder: Record "Production Order"; NewStatus: Enum "Production Order Status"; NewPostingDate: Date; NewUpdateUnitCost: Boolean; var SuppressCommit: Boolean; xProductionOrder: Record "Production Order")
     begin
     end;
 
@@ -2004,5 +2017,9 @@ codeunit 5407 "Prod. Order Status Management"
     local procedure OnTransferReopenProdOrderRtngLineOnAfterInsert(FromProdOrderRoutingLine: Record "Prod. Order Routing Line"; ToProdOrderRoutingLine: Record "Prod. Order Routing Line"; FromProductionOrder: Record "Production Order")
     begin
     end;
-}
 
+    [IntegrationEvent(false, false)]
+    local procedure OnBeforeShowReleasedProdOrderDocument(var ProductionOrder: Record "Production Order"; var IsHandled: Boolean)
+    begin
+    end;
+}

@@ -866,6 +866,8 @@ codeunit 5940 ServContractManagement
         ServHeader2."Bill-to Contact No." := ServContract."Bill-to Contact No.";
         ServHeader2."Bill-to Contact" := ServContract."Bill-to Contact";
         ServHeader2."Gen. Bus. Posting Group" := Cust."Gen. Bus. Posting Group";
+        ServHeader2."Tax Area Code" := Cust."Tax Area Code";
+        ServHeader2."Tax Liable" := Cust."Tax Liable";
         if GLSetup."Bill-to/Sell-to VAT Calc." = GLSetup."Bill-to/Sell-to VAT Calc."::"Sell-to/Buy-from No." then
             ServHeader2."VAT Bus. Posting Group" := Cust."VAT Bus. Posting Group";
         OnCreateOrGetCreditHeaderOnAfterCopyFromCustomer(ServHeader2, ServContract, Cust);
@@ -3066,13 +3068,6 @@ codeunit 5940 ServContractManagement
     begin
     end;
 
-#if not CLEAN25
-    [Obsolete('Replaced by event OnChangeCustNoOnServContractOnAfterGetCustomer', '25.0')]
-    [IntegrationEvent(false, false)]
-    local procedure OnChangeCustNoOnServContractOnAfterGetCust(Customer: Record Customer; var ServiceContractHeader: Record "Service Contract Header"; var CustCheckCrLimit: Codeunit "Cust-Check Cr. Limit"; var IsHandled: Boolean)
-    begin
-    end;
-#endif
 
     [IntegrationEvent(false, false)]
     local procedure OnChangeCustNoOnServContractOnAfterGetCustomer(Customer: Record Customer; var ServiceContractHeader: Record "Service Contract Header"; var ServCheckCreditLimit: Codeunit "Serv. Check Credit Limit"; var IsHandled: Boolean)

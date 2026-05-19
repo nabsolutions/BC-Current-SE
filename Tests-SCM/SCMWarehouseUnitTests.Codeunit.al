@@ -14,6 +14,7 @@ codeunit 137504 "SCM Warehouse Unit Tests"
         LibraryUtility: Codeunit "Library - Utility";
         LibraryInventory: Codeunit "Library - Inventory";
         LibraryItemTracking: Codeunit "Library - Item Tracking";
+        LibraryManufacturing: Codeunit "Library - Manufacturing";
         LibraryPurchase: Codeunit "Library - Purchase";
         LibrarySales: Codeunit "Library - Sales";
         LibraryService: Codeunit "Library - Service";
@@ -32,6 +33,7 @@ codeunit 137504 "SCM Warehouse Unit Tests"
         CannotCreateBinWithoutLocationErr: Label 'Location Code must have a value';
         ItemTrkgManagedByWhseMsg: Label 'You cannot assign a serial, lot or package number because item tracking for this document line is done through a warehouse activity.';
         QtytoCrossDockErr: Label 'Qty. to Cross-Dock must be have value.';
+        PutAwayErr: Label 'Put-away should not be created when template requires find same Item';
 
     [Test]
     [Scope('OnPrem')]
@@ -3106,6 +3108,155 @@ codeunit 137504 "SCM Warehouse Unit Tests"
         // [THEN] "Qty. to Cross-Dock" should be filled with 25
         WarehouseReceiptLine.FindFirst();
         Assert.IsTrue(WarehouseReceiptLine."Qty. to Cross-Dock" <> 0, QtytoCrossDockErr);
+    end;
+
+    [Test]
+    procedure ProdOutputPutAwayRespectsTemplateWithFindSameItem()
+    var
+        Bin: Record Bin;
+        Item: Record Item;
+        ItemJournalBatch: Record "Item Journal Batch";
+        ItemJournalLine: Record "Item Journal Line";
+        ItemJournalTemplate: Record "Item Journal Template";
+        Location: Record Location;
+        ProductionOrder: Record "Production Order";
+        PutAwayTemplateHeader: Record "Put-away Template Header";
+        PutAwayTemplateLine: Record "Put-away Template Line";
+        WarehouseActivityLine: Record "Warehouse Activity Line";
+        Zone: Record Zone;
+        BinTypeCode: Code[10];
+    begin
+        // [SCENARIO 617281] Production output put-away respects put-away template with Find Same Item enabled.
+        Initialize();
+
+        // [GIVEN] Create Location with warehouse put-away for production output.
+        LibraryWarehouse.CreateLocationWMS(Location, true, true, true, true, true);
+        Location.Validate("Always Create Put-away Line", false);
+        Location.Validate("Directed Put-away and Pick", true);
+        Location.Validate("Prod. Output Whse. Handling", Location."Prod. Output Whse. Handling"::"Warehouse Put-away");
+        Location.Modify(true);
+
+        // [GIVEN] Create Put-away template with "Find Same Item" enabled
+        LibraryWarehouse.CreatePutAwayTemplateHeader(PutAwayTemplateHeader);
+        LibraryWarehouse.CreatePutAwayTemplateLine(
+            PutAwayTemplateHeader, PutAwayTemplateLine,
+            false, false, true, false, true, false); // Find Same Item = true 
+
+        // [GIVEN] Create Item and assign put-away template.
+        LibraryInventory.CreateItem(Item);
+        Item.Validate("Put-away Template Code", PutAwayTemplateHeader.Code);
+        Item.Modify(true);
+
+        // [GIVEN] Create bin for the location
+        BinTypeCode := LibraryWarehouse.SelectBinType(false, false, true, true);
+        LibraryWarehouse.CreateZone(Zone, '', Location.Code, BinTypeCode, '', '', 0, false);
+        LibraryWarehouse.CreateBin(Bin, Location.Code, '', Zone.Code, BinTypeCode);
+
+        // [GIVEN] Create Released Production Order.
+        LibraryManufacturing.CreateProductionOrder(
+            ProductionOrder, ProductionOrder.Status::Released,
+            ProductionOrder."Source Type"::Item, Item."No.", LibraryRandom.RandInt(5));
+        ProductionOrder.Validate("Location Code", Location.Code);
+        ProductionOrder.Modify(true);
+        LibraryManufacturing.RefreshProdOrder(ProductionOrder, false, true, true, true, false);
+
+        // [WHEN] Post production output
+        LibraryInventory.SelectItemJournalTemplateName(ItemJournalTemplate, ItemJournalTemplate.Type::Output);
+        LibraryInventory.SelectItemJournalBatchName(ItemJournalBatch, ItemJournalTemplate.Type::Output, ItemJournalTemplate.Name);
+        LibraryManufacturing.CreateOutputJournal(ItemJournalLine, ItemJournalTemplate, ItemJournalBatch, Item."No.", ProductionOrder."No.");
+        ItemJournalLine.Validate("Output Quantity", LibraryRandom.RandInt(5));
+        ItemJournalLine.Validate("Bin Code", Bin.Code);
+        ItemJournalLine.Modify(true);
+        LibraryInventory.PostItemJournalLine(ItemJournalTemplate.Name, ItemJournalBatch.Name);
+
+        // [THEN] Verify no Put-Away document is created because item doesn't exist in any bin yet.
+        WarehouseActivityLine.SetRange("Activity Type", WarehouseActivityLine."Activity Type"::"Put-away");
+        WarehouseActivityLine.SetRange("Item No.", Item."No.");
+        WarehouseActivityLine.SetRange("Location Code", Location.Code);
+        Assert.IsTrue(WarehouseActivityLine.IsEmpty, PutAwayErr);
+    end;
+
+    [Test]
+    procedure PutAwayCreatedForSecondOutputWithSameLot()
+    var
+        Bin: Record Bin;
+        Item: Record Item;
+        ItemTrackingCode: Record "Item Tracking Code";
+        Location: Record Location;
+        ProductionOrder: Record "Production Order";
+        ProdOrderLine: Record "Prod. Order Line";
+        WarehouseActivityHeader: Record "Warehouse Activity Header";
+        WarehouseActivityLine: Record "Warehouse Activity Line";
+        LotNo: Code[50];
+        TotalQty: Decimal;
+        PartialQty: Decimal;
+    begin
+        // [FEATURE] [AI test]
+        // [SCENARIO 624582] Warehouse put-away is created for second output posting with the same lot number
+        Initialize();
+
+        // [GIVEN] Location "L" with Warehouse Put-away for production output, bin mandatory
+        LibraryWarehouse.CreateLocationWMS(Location, true, true, false, false, false);
+        Location.Validate("Prod. Output Whse. Handling", Location."Prod. Output Whse. Handling"::"Warehouse Put-away");
+        Location.Validate("Always Create Put-away Line", true);
+        Location.Modify(true);
+
+        // [GIVEN] Bin "B" for location "L"
+        LibraryWarehouse.CreateBin(Bin, Location.Code, LibraryUtility.GenerateGUID(), '', '');
+
+        // [GIVEN] Item "I" with lot tracking
+        LibraryItemTracking.CreateItemTrackingCode(ItemTrackingCode, false, true);
+        ItemTrackingCode.Validate("Lot Warehouse Tracking", true);
+        ItemTrackingCode.Modify(true);
+        LibraryInventory.CreateItem(Item);
+        Item.Validate("Item Tracking Code", ItemTrackingCode.Code);
+        Item.Modify(true);
+
+        // [GIVEN] Released production order "PO" for item "I" at location "L" with quantity 10
+        TotalQty := 10;
+        PartialQty := TotalQty / 2;
+        LibraryManufacturing.CreateProductionOrder(
+            ProductionOrder, ProductionOrder.Status::Released,
+            ProductionOrder."Source Type"::Item, Item."No.", TotalQty);
+        ProductionOrder.Validate("Location Code", Location.Code);
+        ProductionOrder.Validate("Bin Code", Bin.Code);
+        ProductionOrder.Modify(true);
+        LibraryManufacturing.RefreshProdOrder(ProductionOrder, false, true, true, true, false);
+        FindProdOrderLine(ProdOrderLine, ProductionOrder);
+        LotNo := LibraryUtility.GenerateGUID();
+
+        // [GIVEN] Post first output journal for qty 5 with LOT "L" and register the put-away
+        LibraryManufacturing.PostOutputWithItemTracking(ProdOrderLine, PartialQty, 0, WorkDate(), 0, '', LotNo);
+        FindAndRegisterWhsePutAway(WarehouseActivityHeader, Location.Code, Item."No.");
+
+        // [WHEN] Post second output journal for qty 5 with the same LOT "L"
+        ProdOrderLine.Get(ProdOrderLine.Status, ProdOrderLine."Prod. Order No.", ProdOrderLine."Line No.");
+        LibraryManufacturing.PostOutputWithItemTracking(ProdOrderLine, PartialQty, 0, WorkDate(), 0, '', LotNo);
+
+        // [THEN] A new warehouse put-away is created for item "I"
+        WarehouseActivityLine.SetRange("Activity Type", WarehouseActivityLine."Activity Type"::"Put-away");
+        WarehouseActivityLine.SetRange("Item No.", Item."No.");
+        WarehouseActivityLine.SetRange("Location Code", Location.Code);
+        Assert.IsFalse(WarehouseActivityLine.IsEmpty(), 'Put-away should be created for second output with same lot');
+    end;
+
+    local procedure FindProdOrderLine(var ProdOrderLine: Record "Prod. Order Line"; ProductionOrder: Record "Production Order")
+    begin
+        ProdOrderLine.SetRange(Status, ProductionOrder.Status);
+        ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
+        ProdOrderLine.FindFirst();
+    end;
+
+    local procedure FindAndRegisterWhsePutAway(var WarehouseActivityHeader: Record "Warehouse Activity Header"; LocationCode: Code[10]; ItemNo: Code[20])
+    var
+        WarehouseActivityLine: Record "Warehouse Activity Line";
+    begin
+        WarehouseActivityLine.SetRange("Activity Type", WarehouseActivityLine."Activity Type"::"Put-away");
+        WarehouseActivityLine.SetRange("Item No.", ItemNo);
+        WarehouseActivityLine.SetRange("Location Code", LocationCode);
+        WarehouseActivityLine.FindFirst();
+        WarehouseActivityHeader.Get(WarehouseActivityLine."Activity Type", WarehouseActivityLine."No.");
+        LibraryWarehouse.RegisterWhseActivity(WarehouseActivityHeader);
     end;
 
     local procedure FilterLinesWithItemToPlan(var Item: Record Item)

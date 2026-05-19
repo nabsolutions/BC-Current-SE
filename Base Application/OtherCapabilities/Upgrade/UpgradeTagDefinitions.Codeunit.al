@@ -168,6 +168,13 @@ codeunit 9998 "Upgrade Tag Definitions"
         PerCompanyUpgradeTags.Add(GetICOutboxTransactionSourceTypeUpgradeTag());
         PerCompanyUpgradeTags.Add(GetInventoryPlanningSetupUpgradeTag());
         PerCompanyUpgradeTags.Add(GetICTransactionSourceTypeUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetFinancialReportDefaultsUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetInitializeABCAnalysisSetupUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetPurchRcptLineFieldsUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetSalesShptLineFieldsUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetServiceShptLineFieldsUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetZeroClosedBankAccountLedgerEntriesUpgradeTag());
+        PerCompanyUpgradeTags.Add(GetDepreciationBooksGLIntegrationUpgradeTag());
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Upgrade Tag", 'OnGetPerDatabaseUpgradeTags', '', false, false)]
@@ -1198,4 +1205,45 @@ codeunit 9998 "Upgrade Tag Definitions"
     begin
         exit('MS-578201-ICOutboxTransactionSourceTypeUpgradeTag-20250807');
     end;
+
+    internal procedure GetFinancialReportDefaultsUpgradeTag(): Code[250]
+    begin
+        exit('GIT-1494-FinancialReportDefaultsUpgradeTag-20250801');
+    end;
+
+    internal procedure GetCreateExpenseAgentAADApplicationsTag(): Code[250]
+    begin
+        exit('MS-580734-CreateExpenseAgentAADApplication-20260115');
+    end;
+
+    internal procedure GetInitializeABCAnalysisSetupUpgradeTag(): Code[250]
+    begin
+        exit('MS-619893-ABCAnalysisSetup-20260129');
+    end;
+
+    internal procedure GetPurchRcptLineFieldsUpgradeTag(): Code[250]
+    begin
+        exit('MS-579697-PurchRcptLineFieldsUpgradeTag-20250926');
+    end;
+
+    internal procedure GetSalesShptLineFieldsUpgradeTag(): Code[250]
+    begin
+        exit('MS-579698-SalesShptLineFieldsUpgradeTag-20250926');
+    end;
+
+    internal procedure GetServiceShptLineFieldsUpgradeTag(): Code[250]
+    begin
+        exit('MS-579699-ServiceShptLineFieldsUpgradeTag-20250926');
+    end;
+
+    internal procedure GetZeroClosedBankAccountLedgerEntriesUpgradeTag(): Code[250]
+    begin
+        exit('MS-621821-ZeroClosedBankAccountLedgerEntriesUpgradeTag-20260223');
+    end;
+
+    internal procedure GetDepreciationBooksGLIntegrationUpgradeTag(): Code[250]
+    begin
+        exit('MS-626097-DepreciationBooksGLIntegrationUpgradeTag-20260319');
+    end;
+
 }

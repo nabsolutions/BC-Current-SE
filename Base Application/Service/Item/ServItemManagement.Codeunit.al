@@ -361,6 +361,7 @@ codeunit 5920 ServItemManagement
         OnCreateServItemOnSalesLineShpt(ServItem, SalesHeader, SalesLine);
 
         ServItem.Modify();
+        OnAfterModifyServiceItem(ServItem, SalesHeader, SalesLine, SalesShipmentLine);
     end;
 
     local procedure AddServiceItemComponents(SalesHeader: Record "Sales Header"; SalesLine: Record "Sales Line"; SalesShipmentLine: Record "Sales Shipment Line")
@@ -790,6 +791,11 @@ codeunit 5920 ServItemManagement
     end;
 
     [IntegrationEvent(false, false)]
+    local procedure OnAfterModifyServiceItem(var ServiceItem: Record "Service Item"; var SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line"; var SalesShipmentLine: Record "Sales Shipment Line")
+    begin
+    end;
+
+    [IntegrationEvent(false, false)]
     local procedure OnCreateServItemOnSalesLineShpt(var ServiceItem: Record "Service Item"; SalesHeader: Record "Sales Header"; SalesLine: Record "Sales Line")
     begin
     end;
@@ -864,7 +870,7 @@ codeunit 5920 ServItemManagement
     begin
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Item Variant", 'OnAfterOnDelete', '', false, false)]
+    [EventSubscriber(ObjectType::Table, Database::"Item Variant", 'OnAfterOnDelete', '', true, false)]
     local procedure ItemVariantOnAfterOnDelete(ItemVariant: Record "Item Variant")
     var
         ServiceLine: Record "Service Line";

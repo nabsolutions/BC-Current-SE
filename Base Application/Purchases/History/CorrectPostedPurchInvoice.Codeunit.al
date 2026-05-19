@@ -4,6 +4,7 @@
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Purchases.History;
 
+using Microsoft.EServices.EDocument;
 using Microsoft.Finance.Currency;
 using Microsoft.Finance.Dimension;
 using Microsoft.Finance.GeneralLedger.Account;
@@ -54,6 +55,7 @@ codeunit 1313 "Correct Posted Purch. Invoice"
         if RedoApplications then
             ItemJnlPostLine.RedoApplications();
         UpdatePurchaseOrderLinesFromCancelledInvoice(Rec."No.");
+        ResetIncomingDocumentForCancelledInvoice(Rec."No.");
         OnRunOnAfterUpdatePurchaseOrderLinesFromCancelledInvoice(Rec, PurchaseHeader);
         Commit();
     end;
@@ -1049,6 +1051,47 @@ codeunit 1313 "Correct Posted Purch. Invoice"
         end;
     end;
 
+    local procedure ResetIncomingDocumentForCancelledInvoice(PurchInvoiceHeaderNo: Code[20])
+    var
+        PurchInvLine: Record "Purch. Inv. Line";
+        PurchaseHeader: Record "Purchase Header";
+        IncomingDocument: Record "Incoming Document";
+        IncomingDocumentAttachment: Record "Incoming Document Attachment";
+        DummyRecordID: RecordID;
+    begin
+        PurchInvLine.SetLoadFields("Order No.");
+        PurchInvLine.SetRange("Document No.", PurchInvoiceHeaderNo);
+        PurchInvLine.SetFilter("Order No.", '<>%1', '');
+        if not PurchInvLine.FindFirst() then
+            exit;
+
+        if not PurchaseHeader.Get(PurchaseHeader."Document Type"::Order, PurchInvLine."Order No.") then
+            exit;
+
+        if PurchaseHeader."Incoming Document Entry No." = 0 then
+            exit;
+
+        if not IncomingDocument.Get(PurchaseHeader."Incoming Document Entry No.") then
+            exit;
+
+        if not IncomingDocument.Posted then
+            exit;
+
+        IncomingDocument.Posted := false;
+        IncomingDocument.Processed := false;
+        IncomingDocument.Status := IncomingDocument.Status::Released;
+        IncomingDocument."Posted Date-Time" := 0DT;
+        IncomingDocument."Related Record ID" := DummyRecordID;
+        IncomingDocument."Document No." := '';
+        IncomingDocument."Document Type" := IncomingDocument."Document Type"::" ";
+        IncomingDocument."Posting Date" := 0D;
+        IncomingDocument.Modify(true);
+
+        IncomingDocumentAttachment.SetRange("Incoming Document Entry No.", IncomingDocument."Entry No.");
+        IncomingDocumentAttachment.ModifyAll("Document No.", '');
+        IncomingDocumentAttachment.ModifyAll("Posting Date", 0D);
+    end;
+
     [IntegrationEvent(false, false)]
     local procedure OnAfterCreateCorrectivePurchCrMemo(PurchInvHeader: Record "Purch. Inv. Header"; var PurchaseHeader: Record "Purchase Header"; var CancellingOnly: Boolean; var SuppressCommit: Boolean)
     begin
@@ -1160,13 +1203,5 @@ codeunit 1313 "Correct Posted Purch. Invoice"
     end;
 
 #pragma warning disable AS0018
-#if not CLEAN25
-    [Obsolete('OnBeforeTestPurchaseInvoiceHeaderAmount is not supported anymore.', '25.0')]
-    [IntegrationEvent(false, false)]
-    local procedure OnBeforeTestPurchaseInvoiceHeaderAmount(var PurchInvHeader: Record "Purch. Inv. Header"; Cancelling: Boolean; var IsHandled: Boolean)
-    begin
-    end;
-#endif
 #pragma warning restore AS0018
 }
-

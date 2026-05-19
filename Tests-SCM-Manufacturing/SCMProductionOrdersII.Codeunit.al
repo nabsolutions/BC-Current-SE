@@ -31,19 +31,23 @@ using Microsoft.Manufacturing.Setup;
 using Microsoft.Manufacturing.StandardCost;
 using Microsoft.Manufacturing.WorkCenter;
 using Microsoft.Purchases.Document;
+using Microsoft.Purchases.History;
 using Microsoft.Purchases.Setup;
 using Microsoft.Purchases.Vendor;
 using Microsoft.Sales.Customer;
 using Microsoft.Sales.Document;
+using Microsoft.Sales.History;
 using Microsoft.Sales.Setup;
 using Microsoft.Warehouse.Activity;
 using Microsoft.Warehouse.Activity.History;
 using Microsoft.Warehouse.InventoryDocument;
 using Microsoft.Warehouse.Journal;
+using Microsoft.Warehouse.Ledger;
 using Microsoft.Warehouse.Request;
 using Microsoft.Warehouse.Setup;
 using Microsoft.Warehouse.Structure;
 using Microsoft.Warehouse.Worksheet;
+using System.Environment.Configuration;
 using System.TestLibraries.Utilities;
 using System.Utilities;
 
@@ -89,6 +93,7 @@ codeunit 137072 "SCM Production Orders II"
         LibraryUtility: Codeunit "Library - Utility";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
         LibraryWarehouse: Codeunit "Library - Warehouse";
+        NotificationLifecycleMgt: Codeunit "Notification Lifecycle Mgt.";
         ShopCalendarMgt: Codeunit "Shop Calendar Management";
         IsInitialized: Boolean;
         NothingToHandleErr: Label 'Nothing to handle';
@@ -137,6 +142,7 @@ codeunit 137072 "SCM Production Orders II"
         LotNoMustBeEqualErr: Label '%1 must be equal to %2 in %3', Comment = '%1 = Lot No. Caption, %2 = Expected Lot No., %3 = Warehouse Activity Line Table';
         ProdOrderLineErr: Label 'Production Order should have two lines for variant-based BOM structure.';
         NoOfRecordsMustBeSameErr: Label 'The number of records in table %1 must be the same.', Comment = '%1- TableCaption';
+        UnitCostMustBeEqualErr: Label '%1 must be correct in %2', Comment = '%1 =Field Name %2 = Table Name';
         PostingReverseEntriesQst: Label 'To reverse these entries, correcting entries will be posted.\Do you want to reverse the entries?';
         QtyMustBeEqualErr: Label 'Quantity must be equal after reverse production entry';
 
@@ -7470,8 +7476,62 @@ codeunit 137072 "SCM Production Orders II"
     end;
 
     [Test]
+    [HandlerFunctions('ProductionJnlPageHandler4,ConfirmHandler,MessageHandlerNoText')]
+    [Scope('OnPrem')]
+    procedure UnitCostCorrectlyCalculatedWhenFinishedQtyDiffersFromProdOrderQty()
+    var
+        Item: array[2] of Record Item;
+        Location: Record Location;
+        ProductionOrder: Record "Production Order";
+        ProductionBOMHeader: Record "Production BOM Header";
+        ProdOrderLine: Record "Prod. Order Line";
+    begin
+        // [SCENARIO 563091] When Finished quantity is different than Prod. Order quantity, Unit Cost on 
+        // Finished Prod. Order is calculated correctly
+        Initialize();
+
+        // [GIVEN] Create Item [1] and Validate Costing Method.
+        CreateItemWithProductionBOM(Item[1], LibraryRandom.RandIntInRange(10, 10), ProductionBOMHeader."No.");
+
+        // [GIVEN] Create and Post Item Journal Line.
+        CreateAndPostItemJournalLine(Item[1]."No.", LibraryRandom.RandIntInRange(50, 100), '', '', false);
+
+        // // [GIVEN] Create a Production BOM
+        LibraryManufacturing.CreateCertifiedProductionBOM(ProductionBOMHeader, Item[1]."No.", LibraryRandom.RandInt(1));
+
+        // [GIVEN] Create Item [2] and Validate Costing Method and Production BOM No.
+        CreateItemWithProductionBOM(Item[2], 0, ProductionBOMHeader."No.");
+
+        // [GIVEN] Create and Refresh Production Order.
+        CreateAndRefreshProductionOrder(ProductionOrder, ProductionOrder.Status::Released, Item[2]."No.", LibraryRandom.RandInt(5), Location.Code, '');
+
+        // [GIVEN] Find Prod. Order Line.
+        ProdOrderLine.SetRange(Status, ProductionOrder.Status::Released);
+        ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
+        ProdOrderLine.FindFirst();
+
+        // [GIVEN] Create and Post Production Journal.
+        CreateAndPostProductionJournal(ProductionOrder, ProdOrderLine."Line No.");
+
+        // [WHEN] Finish the Production Order with Finished Quantity different than Prod. Order Quantity.
+        LibraryManufacturing.ChangeProdOrderStatus(ProductionOrder, ProductionOrder.Status::Finished, WorkDate(), true);
+
+        // [THEN] Find Finished Production Order.
+        ProductionOrder.Get(ProductionOrder.Status::Finished, ProductionOrder."No.");
+
+        // [THEN] Get Finished Production Order and verify the Unit Cost Updated correctly.
+        ProdOrderLine.SetRange(Status, ProductionOrder.Status::Finished);
+        ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
+        ProdOrderLine.FindFirst();
+
+        // [THEN] Unit Cost is correctly calculated.
+        Assert.AreEqual(Round(ProdOrderLine."Cost Amount" / ProdOrderLine."Finished Quantity"), ProdOrderLine."Unit Cost",
+            StrSubstNo(UnitCostMustBeEqualErr, ProdOrderLine.FieldCaption("Unit Cost"), ProdOrderLine.TableCaption()));
+    end;
+
+    [Test]
     [HandlerFunctions('ProductionJnlPageHandler5,ConfirmHandlerTrue,MessageHandler')]
-    procedure VerifySucessfullReverseProductionEntryFromILE()
+    procedure VerifySuccessfulReverseProductionEntryFromILE()
     var
         CompItem: Record Item;
         FGItem: Record Item;
@@ -7626,6 +7686,352 @@ codeunit 137072 "SCM Production Orders II"
         WarehouseActivityLine.TestField("Bin Code", '');
     end;
 
+    [Test]
+    procedure VerifyProdOrderWithItemCardDifferentManufacturingPolicy()
+    var
+        ComponentItem: Record Item;
+        ItemVariant: Record "Item Variant";
+        ItemVariant2: Record "Item Variant";
+        MainItem: Record Item;
+        ProductionBOMHeader: Record "Production BOM Header";
+        ProductionBOMLine: Record "Production BOM Line";
+        ReqLine: Record "Requisition Line";
+        SalesHeader: Record "Sales Header";
+        StockkeepingUnit: Record "Stockkeeping Unit";
+        StockkeepingUnit2: Record "Stockkeeping Unit";
+        NewProdOrderChoice: Option " ",Planned,"Firm Planned","Firm Planned & Print","Copy to Req. Wksh";
+    begin
+        // [SCENARIO 622069] When creating a production Order with the planning worksheet it is not correct created when in the item card a different Manufacturing Policy is set
+        Initialize();
+
+        // [GIVEN] Create component item with Lot-for-Lot reordering policy
+        LibraryInventory.CreateItem(ComponentItem);
+        ComponentItem.Validate("Reordering Policy", ComponentItem."Reordering Policy"::"Lot-for-Lot");
+        ComponentItem.Validate("Replenishment System", ComponentItem."Replenishment System"::"Purchase");
+        ComponentItem.Validate("Flushing Method", ComponentItem."Flushing Method"::Manual);
+        ComponentItem.Modify(true);
+
+        // [GIVEN] Create main item with Make-to-stock manufacturing policy
+        LibraryInventory.CreateItem(MainItem);
+        MainItem.Validate("Manufacturing Policy", MainItem."Manufacturing Policy"::"Make-to-Stock");
+        MainItem.Validate("Replenishment System", MainItem."Replenishment System"::"Prod. Order");
+        MainItem.Validate("Reordering Policy", MainItem."Reordering Policy"::Order);
+        MainItem.Validate("Flushing Method", MainItem."Flushing Method"::Manual);
+        MainItem.Modify(true);
+
+        // [GIVEN] Create PINK and VIOLET variants for main item
+        LibraryInventory.CreateItemVariant(ItemVariant, MainItem."No.");
+        ItemVariant.Validate(Description, 'PINK');
+        ItemVariant.Modify(true);
+        LibraryInventory.CreateItemVariant(ItemVariant2, MainItem."No.");
+        ItemVariant2.Validate(Description, 'VIOLET');
+        ItemVariant2.Modify(true);
+
+        // [GIVEN] Create Stockkeeping Units for both variants
+        LibraryInventory.CreateStockkeepingUnitForLocationAndVariant(StockkeepingUnit, '', MainItem."No.", ItemVariant.Code);
+        LibraryInventory.CreateStockkeepingUnitForLocationAndVariant(StockkeepingUnit2, '', MainItem."No.", ItemVariant2.Code);
+
+        // [GIVEN] Create Production BOM for PINK variant with component item
+        CreateProductionBOMAndCertify(
+            ProductionBOMHeader, MainItem."Base Unit of Measure", ProductionBOMLine.Type::Item, ComponentItem."No.", 1, 'PINK', '');
+        StockkeepingUnit.Validate("Production BOM No.", ProductionBOMHeader."No.");
+        StockkeepingUnit.Validate("Manufacturing Policy", StockkeepingUnit."Manufacturing Policy"::"Make-to-Order");
+        StockkeepingUnit.Modify(true);
+
+        // [GIVEN] Create Production BOM for VIOLET variant with main item and PINK variant
+        CreateProductionBOMAndCertify(
+            ProductionBOMHeader, MainItem."Base Unit of Measure", ProductionBOMLine.Type::Item, MainItem."No.", 1, 'VIOLET', ItemVariant.Code);
+        StockkeepingUnit2.Validate("Production BOM No.", ProductionBOMHeader."No.");
+        StockkeepingUnit2.Validate("Manufacturing Policy", StockkeepingUnit2."Manufacturing Policy"::"Make-to-Order");
+        StockkeepingUnit2.Modify(true);
+
+        // [GIVEN] Create Sales Order with VIOLET variant
+        CreateSalesOrder(SalesHeader, MainItem."No.", 1, ItemVariant2.Code);
+
+        // [GIVEN] Calculate regenerative plan in planning worksheet update Planning Worksheet.
+        CalculatePlanOnPlanningWorksheet(MainItem, WorkDate(), CalcDate('<1Y>', WorkDate()), false, false);
+
+        // [GIVEN] Set "Accept Action Message" on all Requisition lines.
+        UpdatePlanningWorkSheetwithVendor(ReqLine, MainItem."No.", ItemVariant2.Code);
+
+        // [WHEN] Running Carry Out Action Message For Requisition lines "Action Message"::Cancel.
+        ReqLine.SetRange("Action Message", ReqLine."Action Message"::New);
+        LibraryPlanning.CarryOutPlanWksh(ReqLine, NewProdOrderChoice::"Firm Planned", 0, 0, 0, '', '', '', '');
+
+        // [THEN] Verify Firm Planned Production Order has two lines
+        VerifyProductionOrderLines(MainItem."No.");
+    end;
+
+    [Test]
+    [HandlerFunctions('ConfirmHandler,SendNotificationHandler')]
+    procedure UndoPurchRcptDescrCopiedToWhseEntryAtBinMandLoc()
+    var
+        Bin: Record Bin;
+        Item: Record Item;
+        PurchaseHeader: Record "Purchase Header";
+        PurchaseLine: Record "Purchase Line";
+        PurchRcptLine: Record "Purch. Rcpt. Line";
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseSetup: Record "Warehouse Setup";
+        CustomDescription: Text[100];
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 630127] Description from purchase receipt line is copied to reversal Warehouse Entry when undoing receipt at bin-mandatory location.
+        Initialize();
+
+        // [GIVEN] "Copy Item Descr. to Entries" is enabled in Warehouse Setup.
+        WarehouseSetup.Get();
+        WarehouseSetup.Validate("Copy Item Descr. to Entries", true);
+        WarehouseSetup.Modify(true);
+
+        // [GIVEN] Create item with custom Description on Purchase Line at bin-mandatory Location.
+        LibraryInventory.CreateItem(Item);
+        CustomDescription := CopyStr(LibraryUtility.GenerateRandomText(50), 1, MaxStrLen(CustomDescription));
+        LibraryWarehouse.FindBin(Bin, LocationRed.Code, '', 0);
+        LibraryPurchase.CreatePurchaseDocumentWithItem(
+            PurchaseHeader, PurchaseLine, PurchaseHeader."Document Type"::Order,
+            '', Item."No.", LibraryRandom.RandIntInRange(5, 10), LocationRed.Code, WorkDate());
+        PurchaseLine.Validate("Bin Code", Bin.Code);
+        PurchaseLine.Validate(Description, CustomDescription);
+        PurchaseLine.Modify(true);
+
+        // [GIVEN] Post Purchase Order as Receive.
+        LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, false);
+
+        // [GIVEN] Find Posted Purchase Receipt Line for Item.
+        FindPurchRcptLine(PurchRcptLine, Item."No.");
+
+        // [WHEN] Undo Purchase Receipt Line.
+        LibraryPurchase.UndoPurchaseReceiptLine(PurchRcptLine);
+
+        // [THEN] Verify reversal Warehouse Entry has Description equal to custom description.
+        FindLastWarehouseEntry(WarehouseEntry, Item."No.", LocationRed.Code);
+        Assert.AreEqual(
+            CustomDescription, WarehouseEntry.Description,
+            StrSubstNo(ValueMustBeEqualErr, WarehouseEntry.FieldCaption(Description), CustomDescription, WarehouseEntry.TableCaption()));
+        NotificationLifecycleMgt.RecallAllNotifications();
+    end;
+
+    [Test]
+    [HandlerFunctions('ConfirmHandler,SendNotificationHandler')]
+    procedure UndoSalesShptDescrCopiedToWhseEntryAtBinMandLoc()
+    var
+        Bin: Record Bin;
+        Item: Record Item;
+        SalesHeader: Record "Sales Header";
+        SalesLine: Record "Sales Line";
+        SalesShipmentLine: Record "Sales Shipment Line";
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseSetup: Record "Warehouse Setup";
+        CustomDescription: Text[100];
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 630127] Description from sales shipment line is copied to reversal Warehouse Entry when undoing shipment at bin-mandatory location.
+        Initialize();
+
+        // [GIVEN] "Copy Item Descr. to Entries" is enabled in Warehouse Setup.
+        WarehouseSetup.Get();
+        WarehouseSetup.Validate("Copy Item Descr. to Entries", true);
+        WarehouseSetup.Modify(true);
+
+        // [GIVEN] Create Item with inventory at bin-mandatory Location and custom Description on Sales Line.
+        LibraryInventory.CreateItem(Item);
+        CustomDescription := CopyStr(LibraryUtility.GenerateRandomText(50), 1, MaxStrLen(CustomDescription));
+        LibraryWarehouse.FindBin(Bin, LocationRed.Code, '', 0);
+        CreateAndPostItemJournalLine(Item."No.", LibraryRandom.RandIntInRange(20, 30), Bin.Code, LocationRed.Code, false);
+
+        // [GIVEN] Create Sales Order with custom Description on Sales Line at bin-mandatory Location.
+        LibrarySales.CreateSalesDocumentWithItem(
+            SalesHeader, SalesLine, SalesHeader."Document Type"::Order,
+            '', Item."No.", LibraryRandom.RandIntInRange(5, 10), LocationRed.Code, WorkDate());
+        SalesLine.Validate("Bin Code", Bin.Code);
+        SalesLine.Validate(Description, CustomDescription);
+        SalesLine.Modify(true);
+
+        // [GIVEN] Post Sales Order as Ship.
+        LibrarySales.PostSalesDocument(SalesHeader, true, false);
+
+        // [GIVEN] Find Posted Sales Shipment Line for Item.
+        FindSalesShipmentLine(SalesShipmentLine, Item."No.");
+
+        // [WHEN] Undo Sales Shipment Line.
+        LibrarySales.UndoSalesShipmentLine(SalesShipmentLine);
+
+        // [THEN] Create Reversal Warehouse Entry has Description equal to custom description.
+        FindLastWarehouseEntry(WarehouseEntry, Item."No.", LocationRed.Code);
+        Assert.AreEqual(
+            CustomDescription, WarehouseEntry.Description,
+            StrSubstNo(ValueMustBeEqualErr, WarehouseEntry.FieldCaption(Description), CustomDescription, WarehouseEntry.TableCaption()));
+        NotificationLifecycleMgt.RecallAllNotifications();
+    end;
+
+    [Test]
+    [HandlerFunctions('SendNotificationHandler')]
+    procedure ConsumpJnlDescrCopiedToWhseEntry()
+    var
+        Bin: Record Bin;
+        ComponentItem: Record Item;
+        ItemJournalLine: Record "Item Journal Line";
+        ParentItem: Record Item;
+        ProductionOrder: Record "Production Order";
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseSetup: Record "Warehouse Setup";
+        CustomDescription: Text[100];
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 630127] Custom Description on consumption journal line is copied to Warehouse Entry when posting at bin-mandatory location.
+        Initialize();
+
+        // [GIVEN] "Copy Item Descr. to Entries" is enabled in Warehouse Setup.
+        WarehouseSetup.Get();
+        WarehouseSetup.Validate("Copy Item Descr. to Entries", true);
+        WarehouseSetup.Modify(true);
+
+        // [GIVEN] Create Parent Item with Production BOM containing Component Item and custom Description on consumption journal line at bin-mandatory Location.
+        CreateItemsSetup(ParentItem, ComponentItem);
+        CustomDescription := CopyStr(LibraryUtility.GenerateRandomText(50), 1, MaxStrLen(CustomDescription));
+
+        // [GIVEN] Create Inventory for Component Item at bin-mandatory Location.
+        LibraryWarehouse.FindBin(Bin, LocationRed.Code, '', 0);
+        CreateAndPostItemJournalLine(ComponentItem."No.", LibraryRandom.RandIntInRange(50, 100), Bin.Code, LocationRed.Code, false);
+
+        // [GIVEN] Create Released Production Order for Parent Item at Location with custom Description on consumption journal line.
+        CreateAndRefreshProductionOrder(
+            ProductionOrder, ProductionOrder.Status::Released, ParentItem."No.",
+            LibraryRandom.RandIntInRange(1, 5), LocationRed.Code, Bin.Code);
+
+        // [GIVEN] Calculate Consumption and set custom Description on consumption journal line.
+        LibraryInventory.ClearItemJournal(ConsumptionItemJournalTemplate, ConsumptionItemJournalBatch);
+        LibraryManufacturing.CalculateConsumption(
+            ProductionOrder."No.", ConsumptionItemJournalTemplate.Name, ConsumptionItemJournalBatch.Name);
+        SelectItemJournalLine(ItemJournalLine, ConsumptionItemJournalTemplate.Name, ConsumptionItemJournalBatch.Name);
+        ItemJournalLine.Validate(Description, CustomDescription);
+        ItemJournalLine.Modify(true);
+
+        // [WHEN] Post Consumption Journal.
+        LibraryInventory.PostItemJournalLine(ConsumptionItemJournalTemplate.Name, ConsumptionItemJournalBatch.Name);
+
+        // [THEN] Verify Warehouse Entry for consumption has Description equal to custom description.
+        FindLastWarehouseEntry(WarehouseEntry, ComponentItem."No.", LocationRed.Code);
+        Assert.AreEqual(
+            CustomDescription, WarehouseEntry.Description,
+            StrSubstNo(ValueMustBeEqualErr, WarehouseEntry.FieldCaption(Description), CustomDescription, WarehouseEntry.TableCaption()));
+        NotificationLifecycleMgt.RecallAllNotifications();
+    end;
+
+    [Test]
+    [HandlerFunctions('SendNotificationHandler')]
+    procedure OutputJnlDescrCopiedToWhseEntry()
+    var
+        Bin: Record Bin;
+        Item: Record Item;
+        ItemJournalLine: Record "Item Journal Line";
+        ProductionOrder: Record "Production Order";
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseSetup: Record "Warehouse Setup";
+        CustomDescription: Text[100];
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO 630127] Custom Description on output journal line is copied to Warehouse Entry when posting at bin-mandatory location.
+        Initialize();
+
+        // [GIVEN] "Copy Item Descr. to Entries" is enabled in Warehouse Setup.
+        WarehouseSetup.Get();
+        WarehouseSetup.Validate("Copy Item Descr. to Entries", true);
+        WarehouseSetup.Modify(true);
+
+        // [GIVEN] Create Item with inventory at bin-mandatory Location and custom Description on output journal line.
+        LibraryInventory.CreateItem(Item);
+        CustomDescription := CopyStr(LibraryUtility.GenerateRandomText(50), 1, MaxStrLen(CustomDescription));
+
+        // [GIVEN] Create Released Production Order for Item at bin-mandatory Location with custom Description on output journal line.
+        LibraryWarehouse.FindBin(Bin, LocationRed.Code, '', 0);
+        CreateAndRefreshProductionOrder(
+            ProductionOrder, ProductionOrder.Status::Released, Item."No.",
+            LibraryRandom.RandIntInRange(1, 5), LocationRed.Code, Bin.Code);
+
+        // [GIVEN] Create Output Journal with custom Description.
+        CreateOutputJournalWithExlpodeRouting(ItemJournalLine, ProductionOrder."No.");
+        ItemJournalLine.Validate(Description, CustomDescription);
+        ItemJournalLine.Modify(true);
+
+        // [WHEN] Post Output Journal.
+        LibraryInventory.PostItemJournalLine(OutputItemJournalTemplate.Name, OutputItemJournalBatch.Name);
+
+        // [THEN] Verify Warehouse Entry for output has Description equal to custom description.
+        FindLastWarehouseEntry(WarehouseEntry, Item."No.", LocationRed.Code);
+        Assert.AreEqual(
+            CustomDescription, WarehouseEntry.Description,
+            StrSubstNo(ValueMustBeEqualErr, WarehouseEntry.FieldCaption(Description), CustomDescription, WarehouseEntry.TableCaption()));
+        NotificationLifecycleMgt.RecallAllNotifications();
+    end;
+
+    [Test]
+    [HandlerFunctions('ItemTrackingPageHandler,ItemTrackingSummaryPageHandler')]
+    procedure PostOutputWithBackwardFlushingTwoTrackedCompsSameRoutingLink()
+    var
+        CompItem: Record Item;
+        CompItem2: Record Item;
+        ProdItem: Record Item;
+        RoutingHeader: Record "Routing Header";
+        RoutingLine: Record "Routing Line";
+        RoutingLink: Record "Routing Link";
+        WorkCenter: Record "Work Center";
+        ProductionBOMHeader: Record "Production BOM Header";
+        ProductionBOMLine: Record "Production BOM Line";
+        ProductionOrder: Record "Production Order";
+        ProdOrderComponent: Record "Prod. Order Component";
+        Qty: Decimal;
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 630224] Posting output with backward flushing for two lot-tracked components on the same routing link does not cause duplicate Tracking Specification error.
+        Initialize();
+        Qty := LibraryRandom.RandIntInRange(2, 10);
+
+        // [GIVEN] Two component items "C1" and "C2" with lot tracking.
+        CreateItemWithItemTrackingCode(CompItem, CreateItemTrackingCode());
+        CreateItemWithItemTrackingCode(CompItem2, CreateItemTrackingCode());
+
+        // [GIVEN] Post inventory for "C1" and "C2" with lot tracking.
+        AssignNoSeriesForItemJournalBatch(ItemJournalBatch, '');  // Value required to avoid the Document No mismatch.
+        CreateAndPostItemJournalLine(CompItem."No.", Qty * 2, '', '', true);
+        CreateAndPostItemJournalLine(CompItem2."No.", Qty * 2, '', '', true);
+
+        // [GIVEN] Production item "P" with routing and BOM containing "C1" and "C2" on the same routing link code.
+        LibraryInventory.CreateItem(ProdItem);
+        LibraryManufacturing.CreateRoutingLink(RoutingLink);
+        LibraryManufacturing.CreateWorkCenter(WorkCenter);
+        CreateAndCertifyRoutingWithRoutingLinkCode(RoutingHeader, RoutingLine, WorkCenter."No.", RoutingLink.Code);
+        CreateAndCertifyProductionBOMwithRoutingLinkCode(ProductionBOMHeader, ProductionBOMLine, ProdItem, CompItem, CompItem2, RoutingLink);
+        ProdItem.Validate("Routing No.", RoutingHeader."No.");
+        ProdItem.Validate("Production BOM No.", ProductionBOMHeader."No.");
+        ProdItem.Modify(true);
+
+        // [GIVEN] Released production order for "P".
+        CreateAndRefreshProductionOrder(ProductionOrder, ProductionOrder.Status::Released, ProdItem."No.", Qty, '', '');
+
+        // [GIVEN] Set backward flushing on both components.
+        ProdOrderComponent.SetRange("Prod. Order No.", ProductionOrder."No.");
+        ProdOrderComponent.ModifyAll("Flushing Method", ProdOrderComponent."Flushing Method"::Backward, true);
+
+        // [GIVEN] Assign lot tracking on component "C1".
+        SelectItemTrackingForProdOrderComponents(CompItem."No.");
+
+        // [GIVEN] Assign lot tracking on component "C2".
+        SelectItemTrackingForProdOrderComponents(CompItem2."No.");
+
+        // [WHEN] Post output journal for production order.
+        CreateAndPostOutputJournal(ProductionOrder."No.", Qty);
+
+        // [THEN] Consumption is posted for "C1" with lot tracking.
+        VerifyConsumptionWithLotTracking(CompItem."No.");
+
+        // [THEN] Consumption is posted for "C2" with lot tracking.
+        VerifyConsumptionWithLotTracking(CompItem2."No.");
+
+        LibraryVariableStorage.AssertEmpty();
+    end;
+
     local procedure Initialize()
     var
         LibraryERMCountryData: Codeunit "Library - ERM Country Data";
@@ -7652,6 +8058,7 @@ codeunit 137072 "SCM Production Orders II"
         ShopCalendarMgt.ClearInternals(); // clear single instance codeunit vars to avoid influence of other test codeunits
         LibrarySetupStorage.SaveInventorySetup();
         LibrarySetupStorage.SaveManufacturingSetup();
+        LibrarySetupStorage.Save(Database::"Warehouse Setup");
 
         IsInitialized := true;
         Commit();
@@ -9877,6 +10284,18 @@ codeunit 137072 "SCM Production Orders II"
         exit(WarehouseActivityLine."No.");
     end;
 
+    local procedure CreateItemWithProductionBOM(var Item: Record Item; UnitCost: Decimal; ProductionBOMNo: Code[20])
+    begin
+        LibraryInventory.CreateItem(Item);
+        Item.Validate("Costing Method", Item."Costing Method"::FIFO);
+        if UnitCost <> 0 then
+            Item.Validate("Unit Cost", UnitCost);
+        if ProductionBOMNo <> '' then
+            Item.Validate("Production BOM No.", ProductionBOMNo);
+
+        Item.Modify(true);
+    end;
+
     local procedure VerifyReverseItemLedgerEntry(CompItemNo: Code[20]; UnitOfMeasureCode: Code[10])
     var
         ItemLedgerEntry: Record "Item Ledger Entry";
@@ -9887,6 +10306,37 @@ codeunit 137072 "SCM Production Orders II"
         ItemLedgerEntry.FindFirst();
 
         Assert.AreEqual(0.001, ItemLedgerEntry.Quantity, QtyMustBeEqualErr);
+    end;
+
+    local procedure FindPurchRcptLine(var PurchRcptLine: Record "Purch. Rcpt. Line"; ItemNo: Code[20])
+    begin
+        PurchRcptLine.SetRange(Type, PurchRcptLine.Type::Item);
+        PurchRcptLine.SetRange("No.", ItemNo);
+        PurchRcptLine.FindFirst();
+    end;
+
+    local procedure FindSalesShipmentLine(var SalesShipmentLine: Record "Sales Shipment Line"; ItemNo: Code[20])
+    begin
+        SalesShipmentLine.SetRange(Type, SalesShipmentLine.Type::Item);
+        SalesShipmentLine.SetRange("No.", ItemNo);
+        SalesShipmentLine.FindFirst();
+    end;
+
+    local procedure FindLastWarehouseEntry(var WarehouseEntry: Record "Warehouse Entry"; ItemNo: Code[20]; LocationCode: Code[10])
+    begin
+        WarehouseEntry.SetRange("Item No.", ItemNo);
+        WarehouseEntry.SetRange("Location Code", LocationCode);
+        WarehouseEntry.FindLast();
+    end;
+
+    local procedure VerifyConsumptionWithLotTracking(ItemNo: Code[20])
+    var
+        ItemLedgerEntry: Record "Item Ledger Entry";
+    begin
+        ItemLedgerEntry.SetRange("Entry Type", ItemLedgerEntry."Entry Type"::Consumption);
+        ItemLedgerEntry.SetRange("Item No.", ItemNo);
+        ItemLedgerEntry.SetFilter("Lot No.", '<>%1', '');
+        Assert.RecordIsNotEmpty(ItemLedgerEntry);
     end;
 
     [ModalPageHandler]
@@ -10277,10 +10727,29 @@ codeunit 137072 "SCM Production Orders II"
     end;
 
     [ModalPageHandler]
+    [Scope('OnPrem')]
+    procedure ProductionJnlPageHandler4(var ProductionJournal: TestPage "Production Journal")
+    var
+        OutputQuantity: Decimal;
+    begin
+        ProductionJournal.Next();
+        OutputQuantity := ProductionJournal."Output Quantity".AsDecimal();
+        ProductionJournal."Output Quantity".SetValue(OutputQuantity + 1);
+        ProductionJournal.Post.Invoke();
+    end;
+
+    [ModalPageHandler]
     procedure ProductionJnlPageHandler5(var ProductionJournal: TestPage "Production Journal")
     begin
         ProductionJournal.Filter.SetFilter("Entry Type", Format("Item Ledger Entry Type"::Consumption));
         ProductionJournal.Post.Invoke();
     end;
+
+    [SendNotificationHandler]
+    procedure SendNotificationHandler(var TheNotification: Notification): Boolean
+    begin
+        exit(true);
+    end;
+
 }
 

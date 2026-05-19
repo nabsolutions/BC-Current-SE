@@ -1,4 +1,4 @@
-codeunit 134117 "Price Lists UI"
+﻿codeunit 134117 "Price Lists UI"
 {
     Subtype = Test;
     TestPermissions = Disabled;
@@ -23,9 +23,7 @@ codeunit 134117 "Price Lists UI"
         LibraryTestInitialize: Codeunit "Library - Test Initialize";
         LibraryUtility: Codeunit "Library - Utility";
         LibraryVariableStorage: Codeunit "Library - Variable Storage";
-#if not CLEAN25
         FeatureIsOffErr: Label 'This page is used by a feature that is not enabled.';
-#endif
         IsInitialized: Boolean;
         CreateNewTxt: Label 'Create New...';
         ViewExistingTxt: Label 'View Existing Prices and Discounts...';
@@ -142,10 +140,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsFalse(SalesPriceLists.Next(), 'found 4th');
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T003_SalesPriceListsDiscountsFromCustomersList()
     var
         Customer: array[2] of Record Customer;
@@ -193,8 +188,7 @@ codeunit 134117 "Price Lists UI"
         SalesPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(SalesPriceLists.Next(), 'found third');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T004_SalesPriceLinesFromCustomersCard()
     var
@@ -223,11 +217,13 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         CustomerCard.PriceLines.Invoke();
 
-        // [THEN] There is 1 price line - #2, "Price List Description" is '002'
+        // [THEN] There are 2 price lines - #1 (All Customers) and #2 (Customer 'A')
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListLine[1]."Price List Code");
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals(PriceListLine[2]."Price List Code");
         PriceListLineReview.PriceListDescription.AssertEquals(PriceListLine[2].FieldName(Description) + PriceListLine[2]."Price List Code");
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 2th');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
     end;
 
     [Test]
@@ -258,11 +254,13 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         CustomerList.DiscountLines.Invoke();
 
-        // [THEN] There is 1 price line - #4
+        // [THEN] There are 2 discount lines - #1 (All Customers) and #4 (Customer 'A')
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListLine[1]."Price List Code");
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals(PriceListLine[4]."Price List Code");
         PriceListLineReview.PriceListDescription.AssertEquals(PriceListLine[4].FieldName(Description) + PriceListLine[4]."Price List Code");
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 2th');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
     end;
 
     [Test]
@@ -389,10 +387,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsFalse(PriceListLineReview.Next(), 'found 2nd');
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T008_SalesPriceListsDiscForDiscGroupFromCustomersCard()
     var
         Customer: array[2] of Record Customer;
@@ -454,8 +449,7 @@ codeunit 134117 "Price Lists UI"
         SalesPriceLists.SourceNo.AssertEquals(PriceListHeader[5]."Source No.");
         Assert.IsFalse(SalesPriceLists.Next(), 'found fourth');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T009_SalesDisounctLinesForDiscGroupFromCustomerDiscountGroups()
     var
@@ -873,17 +867,12 @@ codeunit 134117 "Price Lists UI"
 
         // [THEN] "Sales Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(CustomerCard.PriceLists.Visible(), 'PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(CustomerCard.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(CustomerCard.Prices.Visible(), 'Prices. Visible');
         Assert.IsFalse(CustomerCard."Line Discounts".Visible(), 'Line Discounts. Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T021_CustomerCardPriceListsActionNotVisibleIfFeatureOff()
     var
         CustomerCard: TestPage "Customer Card";
@@ -900,8 +889,6 @@ codeunit 134117 "Price Lists UI"
         Assert.IsTrue(CustomerCard.Prices.Visible(), 'Prices. not Visible');
         Assert.IsTrue(CustomerCard."Line Discounts".Visible(), 'Line Discounts. not Visible');
     end;
-#pragma warning restore AS0072
-#endif
 
     [Test]
     procedure T022_CustomerListPriceListsActionVisibleIfFeatureOn()
@@ -916,17 +903,12 @@ codeunit 134117 "Price Lists UI"
 
         // [THEN] "Sales Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(CustomerList.PriceLists.Visible(), 'PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(CustomerList.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(CustomerList.Prices_Prices.Visible(), 'Prices_Prices. Visible');
         Assert.IsFalse(CustomerList.Prices_LineDiscounts.Visible(), 'Prices_LineDiscounts. Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T023_CustomerListPriceListsActionNotVisibleIfFeatureOff()
     var
         CustomerList: TestPage "Customer List";
@@ -945,7 +927,6 @@ codeunit 134117 "Price Lists UI"
     end;
 
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T024_SalesPriceListsPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -957,7 +938,6 @@ codeunit 134117 "Price Lists UI"
     end;
 
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T025_SalesPriceListPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -967,8 +947,6 @@ codeunit 134117 "Price Lists UI"
         asserterror Page.Run(Page::"Sales Price List");
         Assert.ExpectedError(FeatureIsOffErr);
     end;
-#pragma warning restore AS0072
-#endif
 
     [Test]
     procedure T026_SalesPriceListPageAllowDiscountsOn()
@@ -1897,10 +1875,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsFalse(PurchasePriceLists.Next(), 'found 4th');
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T053_PurchasePriceListsDiscountsFromVendorsList()
     var
         Vendor: array[2] of Record Vendor;
@@ -1948,8 +1923,7 @@ codeunit 134117 "Price Lists UI"
         PurchasePriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(PurchasePriceLists.Next(), 'found third');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T054_PurchasePriceLinesFromVendorsCard()
     var
@@ -1978,16 +1952,18 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         VendorCard.PriceLines.Invoke();
 
-        // [THEN] "Source Type", "Source No." are hidden, "Asset Type", "Asset No." are visible
-        Assert.IsFalse(PriceListLineReview."Source Type".Visible(), 'Source Type.Visible');
-        Assert.IsFalse(PriceListLineReview."Source No.".Visible(), 'Source No.Visible');
+        // [THEN] "Source Type", "Source No.", "Asset Type", "Asset No." are visible
+        Assert.IsTrue(PriceListLineReview."Source Type".Visible(), 'Source Type.Visible');
+        Assert.IsTrue(PriceListLineReview."Source No.".Visible(), 'Source No.Visible');
         Assert.IsTrue(PriceListLineReview."Asset Type".Visible(), 'Asset Type.Visible');
         Assert.IsTrue(PriceListLineReview."Asset No.".Visible(), 'Asset No.Visible');
-        // [THEN] PriceListLineReview page open, where are 1 price line - #2, PriceListDescription is <blank>
+        // [THEN] PriceListLineReview page open, where are 2 price lines - #1 (All Vendors) and #2 (Vendor 'A')
         Assert.IsTrue(PriceListLineReview.First(), 'not found first price');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second price');
         PriceListLineReview."Price List Code".AssertEquals('002');
         PriceListLineReview.PriceListDescription.AssertEquals('');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found second price');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found third price');
         PriceListLineReview.Close();
     end;
 
@@ -2019,10 +1995,12 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         VendorList.DiscountLines.Invoke();
 
-        // [THEN] PriceListLineReview page open, where are 1 discount line - #4
+        // [THEN] PriceListLineReview page open, where are 2 discount lines - #1 (All Vendors) and #4 (Vendor 'A')
         Assert.IsTrue(PriceListLineReview.First(), 'not found first discount');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second discount');
         PriceListLineReview."Price List Code".AssertEquals('004');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found second discount');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found third discount');
         PriceListLineReview.Close();
     end;
 
@@ -2356,17 +2334,12 @@ codeunit 134117 "Price Lists UI"
 
         // [THEN] "Purchase Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(VendorCard.PriceLists.Visible(), 'PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(VendorCard.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(VendorCard.Prices.Visible(), 'Prices. Visible');
         Assert.IsFalse(VendorCard."Line Discounts".Visible(), 'Line Discounts. Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T071_VendorCardPriceListsActionNotVisibleIfFeatureOff()
     var
         VendorCard: TestPage "Vendor Card";
@@ -2383,8 +2356,6 @@ codeunit 134117 "Price Lists UI"
         Assert.IsTrue(VendorCard.Prices.Visible(), 'Prices. not Visible');
         Assert.IsTrue(VendorCard."Line Discounts".Visible(), 'Line Discounts. not Visible');
     end;
-#pragma warning restore AS0072
-#endif
 
     [Test]
     procedure T072_VendorListPriceListsActionVisibleIfFeatureOn()
@@ -2399,17 +2370,12 @@ codeunit 134117 "Price Lists UI"
 
         // [THEN] "Purchase Price Lists" action is visible, old actions are not visible
         Assert.IsTrue(VendorList.PriceLists.Visible(), 'PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(VendorList.PriceListsDiscounts.Visible(), 'PriceListsDiscounts. Visible');
         Assert.IsFalse(VendorList.Prices.Visible(), 'Prices_Prices. Visible');
         Assert.IsFalse(VendorList."Line Discounts".Visible(), 'Prices_LineDiscounts. Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T073_VendorListPriceListsActionNotVisibleIfFeatureOff()
     var
         VendorList: TestPage "Vendor List";
@@ -2428,7 +2394,6 @@ codeunit 134117 "Price Lists UI"
     end;
 
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T074_PurchPriceListsPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -2440,7 +2405,6 @@ codeunit 134117 "Price Lists UI"
     end;
 
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T075_PurchPriceListPageNotOpenIfFeatureOff()
     begin
         Initialize(false);
@@ -2450,8 +2414,6 @@ codeunit 134117 "Price Lists UI"
         asserterror Page.Run(Page::"Purchase Price List");
         Assert.ExpectedError(FeatureIsOffErr);
     end;
-#pragma warning restore AS0072
-#endif
 
     [Test]
     procedure T076_PurchPriceListPageAllowDiscountsOn()
@@ -2715,10 +2677,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsFalse(SalesJobPriceLists.Next(), 'found 5th');
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T103_SalesJobPriceListsDiscountsFromJobsList()
     var
         Job: array[2] of Record Job;
@@ -2766,8 +2725,7 @@ codeunit 134117 "Price Lists UI"
         SalesJobPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(SalesJobPriceLists.Next(), 'found third');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T104_SalesJobPricesFromJobsCard()
     var
@@ -2799,12 +2757,14 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         JobCard.SalesPriceLines.Invoke();
 
-        // [THEN] There are 2 price lines - #2, #5
+        // [THEN] There are 3 price lines - #1 (All Jobs), #2, #5
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals('002');
-        Assert.IsTrue(PriceListLineReview.Next(), 'not found 2th');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found third');
         PriceListLineReview."Price List Code".AssertEquals('005');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 4th');
     end;
 
     [Test]
@@ -2838,12 +2798,14 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         JobList.SalesDiscountLines.Invoke();
 
-        // [THEN] There are 2 price lines - #4, #5
+        // [THEN] There are 3 discount lines - #1 (All Jobs), #4, #5
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals('004');
-        Assert.IsTrue(PriceListLineReview.Next(), 'not found 2th');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found third');
         PriceListLineReview."Price List Code".AssertEquals('005');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 4th');
     end;
 
     [Test]
@@ -2903,19 +2865,14 @@ codeunit 134117 "Price Lists UI"
         // [THEN] "Sales/Purchase Price Lists" actions are visible, old actions are not visible
         Assert.IsTrue(JobCard.SalesPriceLists.Visible(), 'S.PriceLists. not Visible');
         Assert.IsTrue(JobCard.PurchasePriceLists.Visible(), 'P.PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(JobCard.SalesPriceListsDiscounts.Visible(), 'S.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobCard.PurchasePriceListsDiscounts.Visible(), 'P.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobCard."&Resource".Visible(), '"&Resource". Visible');
         Assert.IsFalse(JobCard."&Item".Visible(), '"&Item". Visible');
         Assert.IsFalse(JobCard."&G/L Account".Visible(), '"&G/L Account". Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T121_JobCardPriceListsActionNotVisibleIfFeatureOff()
     var
         JobCard: TestPage "Job Card";
@@ -2935,8 +2892,6 @@ codeunit 134117 "Price Lists UI"
         Assert.IsTrue(JobCard."&Item".Visible(), '"&Item". not Visible');
         Assert.IsTrue(JobCard."&G/L Account".Visible(), '"&G/L Account". not Visible');
     end;
-#pragma warning restore AS0072
-#endif
 
     [Test]
     procedure T122_JobListPriceListsActionVisibleIfFeatureOn()
@@ -2952,19 +2907,14 @@ codeunit 134117 "Price Lists UI"
         // [THEN] "Sales/Purchase Price Lists" actions are visible, old actions are not visible
         Assert.IsTrue(JobList.SalesPriceLists.Visible(), 'S.PriceLists. not Visible');
         Assert.IsTrue(JobList.PurchasePriceLists.Visible(), 'P.PriceLists. not Visible');
-#if not CLEAN25
         Assert.IsFalse(JobList.SalesPriceListsDiscounts.Visible(), 'S.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobList.PurchasePriceListsDiscounts.Visible(), 'P.PriceListsDiscounts. Visible');
         Assert.IsFalse(JobList."&Resource".Visible(), '"&Resource". Visible');
         Assert.IsFalse(JobList."&Item".Visible(), '"&Item". Visible');
         Assert.IsFalse(JobList."&G/L Account".Visible(), '"&G/L Account". Visible');
-#endif
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T123_JobListPriceListsActionNotVisibleIfFeatureOff()
     var
         JobList: TestPage "Job List";
@@ -2984,8 +2934,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsTrue(JobList."&Item".Visible(), '"&Item". not Visible');
         Assert.IsTrue(JobList."&G/L Account".Visible(), '"&G/L Account". not Visible');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T124_JobCardFactBoxPricesIfFeatureOn()
     var
@@ -3218,10 +3167,7 @@ codeunit 134117 "Price Lists UI"
         Assert.IsFalse(PurchaseJobPriceLists.Next(), 'found 5th');
     end;
 
-#if not CLEAN25
-#pragma warning disable AS0072
     [Test]
-    [Obsolete('Not Used.', '23.0')]
     procedure T153_PurchaseJobPriceListsDiscountsFromJobList()
     var
         Job: array[2] of Record Job;
@@ -3269,8 +3215,7 @@ codeunit 134117 "Price Lists UI"
         PurchaseJobPriceLists.SourceNo.AssertEquals(PriceListHeader[2]."Source No.");
         Assert.IsFalse(PurchaseJobPriceLists.Next(), 'found third');
     end;
-#pragma warning restore AS0072
-#endif
+
     [Test]
     procedure T154_PurchaseJobPricesFromJobsCard()
     var
@@ -3302,12 +3247,14 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         JobCard.PurchPriceLines.Invoke();
 
-        // [THEN] There are 2 price lines - #2, #5
+        // [THEN] There are 3 price lines - #1 (All Jobs), #2, #5
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals('002');
-        Assert.IsTrue(PriceListLineReview.Next(), 'not found 2th');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found third');
         PriceListLineReview."Price List Code".AssertEquals('005');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 4th');
     end;
 
     [Test]
@@ -3341,12 +3288,14 @@ codeunit 134117 "Price Lists UI"
         PriceListLineReview.Trap();
         JobList.PurchDiscountLines.Invoke();
 
-        // [THEN] There are 2 price lines - #4, #5
+        // [THEN] There are 3 discount lines - #1 (All Jobs), #4, #5
         Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals('001');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
         PriceListLineReview."Price List Code".AssertEquals('004');
-        Assert.IsTrue(PriceListLineReview.Next(), 'not found 2th');
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found third');
         PriceListLineReview."Price List Code".AssertEquals('005');
-        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 4th');
     end;
 
     [Test]
@@ -4531,6 +4480,366 @@ codeunit 134117 "Price Lists UI"
                 CustDiscountGroupCodeDeleteErr,
                 CustomerDiscountGroup[1].Code,
                 CustomerDiscountGroup[1].TableCaption()));
+    end;
+
+    [Test]
+    procedure T209_SalesPriceLinesFromCustomerCardShowAllCustomersLines()
+    var
+        Customer: Record Customer;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        CustomerCard: TestPage "Customer Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Sales Price lines from Customer Card include "All Customers" price lines
+        Initialize(true);
+
+        // [GIVEN] Customer "C"
+        LibrarySales.CreateCustomer(Customer);
+
+        // [GIVEN] Item "I1" with price list for All Customers
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Sale, "Price Source Type"::"All Customers", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with price list for Customer "C"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Sale, "Price Source Type"::Customer, Customer."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Customer Card for Customer "C"
+        CustomerCard.OpenEdit();
+        CustomerCard.Filter.SetFilter("No.", Customer."No.");
+
+        // [WHEN] Run action "Sales Prices"
+        PriceListLineReview.Trap();
+        CustomerCard.PriceLines.Invoke();
+
+        // [THEN] Both price lines are shown: All Customers line and Customer-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T210_SalesDiscountLinesFromCustomerCardShowAllCustomersLines()
+    var
+        Customer: Record Customer;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        CustomerCard: TestPage "Customer Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Sales Discount lines from Customer Card include "All Customers" discount lines
+        Initialize(true);
+
+        // [GIVEN] Customer "C"
+        LibrarySales.CreateCustomer(Customer);
+
+        // [GIVEN] Item "I1" with discount for All Customers
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Sale, "Price Source Type"::"All Customers", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with discount for Customer "C"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Sale, "Price Source Type"::Customer, Customer."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Customer Card for Customer "C"
+        CustomerCard.OpenEdit();
+        CustomerCard.Filter.SetFilter("No.", Customer."No.");
+
+        // [WHEN] Run action "Sales Discounts"
+        PriceListLineReview.Trap();
+        CustomerCard.DiscountLines.Invoke();
+
+        // [THEN] Both discount lines are shown: All Customers line and Customer-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T211_PurchPriceLinesFromVendorCardShowAllVendorsLines()
+    var
+        Vendor: Record Vendor;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        VendorCard: TestPage "Vendor Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Purchase Price lines from Vendor Card include "All Vendors" price lines
+        Initialize(true);
+
+        // [GIVEN] Vendor "V"
+        LibraryPurchase.CreateVendor(Vendor);
+
+        // [GIVEN] Item "I1" with price list for All Vendors
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Purchase, "Price Source Type"::"All Vendors", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with price list for Vendor "V"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Purchase, "Price Source Type"::Vendor, Vendor."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Vendor Card for Vendor "V"
+        VendorCard.OpenEdit();
+        VendorCard.Filter.SetFilter("No.", Vendor."No.");
+
+        // [WHEN] Run action "Purchase Prices"
+        PriceListLineReview.Trap();
+        VendorCard.PriceLines.Invoke();
+
+        // [THEN] Both price lines are shown: All Vendors line and Vendor-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T212_PurchDiscountLinesFromVendorCardShowAllVendorsLines()
+    var
+        Vendor: Record Vendor;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        VendorCard: TestPage "Vendor Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Purchase Discount lines from Vendor Card include "All Vendors" discount lines
+        Initialize(true);
+
+        // [GIVEN] Vendor "V"
+        LibraryPurchase.CreateVendor(Vendor);
+
+        // [GIVEN] Item "I1" with discount for All Vendors
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Purchase, "Price Source Type"::"All Vendors", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with discount for Vendor "V"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Purchase, "Price Source Type"::Vendor, Vendor."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Vendor Card for Vendor "V"
+        VendorCard.OpenEdit();
+        VendorCard.Filter.SetFilter("No.", Vendor."No.");
+
+        // [WHEN] Run action "Purchase Discounts"
+        PriceListLineReview.Trap();
+        VendorCard.DiscountLines.Invoke();
+
+        // [THEN] Both discount lines are shown: All Vendors line and Vendor-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T213_SalesPriceLinesFromJobCardShowAllJobsLines()
+    var
+        Job: Record Job;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        JobCard: TestPage "Job Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Sales Price lines from Job Card include "All Jobs" price lines
+        Initialize(true);
+
+        // [GIVEN] Job "J"
+        LibraryJob.CreateJob(Job);
+
+        // [GIVEN] Item "I1" with sales price list for All Jobs
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Sale, "Price Source Type"::"All Jobs", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with sales price list for Job "J"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Sale, "Price Source Type"::Job, Job."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Job Card for Job "J"
+        JobCard.OpenEdit();
+        JobCard.Filter.SetFilter("No.", Job."No.");
+
+        // [WHEN] Run action "Sales Prices"
+        PriceListLineReview.Trap();
+        JobCard.SalesPriceLines.Invoke();
+
+        // [THEN] Both price lines are shown: All Jobs line and Job-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T214_SalesDiscountLinesFromJobCardShowAllJobsLines()
+    var
+        Job: Record Job;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        JobCard: TestPage "Job Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Sales Discount lines from Job Card include "All Jobs" discount lines
+        Initialize(true);
+
+        // [GIVEN] Job "J"
+        LibraryJob.CreateJob(Job);
+
+        // [GIVEN] Item "I1" with sales discount for All Jobs
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Sale, "Price Source Type"::"All Jobs", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with sales discount for Job "J"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Sale, "Price Source Type"::Job, Job."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Job Card for Job "J"
+        JobCard.OpenEdit();
+        JobCard.Filter.SetFilter("No.", Job."No.");
+
+        // [WHEN] Run action "Sales Discounts"
+        PriceListLineReview.Trap();
+        JobCard.SalesDiscountLines.Invoke();
+
+        // [THEN] Both discount lines are shown: All Jobs line and Job-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T215_PurchPriceLinesFromJobCardShowAllJobsLines()
+    var
+        Job: Record Job;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        JobCard: TestPage "Job Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Purchase Price lines from Job Card include "All Jobs" price lines
+        Initialize(true);
+
+        // [GIVEN] Job "J"
+        LibraryJob.CreateJob(Job);
+
+        // [GIVEN] Item "I1" with purchase price list for All Jobs
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Purchase, "Price Source Type"::"All Jobs", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with purchase price list for Job "J"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Purchase, "Price Source Type"::Job, Job."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Price, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Job Card for Job "J"
+        JobCard.OpenEdit();
+        JobCard.Filter.SetFilter("No.", Job."No.");
+
+        // [WHEN] Run action "Purchase Prices"
+        PriceListLineReview.Trap();
+        JobCard.PurchPriceLines.Invoke();
+
+        // [THEN] Both price lines are shown: All Jobs line and Job-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
+    end;
+
+    [Test]
+    procedure T216_PurchDiscountLinesFromJobCardShowAllJobsLines()
+    var
+        Job: Record Job;
+        Item: array[2] of Record Item;
+        PriceListHeader: array[2] of Record "Price List Header";
+        PriceListLine: array[2] of Record "Price List Line";
+        JobCard: TestPage "Job Card";
+        PriceListLineReview: TestPage "Price List Line Review";
+    begin
+        // [FEATURE] [AI test 0.4]
+        // [SCENARIO] Purchase Discount lines from Job Card include "All Jobs" discount lines
+        Initialize(true);
+
+        // [GIVEN] Job "J"
+        LibraryJob.CreateJob(Job);
+
+        // [GIVEN] Item "I1" with purchase discount for All Jobs
+        LibraryInventory.CreateItem(Item[1]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[1], "Price Type"::Purchase, "Price Source Type"::"All Jobs", '');
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[1], PriceListHeader[1], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[1]."No.");
+
+        // [GIVEN] Item "I2" with purchase discount for Job "J"
+        LibraryInventory.CreateItem(Item[2]);
+        LibraryPriceCalculation.CreatePriceHeader(PriceListHeader[2], "Price Type"::Purchase, "Price Source Type"::Job, Job."No.");
+        LibraryPriceCalculation.CreatePriceListLine(
+            PriceListLine[2], PriceListHeader[2], "Price Amount Type"::Discount, "Price Asset Type"::Item, Item[2]."No.");
+
+        // [GIVEN] Open Job Card for Job "J"
+        JobCard.OpenEdit();
+        JobCard.Filter.SetFilter("No.", Job."No.");
+
+        // [WHEN] Run action "Purchase Discounts"
+        PriceListLineReview.Trap();
+        JobCard.PurchDiscountLines.Invoke();
+
+        // [THEN] Both discount lines are shown: All Jobs line and Job-specific line
+        Assert.IsTrue(PriceListLineReview.First(), 'not found first');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[1].Code);
+        Assert.IsTrue(PriceListLineReview.Next(), 'not found second');
+        PriceListLineReview."Price List Code".AssertEquals(PriceListHeader[2].Code);
+        Assert.IsFalse(PriceListLineReview.Next(), 'found 3rd');
     end;
 
     local procedure Initialize(Enable: Boolean)

@@ -4,37 +4,37 @@
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Manufacturing.Test;
 
-using Microsoft.Manufacturing.Capacity;
-using System.TestLibraries.Utilities;
-using Microsoft.Manufacturing.ProductionBOM;
-using Microsoft.Inventory.Tracking;
-using Microsoft.Manufacturing.Document;
-using Microsoft.Inventory.Ledger;
-using Microsoft.Manufacturing.WorkCenter;
-using Microsoft.Sales.Setup;
-using Microsoft.Inventory.Journal;
-using Microsoft.Manufacturing.MachineCenter;
-using Microsoft.Manufacturing.Journal;
-using Microsoft.Manufacturing.Forecast;
+using Microsoft.Finance.Dimension;
+using Microsoft.Finance.GeneralLedger.Ledger;
+using Microsoft.Finance.GeneralLedger.Setup;
+using Microsoft.Foundation.UOM;
+using Microsoft.Inventory.BOM;
 using Microsoft.Inventory.Item;
-using Microsoft.Manufacturing.Routing;
+using Microsoft.Inventory.Journal;
+using Microsoft.Inventory.Ledger;
+using Microsoft.Inventory.Location;
+using Microsoft.Inventory.Planning;
+using Microsoft.Inventory.Posting;
 using Microsoft.Inventory.Requisition;
 using Microsoft.Inventory.Setup;
-using Microsoft.Sales.Document;
-using Microsoft.Manufacturing.Setup;
-using Microsoft.Warehouse.Structure;
-using Microsoft.Foundation.UOM;
-using Microsoft.Inventory.Location;
-using Microsoft.Finance.Dimension;
-using Microsoft.Inventory.Posting;
-using Microsoft.Inventory.BOM;
+using Microsoft.Inventory.Tracking;
 using Microsoft.Inventory.Transfer;
-using Microsoft.Finance.GeneralLedger.Setup;
-using Microsoft.Warehouse.Request;
-using Microsoft.Finance.GeneralLedger.Ledger;
-using Microsoft.Inventory.Planning;
-using Microsoft.Warehouse.Activity;
+using Microsoft.Manufacturing.Capacity;
+using Microsoft.Manufacturing.Document;
+using Microsoft.Manufacturing.Forecast;
+using Microsoft.Manufacturing.Journal;
+using Microsoft.Manufacturing.MachineCenter;
+using Microsoft.Manufacturing.ProductionBOM;
 using Microsoft.Manufacturing.Reports;
+using Microsoft.Manufacturing.Routing;
+using Microsoft.Manufacturing.Setup;
+using Microsoft.Manufacturing.WorkCenter;
+using Microsoft.Sales.Document;
+using Microsoft.Sales.Setup;
+using Microsoft.Warehouse.Activity;
+using Microsoft.Warehouse.Request;
+using Microsoft.Warehouse.Structure;
+using System.TestLibraries.Utilities;
 
 codeunit 137404 "SCM Manufacturing"
 {
@@ -4942,6 +4942,45 @@ codeunit 137404 "SCM Manufacturing"
         // [THEN] Verify all production journals must be posted without any error.
     end;
 
+    [Test]
+    [HandlerFunctions('ExchangeProductionBOMItemHandler')]
+    [Scope('OnPrem')]
+    procedure ExchProdBOMItemCreateNewVerMultipleBOMsSameItem()
+    var
+        UnitOfMeasure: Record "Unit of Measure";
+        ProdBOMHeader: array[2] of Record "Production BOM Header";
+        ProdBOMVersion: array[2] of Record "Production BOM Version";
+        Components: array[3] of Code[20];
+        i: Integer;
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 624718] Exchange Production BOM Item creates new versions for multiple BOMs sharing the same item
+        Initialize();
+
+        // [GIVEN] Items "I1", "I2", "I3"
+        LibraryInventory.CreateUnitOfMeasureCode(UnitOfMeasure);
+        Components[1] := LibraryInventory.CreateItemNo();
+        Components[2] := LibraryInventory.CreateItemNo();
+        Components[3] := LibraryInventory.CreateItemNo();
+
+        // [GIVEN] Two Production BOMs each with a certified version containing items "I1" and "I2"
+        for i := 1 to ArrayLen(ProdBOMHeader) do begin
+            ProdBOMHeader[i].Get(CreateProductionBOMForSingleItem(Components[1], UnitOfMeasure.Code));
+            CreateProductionBOMVersionWithTwoComponents(
+              ProdBOMVersion[i], ProdBOMHeader[i], UnitOfMeasure.Code, WorkDate(), Components[1], Components[2]);
+        end;
+
+        // [WHEN] Run "Exchange Production BOM Item" to replace item "I1" with "I3" and "Create New Version" option
+        RunExchangeProdBOMItemReportWithParameters(Components[1], Components[3], true, false);
+
+        // [THEN] New version of each BOM has been created containing "I2" and "I3", but not "I1"
+        for i := 1 to ArrayLen(ProdBOMHeader) do begin
+            VerifyProductionBOMLineExists(ProdBOMHeader[i]."No.", FindLastBOMVersionCode(ProdBOMHeader[i]."No."), Components[2]);
+            VerifyProductionBOMLineExists(ProdBOMHeader[i]."No.", FindLastBOMVersionCode(ProdBOMHeader[i]."No."), Components[3]);
+            VerifyProductionBOMLineNotExists(ProdBOMHeader[i]."No.", FindLastBOMVersionCode(ProdBOMHeader[i]."No."), Components[1]);
+        end;
+    end;
+
     local procedure Initialize()
     var
         LibraryERMCountryData: Codeunit "Library - ERM Country Data";
@@ -5353,6 +5392,7 @@ codeunit 137404 "SCM Manufacturing"
         Location.Validate("Require Shipment", true);
         Location.Validate("Require Put-away", true);
         Location.Validate("Require Pick", true);
+        Location.Validate("Prod. Consump. Whse. Handling", Location."Prod. Consump. Whse. Handling"::"Warehouse Pick (mandatory)");
         Location.Modify(true);
     end;
 
@@ -6038,6 +6078,8 @@ codeunit 137404 "SCM Manufacturing"
         Evaluate(OperationNo, RoutingLine."Operation No.");
         AddRoutingLine(
           RoutingLine2, RoutingLine."Routing No.", WorkCenter."No.", OperationNo + LibraryRandom.RandInt(20)); // Add the second routing line
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
+        RoutingLine2.GetBySystemId(RoutingLine2.SystemId);
     end;
 
     local procedure CreateAndRefreshProdOrderWithSpecificItem(var ProductionOrder: Record "Production Order"; ItemNo: Code[20]; Forward: Boolean)
@@ -6358,16 +6400,15 @@ codeunit 137404 "SCM Manufacturing"
         RoutingHeader: Record "Routing Header";
     begin
         RoutingHeader.Get(RoutingLine."Routing No.");
-        RoutingHeader.Validate(Status, RoutingHeader.Status::"Under Development");
-        RoutingHeader.Modify(true);
+        ModifyRoutingStatus(RoutingHeader, Enum::"Routing Status"::"Under Development");
 
         RoutingLine.Validate("No.", WorkCenterNo);
         RoutingLine.Validate("Wait Time", WaitTime);
         RoutingLine.Validate("Wait Time Unit of Meas. Code", CapacityUomCode);
         RoutingLine.Modify(true);
 
-        RoutingHeader.Validate(Status, RoutingHeader.Status::Certified);
-        RoutingHeader.Modify(true);
+        ModifyRoutingStatus(RoutingHeader, Enum::"Routing Status"::Certified);
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
     end;
 
     local procedure ModifyWorkCenterAndRunTimeOnRoutingLine(var RoutingLine: Record "Routing Line"; WorkCenterNo: Code[20]; CapacityUomCode: Code[10]; RunTime: Integer)
@@ -6383,6 +6424,7 @@ codeunit 137404 "SCM Manufacturing"
         RoutingLine.Modify(true);
 
         ModifyRoutingStatus(RoutingHeader, RoutingHeader.Status::Certified);
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
     end;
 
     local procedure ModifySetupTimeOnRoutingLine(var RoutingLine: Record "Routing Line"; SetupTime: Decimal)
@@ -6394,6 +6436,7 @@ codeunit 137404 "SCM Manufacturing"
         RoutingLine.Validate("Setup Time", SetupTime);
         RoutingLine.Modify(true);
         ModifyRoutingStatus(RoutingHeader, RoutingHeader.Status::Certified);
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
     end;
 
     local procedure ModifyWaitTimeOnRoutingLine(var RoutingLine: Record "Routing Line"; WaitTime: Decimal)
@@ -6405,6 +6448,7 @@ codeunit 137404 "SCM Manufacturing"
         RoutingLine.Validate("Wait Time", WaitTime);
         RoutingLine.Modify(true);
         ModifyRoutingStatus(RoutingHeader, RoutingHeader.Status::Certified);
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
     end;
 
     local procedure ModifyRunTimeOnRoutingLine(var RoutingLine: Record "Routing Line"; RunTime: Decimal)
@@ -6416,6 +6460,7 @@ codeunit 137404 "SCM Manufacturing"
         RoutingLine.Validate("Run Time", RunTime);
         RoutingLine.Modify(true);
         ModifyRoutingStatus(RoutingHeader, RoutingHeader.Status::Certified);
+        RoutingLine.GetBySystemId(RoutingLine.SystemId);
     end;
 
     local procedure ModifyStartingDateOnProdOrderRtngLn(var ProdOrderRoutingLine: Record "Prod. Order Routing Line"; Date: Date)
@@ -6930,6 +6975,8 @@ codeunit 137404 "SCM Manufacturing"
         FindProductionOrderComponent(ProdOrderComponent, ProductionOrder.Status, ProductionOrder."No.");
         ProdOrderComponent.Validate("Location Code", Location.Code);
         ProdOrderComponent.Modify();
+        LibraryManufacturing.RefreshProdOrder(ProductionOrder, false, true, true, true, false);
+        FindProductionOrderComponent(ProdOrderComponent, ProductionOrder.Status, ProductionOrder."No.");
     end;
 
     local procedure VerifyWhsePickRequestOnPositiveRemQty(var ProductionOrder: Record "Production Order"; var ProdOrderComponent: Record "Prod. Order Component")

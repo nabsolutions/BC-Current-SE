@@ -119,14 +119,18 @@ table 77 "Report Selections"
             FieldClass = Flowfield;
             ToolTip = 'Specifies a description of the custom email body layout that is used.';
 
+#if not CLEAN28
             trigger OnLookup()
             var
                 CustomReportLayout: Record "Custom Report Layout";
             begin
                 if "Email Body Layout Type" = "Email Body Layout Type"::"Custom Report Layout" then
+#pragma warning disable AL0432
                     if CustomReportLayout.LookupLayoutOK("Report ID") then
+#pragma warning restore AL0432
                         Validate("Email Body Layout Code", CustomReportLayout.Code);
             end;
+#endif
         }
         field(25; "Email Body Layout Type"; Enum "Email Body Layout Type")
         {
@@ -254,7 +258,7 @@ table 77 "Report Selections"
         field(32; "Report Layout Caption"; Text[250])
         {
             Caption = 'Report Layout';
-            ToolTip = 'Specifies the Name of the report layout that is used.';
+            ToolTip = 'Specifies the name of the report layout that is used.';
             FieldClass = FlowField;
             CalcFormula = lookup("Report Layout List".Caption where("Report ID" = field("Report ID"), Name = field("Report Layout Name")));
 
@@ -277,7 +281,7 @@ table 77 "Report Selections"
         field(33; "Report Layout Publisher"; Text[250])
         {
             Caption = 'Report Layout Publisher';
-            ToolTip = 'Specifies the publisher of the email Attachment layout that is used.';
+            ToolTip = 'Specifies the publisher of the report layout that is used.';
             FieldClass = FlowField;
             CalcFormula = lookup("Report Layout List"."Layout Publisher" where("Report ID" = field("Report ID"), "Application ID" = field("Report Layout AppID")));
             Editable = false;
@@ -744,6 +748,42 @@ table 77 "Report Selections"
         TempBodyReportSelections: Record "Report Selections" temporary;
     begin
         FindReportUsageForCust(ReportUsage, CustNo, TempBodyReportSelections);
+
+        SaveReportAsPDFInTempBlob(TempBlob, TempBodyReportSelections."Report ID", RecordVariant, TempBodyReportSelections."Custom Report Layout Code", ReportUsage);
+    end;
+
+    /// <summary>
+    /// Gets File Path to the PDF report for a vendor
+    /// </summary>
+    /// <param name="ServerEmailBodyFilePath">File Path</param>
+    /// <param name="ReportUsage">Vendor based report usage</param>
+    /// <param name="RecordVariant">Record applied to report dataitem</param>
+    /// <param name="VendNo">Vendor No.</param>
+    [Scope('OnPrem')]
+    procedure GetPdfReportForVend(var ServerEmailBodyFilePath: Text[250]; ReportUsage: Enum "Report Selection Usage"; RecordVariant: Variant; VendNo: Code[20])
+    var
+        TempBodyReportSelections: Record "Report Selections" temporary;
+    begin
+        ServerEmailBodyFilePath := '';
+
+        FindReportUsageForVend(ReportUsage, VendNo, TempBodyReportSelections);
+
+        ServerEmailBodyFilePath :=
+            SaveReportAsPDF(TempBodyReportSelections."Report ID", RecordVariant, TempBodyReportSelections."Custom Report Layout Code", ReportUsage);
+    end;
+
+    /// <summary>
+    /// Gets the PDF report for a vendor to TempBlob
+    /// </summary>
+    /// <param name="TempBlob">The temporary blob to store the generated PDF report</param>
+    /// <param name="ReportUsage">Vendor based report usage</param>
+    /// <param name="RecordVariant">Record applied to report dataitem</param>
+    /// <param name="VendNo">Vendor No.</param>
+    procedure GetPdfReportForVend(var TempBlob: Codeunit "Temp Blob"; ReportUsage: Enum "Report Selection Usage"; RecordVariant: Variant; VendNo: Code[20])
+    var
+        TempBodyReportSelections: Record "Report Selections" temporary;
+    begin
+        FindReportUsageForVend(ReportUsage, VendNo, TempBodyReportSelections);
 
         SaveReportAsPDFInTempBlob(TempBlob, TempBodyReportSelections."Report ID", RecordVariant, TempBodyReportSelections."Custom Report Layout Code", ReportUsage);
     end;
@@ -1518,6 +1558,7 @@ table 77 "Report Selections"
                                 SourceIDs.Add(SalesInvoice.SystemId);
                                 SourceRelationTypes.Add(Enum::"Email Relation Type"::"Related Entity".AsInteger());
                             end;
+                        OnSendEmailDirectlyOnAfterAddRelatedReminderInvoiceSource(SourceTableIDs, SourceRelationTypes, SourceIDs, ReminderLines);
                     until ReminderLines.Next() = 0;
             end;
 
@@ -1664,6 +1705,7 @@ table 77 "Report Selections"
             TempReportSelections.SaveReportAsPDFInTempBlob(TempBlob, TempReportSelections."Report ID", RecordVariant, TempReportSelections."Custom Report Layout Code", ReportUsage);
             TempBlob.CreateInStream(AttachmentInStream);
             ClientAttachmentFileName := ElectronicDocumentFormat.GetAttachmentFileName(RecordVariant, DocNo, DocName, 'pdf');
+            OnSendToDiskForCustOnBeforeDownloadAttachment(TempReportSelections, RecordVariant, DocNo, DocName, 'pdf', ClientAttachmentFileName);
             DownloadAttachmentFromStream(TempReportSelections, RecordVariant, AttachmentInStream, ClientAttachmentFileName);
         until TempReportSelections.Next() = 0;
     end;
@@ -2710,6 +2752,16 @@ table 77 "Report Selections"
 
     [IntegrationEvent(false, false)]
     local procedure OnAfterCopyReportSelectionToReportSelection(ReportSelections: Record "Report Selections"; var TempToReportSelections: Record "Report Selections" temporary)
+    begin
+    end;
+
+    [IntegrationEvent(false, false)]
+    local procedure OnSendEmailDirectlyOnAfterAddRelatedReminderInvoiceSource(var SourceTableIDs: List of [Integer]; var SourceRelationTypes: List of [Integer]; var SourceIDs: List of [Guid]; ReminderLines: Record "Issued Reminder Line")
+    begin
+    end;
+
+    [IntegrationEvent(false, false)]
+    local procedure OnSendToDiskForCustOnBeforeDownloadAttachment(var TempReportSelections: Record "Report Selections" temporary; RecordVariant: Variant; DocumentNo: Code[20]; DocumentName: Text; Extension: Code[3]; var ClientAttachmentFileName: Text)
     begin
     end;
 }

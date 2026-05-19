@@ -586,16 +586,25 @@ codeunit 6500 "Item Tracking Management"
         CopyItemTracking(FromRowID, ToRowID, SwapSign, false);
     end;
 
+    procedure CopyItemTracking(FromRowID: Text[250]; ToRowID: Text[250]; SwapSign: Boolean; SkipReservation: Boolean; NewReservationStatus: Enum "Reservation Status")
+    var
+        ReservEntry: Record "Reservation Entry";
+    begin
+        ReservEntry.SetPointer(FromRowID);
+        ReservEntry.SetPointerFilter();
+        CopyItemTracking3(ReservEntry, ToRowID, SwapSign, SkipReservation, NewReservationStatus);
+    end;
+
     procedure CopyItemTracking(FromRowID: Text[250]; ToRowID: Text[250]; SwapSign: Boolean; SkipReservation: Boolean)
     var
         ReservEntry: Record "Reservation Entry";
     begin
         ReservEntry.SetPointer(FromRowID);
         ReservEntry.SetPointerFilter();
-        CopyItemTracking3(ReservEntry, ToRowID, SwapSign, SkipReservation);
+        CopyItemTracking3(ReservEntry, ToRowID, SwapSign, SkipReservation, ReservEntry."Reservation Status"::Prospect);
     end;
 
-    local procedure CopyItemTracking3(var ReservEntry: Record "Reservation Entry"; ToRowID: Text[250]; SwapSign: Boolean; SkipReservation: Boolean)
+    local procedure CopyItemTracking3(var ReservEntry: Record "Reservation Entry"; ToRowID: Text[250]; SwapSign: Boolean; SkipReservation: Boolean; NewReservationStatus: Enum "Reservation Status")
     var
         ReservEntry1: Record "Reservation Entry";
         TempReservEntry: Record "Reservation Entry" temporary;
@@ -613,7 +622,7 @@ codeunit 6500 "Item Tracking Management"
             repeat
                 if ReservEntry.TrackingExists() then begin
                     TempReservEntry := ReservEntry;
-                    TempReservEntry."Reservation Status" := TempReservEntry."Reservation Status"::Prospect;
+                    TempReservEntry."Reservation Status" := NewReservationStatus;
                     TempReservEntry.SetPointer(ToRowID);
                     if SwapSign then begin
                         TempReservEntry."Quantity (Base)" := -TempReservEntry."Quantity (Base)";
@@ -741,15 +750,53 @@ codeunit 6500 "Item Tracking Management"
         until ItemEntryRelation.Next() = 0;
     end;
 
-#if not CLEAN25
-    [Obsolete('Moved to codeunit Serv. Item Tracking Mgt.', '25.0')]
-    procedure CopyHandledItemTrkgToServLine(FromServLine: Record Microsoft.Service.Document."Service Line"; ToServLine: Record Microsoft.Service.Document."Service Line")
+    internal procedure CopyMatchedItemTrkgToPurchLine(FromPurchLine: Record "Purchase Line"; ToPurchLine: Record "Purchase Line"; MatchedOrderLine: Record "Matched Order Line"; CheckLineQty: Boolean)
     var
-        ServItemTrackingMgt: Codeunit "Serv. Item Tracking Mgt.";
+        ItemEntryRelation: Record "Item Entry Relation";
+        TrackingSpecification: Record "Tracking Specification";
+        PurchRcptLine: Record "Purch. Rcpt. Line";
+        ReservationEntry: Record "Reservation Entry";
+        ItemTrackingMgt: Codeunit "Item Tracking Management";
+        QtyBase: Decimal;
     begin
-        ServitemTrackingMgt.CopyHandledItemTrkgToServLine(FromServLine, ToServLine);
+        // Used for combined receipts/returns:
+        if FromPurchLine.Type <> FromPurchLine.Type::Item then
+            exit;
+
+        case ToPurchLine."Document Type" of
+            ToPurchLine."Document Type"::Invoice:
+                begin
+                    PurchRcptLine.GetBySystemId(MatchedOrderLine."Matched Rcpt./Shpt. Line SysId");
+                    ItemEntryRelation.SetSourceFilter(Database::"Purch. Rcpt. Line", 0, PurchRcptLine."Document No.", PurchRcptLine."Line No.", true);
+                    ItemEntryRelation.SetSourceFilter2('', 0);
+                end;
+            ToPurchLine."Document Type"::"Credit Memo":
+                begin
+                    ItemEntryRelation.SetSourceFilter(Database::"Return Shipment Line", 0, ToPurchLine."Return Shipment No.", ToPurchLine."Return Shipment Line No.", true);
+                    ItemEntryRelation.SetSourceFilter2('', 0);
+                end;
+            else
+                ToPurchLine.FieldError("Document Type", Format(ToPurchLine."Document Type"));
+        end;
+
+        ItemEntryRelation.SetLoadFields("Item Entry No.");
+        if not ItemEntryRelation.FindSet() then
+            exit;
+
+        ReservationEntry.SetSourceFilter(Database::"Purchase Line", ToPurchLine."Document Type".AsInteger(), ToPurchLine."Document No.", ToPurchLine."Line No.", true);
+        repeat
+            TrackingSpecification.Get(ItemEntryRelation."Item Entry No.");
+
+            ReservationEntry.SetRange("Item Ledger Entry No.", TrackingSpecification."Item Ledger Entry No.");
+            ReservationEntry.DeleteAll(true);
+
+            QtyBase := TrackingSpecification."Quantity (Base)" - TrackingSpecification."Quantity Invoiced (Base)";
+            if CheckLineQty and (QtyBase > ToPurchLine.Quantity) then
+                QtyBase := ToPurchLine.Quantity;
+            ItemTrackingMgt.InsertReservEntryFromTrackingSpec(
+              TrackingSpecification, ToPurchLine."Document Type".AsInteger(), ToPurchLine."Document No.", ToPurchLine."Line No.", QtyBase);
+        until ItemEntryRelation.Next() = 0;
     end;
-#endif
 
     procedure CollectItemEntryRelation(var TempItemLedgEntry: Record "Item Ledger Entry" temporary; SourceType: Integer; SourceSubtype: Integer; SourceID: Code[20]; SourceBatchName: Code[10]; SourceProdOrderLine: Integer; SourceRefNo: Integer; TotalQty: Decimal) Result: Boolean
     var
@@ -910,8 +957,7 @@ codeunit 6500 "Item Tracking Management"
                 if ToTransfer then begin
                     WhseItemTrackingSetup.CopyTrackingFromNewTrackingSpec(TempWhseSplitTrackingSpec);
                     TempWhseJnlLine2.CopyTrackingFromItemTrackingSetupIfRequired(WhseItemTrackingSetup);
-                    if TempWhseSplitTrackingSpec."New Expiration Date" <> 0D then
-                        TempWhseJnlLine2."Expiration Date" := TempWhseSplitTrackingSpec."New Expiration Date";
+                    TempWhseJnlLine2."Expiration Date" := TempWhseSplitTrackingSpec."New Expiration Date";
                 end else begin
                     WhseItemTrackingSetup.CopyTrackingFromTrackingSpec(TempWhseSplitTrackingSpec);
                     TempWhseJnlLine2.CopyTrackingFromItemTrackingSetupIfRequired(WhseItemTrackingSetup);
@@ -1770,7 +1816,7 @@ codeunit 6500 "Item Tracking Management"
                     Message(Text006);
                     exit;
                 end;
-            CopyItemTracking3(FromReservEntry, ToRowID, SignFactor1 <> SignFactor2, false);
+            CopyItemTracking3(FromReservEntry, ToRowID, SignFactor1 <> SignFactor2, false, FromReservEntry."Reservation Status"::Prospect);
 
             // Copy to inbound part of transfer.
             if IsReservedFromTransferShipment(FromReservEntry) then begin
@@ -2162,6 +2208,7 @@ codeunit 6500 "Item Tracking Management"
         if IsHandled then
             exit(ExpiryDate);
 
+        ItemLedgEntry.ReadIsolation(IsolationLevel::ReadUncommitted);
         ItemLedgEntry.SetLoadFields("Expiration Date");
         if not FindLastItemLedgerEntry(ItemNo, VariantCode, ItemTrackingSetup, ItemLedgEntry) then begin
             EntriesExist := false;

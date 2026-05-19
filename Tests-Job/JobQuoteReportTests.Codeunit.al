@@ -12,10 +12,12 @@ codeunit 136314 "Job Quote Report Tests"
     var
         Job: Record Job;
         ReportLayoutSelection: Record "Report Layout Selection";
-        Assert: Codeunit Assert;
-        LibraryTestInitialize: Codeunit "Library - Test Initialize";
-        LibraryReportValidation: Codeunit "Library - Report Validation";
         ActiveDirectoryMockEvents: Codeunit "Active Directory Mock Events";
+        Assert: Codeunit Assert;
+        LibraryJob: Codeunit "Library - Job";
+        LibraryRandom: Codeunit "Library - Random";
+        LibraryReportValidation: Codeunit "Library - Report Validation";
+        LibraryTestInitialize: Codeunit "Library - Test Initialize";
         IsInitialized: Boolean;
         AmountErr: Label 'Total amount must be equal.';
         RollingBackChangesErr: Label 'Rolling back changes...';
@@ -26,13 +28,16 @@ codeunit 136314 "Job Quote Report Tests"
         UnitCostTxt: Label 'Unit Cost';
         TotalCostTxt: Label 'Total Cost';
         JobTaskNoTxt: Label 'Project Task No.';
+        DiscountPctTxt: Label 'Discount %';
+        DiscuntAmtTxt: Label 'Discount Amount';
+        TotalPriceTxt: Label 'Total Price';
 
     [HandlerFunctions('PostandSendPageHandlerYes,EmailEditorHandler,CloseEmailEditorHandler')]
     [Test]
     Procedure SendProjectTaskQuoteFromProjectTaskCardDoesNotProvideWithTheSsameFileNameAsSendProjectQuotefromProjectCard()
     var
         JobTaskLine: Record "Job Task";
-        LibraryWorkflow: Codeunit "Library - Workflow";
+        LibraryEmail: Codeunit "Library - Email";
         LibraryJob: Codeunit "Library - Job";
         LibraryERM: Codeunit "Library - ERM";
         LibraryRandom: Codeunit "Library - Random";
@@ -42,7 +47,7 @@ codeunit 136314 "Job Quote Report Tests"
         Initialize();
 
         //[GIVEN] Setup Email
-        LibraryWorkflow.SetUpEmailAccount();
+        LibraryEmail.SetUpEmailAccount();
 
         // [GIVEN] Create Job
         LibraryJob.CreateJob(Job);
@@ -204,7 +209,6 @@ codeunit 136314 "Job Quote Report Tests"
         LibraryJob: Codeunit "Library - Job";
         LibraryERM: Codeunit "Library - ERM";
         LibraryUtility: Codeunit "Library - Utility";
-        LibraryReportDataset: Codeunit "Library - Report Dataset";
         LibraryResource: Codeunit "Library - Resource";
         LibraryRandom: Codeunit "Library - Random";
         ResQuantity: Decimal;
@@ -227,8 +231,8 @@ codeunit 136314 "Job Quote Report Tests"
         // [GIVEN] Job Planning Line:
         LibraryJob.CreateJobPlanningLine(JobPlanningLine."Line Type"::"Both Budget and Billable", JobPlanningLine.Type::Resource, JobTaskLine, JobPlanningLine);
         LibraryResource.CreateResource(Resource, '');
-        ResQuantity := LibraryRandom.RandDec(100, 2);
-        UnitPrice := 10 + LibraryRandom.RandDec(10, 2);
+        ResQuantity := LibraryRandom.RandDec(100, 0);
+        UnitPrice := 10 + LibraryRandom.RandDec(10, 0);
         DocNo := LibraryUtility.GenerateRandomCode20(JobPlanningLine.FieldNo("Document No."), Database::"Job Planning Line");
         JobPlanningLine.Validate("Document No.", DocNo);
         JobPlanningLine.Validate("No.", Resource."No.");
@@ -241,21 +245,56 @@ codeunit 136314 "Job Quote Report Tests"
         RunJobQuoteReport(Job."No.");
 
         // [THEN] Result
-        LibraryReportDataset.GetLastRow();
+        LibraryReportValidation.OpenFile();
         Assert.AreEqual(LibraryReportValidation.CheckIfDecimalValueExists(JobPlanningLine."Total Price"), true, ValueNotFoundErr);
+    end;
+
+    [Test]
+    [HandlerFunctions('ConfirmHandlerTrue,MessageHandler')]
+    procedure VerifyTotalPriceOnJobQuoteReport()
+    var
+        JobPlanningLine: Record "Job Planning Line";
+        JobTaskLine: Record "Job Task";
+        DiscountPct: Decimal;
+    begin
+        // [SCENARIO 618738] The discount and Total Price of a planning project line is not shown/not correct in Job Quote report.
+        Initialize();
+
+        // [GIVEN] Create a new Job.
+        LibraryJob.CreateJob(Job);
+
+        // [GIVEN] Create Job Task Line.
+        LibraryJob.CreateJobTask(Job, JobTaskLine);
+
+        // [GIVEN] Create Job Planning Line with Discount %.
+        LibraryJob.CreateJobPlanningLine(JobPlanningLine."Line Type"::Billable, JobPlanningLine.Type::Resource, JobTaskLine, JobPlanningLine);
+        DiscountPct := LibraryRandom.RandIntInRange(5, 10);
+        JobPlanningLine.Validate("Line Discount %", DiscountPct);
+        JobPlanningLine.Modify(true);
+
+        // [WHEN] Run Job Quote report.
+        SetReportLayoutForRDLC();
+        SetupForJobQuote(JobPlanningLine);
+
+        // [THEN] Verify Discount and Total Price on Job Quote report.
+        VerifyJobQuoteTotalPrice(JobPlanningLine, DiscountPctTxt, DiscuntAmtTxt, TotalPriceTxt);
+
+        // Cleanup
+        RemoveReportLayout();
+        TearDown();
     end;
 
     procedure SendJobQuoteFromJobCardInternal()
     var
         JobPlanningLine: Record "Job Planning Line";
         JobCard: TestPage "Job Card";
-        LibraryWorkflow: Codeunit "Library - Workflow";
+        LibraryEmail: Codeunit "Library - Email";
     begin
         // [GIVEN] A newly setup company, with a new job created
         Initialize();
         SetReportLayoutForRDLC();
         SetupForJobQuote(JobPlanningLine);
-        LibraryWorkflow.SetUpEmailAccount();
+        LibraryEmail.SetUpEmailAccount();
 
         // [THEN] Verify contents on Job Quote report
         VerifyJobQuoteReport(JobPlanningLine, QuantityTxt, UnitCostTxt, TotalCostTxt, JobTaskNoTxt);
@@ -318,6 +357,18 @@ codeunit 136314 "Job Quote Report Tests"
         Assert.AreEqual(LibraryReportValidation.CheckIfValueExists(JobPlanningLine."Job Task No."), true, ValueNotFoundErr);
 
         Assert.AreEqual(JobPlanningLine.Quantity * JobPlanningLine."Unit Price", JobPlanningLine."Total Price", AmountErr);
+    end;
+
+    local procedure VerifyJobQuoteTotalPrice(JobPlanningLine: Record "Job Planning Line"; Column: Text[250]; Column2: Text[250]; Column3: Text[250])
+    begin
+        LibraryReportValidation.OpenFile();
+        LibraryReportValidation.SetRange(JobPlanningLine.FieldCaption("Job Task No."), Format(JobPlanningLine."Job Task No."));
+        LibraryReportValidation.SetColumn(Column);
+        Assert.AreEqual(LibraryReportValidation.CheckIfDecimalValueExists(JobPlanningLine."Line Discount %"), true, ValueNotFoundErr);
+        LibraryReportValidation.SetColumn(Column2);
+        Assert.AreEqual(LibraryReportValidation.CheckIfDecimalValueExists(JobPlanningLine."Line Discount Amount"), true, ValueNotFoundErr);
+        LibraryReportValidation.SetColumn(Column3);
+        Assert.AreEqual(LibraryReportValidation.CheckIfDecimalValueExists(JobPlanningLine."Total Price" - JobPlanningLine."Line Discount Amount"), true, ValueNotFoundErr);
     end;
 
     [StrMenuHandler]

@@ -4,39 +4,39 @@
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Manufacturing.Test;
 
-using Microsoft.Manufacturing.Setup;
-using Microsoft.Inventory.Location;
-using Microsoft.Inventory.Journal;
-using System.TestLibraries.Utilities;
-using Microsoft.Foundation.NoSeries;
-using Microsoft.Manufacturing.Routing;
-using Microsoft.Inventory.Requisition;
-using Microsoft.Manufacturing.ProductionBOM;
-using Microsoft.Inventory.Item;
-using Microsoft.Manufacturing.Capacity;
-using Microsoft.Manufacturing.Document;
-using Microsoft.Manufacturing.WorkCenter;
 using Microsoft.Finance.Dimension;
-using Microsoft.Inventory.Planning;
-using Microsoft.Sales.Document;
-using Microsoft.Purchases.Document;
-using Microsoft.Purchases.Vendor;
-using Microsoft.Sales.Setup;
+using Microsoft.Finance.GeneralLedger.Setup;
+using Microsoft.Foundation.Enums;
+using Microsoft.Foundation.NoSeries;
 using Microsoft.Foundation.UOM;
-using Microsoft.Manufacturing.Family;
 using Microsoft.Inventory.Availability;
+using Microsoft.Inventory.Item;
+using Microsoft.Inventory.Item.Catalog;
+using Microsoft.Inventory.Journal;
+using Microsoft.Inventory.Ledger;
+using Microsoft.Inventory.Location;
+using Microsoft.Inventory.Planning;
+using Microsoft.Inventory.Posting;
+using Microsoft.Inventory.Requisition;
+using Microsoft.Inventory.Setup;
 using Microsoft.Inventory.Tracking;
 using Microsoft.Inventory.Transfer;
-using Microsoft.Inventory.Ledger;
-using Microsoft.Inventory.Item.Catalog;
-using Microsoft.Purchases.Setup;
-using Microsoft.Manufacturing.MachineCenter;
-using Microsoft.Finance.GeneralLedger.Setup;
+using Microsoft.Manufacturing.Capacity;
+using Microsoft.Manufacturing.Document;
+using Microsoft.Manufacturing.Family;
 using Microsoft.Manufacturing.Journal;
+using Microsoft.Manufacturing.MachineCenter;
+using Microsoft.Manufacturing.ProductionBOM;
+using Microsoft.Manufacturing.Routing;
+using Microsoft.Manufacturing.Setup;
+using Microsoft.Manufacturing.WorkCenter;
+using Microsoft.Purchases.Document;
+using Microsoft.Purchases.Setup;
+using Microsoft.Purchases.Vendor;
+using Microsoft.Sales.Document;
+using Microsoft.Sales.Setup;
+using System.TestLibraries.Utilities;
 using System.Utilities;
-using Microsoft.Foundation.Enums;
-using Microsoft.Inventory.Setup;
-using Microsoft.Inventory.Posting;
 
 codeunit 137063 "SCM Manufacturing 7.0"
 {
@@ -113,6 +113,7 @@ codeunit 137063 "SCM Manufacturing 7.0"
         ProductionStatusErr: Label 'Selected Production Order must be released.';
         QuanityPerErrorLbl: Label '%1 must be %2 in %3', Comment = '%1 = "Quantity Per", %2 = Expected Value, %3 = Table Caption';
         OperationNoErr: Label 'Operation No. must be equal to %1', Comment = '%1 = Operation No.';
+        ProductionRoutingErr: Label 'Production order routing number must be equal to SKU routing number';
 
     [Test]
     [Scope('OnPrem')]
@@ -3701,6 +3702,61 @@ codeunit 137063 "SCM Manufacturing 7.0"
         // [THEN] Planning Worksheet should suggest Qty of second Sales order
         // The reserved qty units on the production order should not be considered available
         VerifyQuantityOnRequisitionLine(Item."No.", RequisitionLine."Replenishment System"::"Prod. Order", Qty);
+    end;
+
+    [Test]
+    [HandlerFunctions('MessageHandler')]
+    procedure FirmPlannedProdOrderFromSalesOrderUsesLocationSKURouting()
+    var
+        ChildItem: Record Item;
+        ItemRoutingHeader: Record "Routing Header";
+        Location: Record Location;
+        ParentItem: Record Item;
+        ProdOrderLine: Record "Prod. Order Line";
+        ProductionBOMHeader: Record "Production BOM Header";
+        ProductionBOMLine: Record "Production BOM Line";
+        ProductionOrder: Record "Production Order";
+        SalesHeader: Record "Sales Header";
+        SalesLine: Record "Sales Line";
+        SKURoutingHeader: Record "Routing Header";
+        StockkeepingUnit: Record "Stockkeeping Unit";
+    begin
+        // [SCENARIO 625657] When creating a firm planned production order from a sales order for a location-specific SKU,
+        // the production order header routing number should match the SKU routing, not the item card routing.
+        Initialize();
+
+        // [GIVEN] A parent item with a default routing and production BOM
+        CreateItem(ChildItem, ChildItem."Replenishment System"::Purchase, ChildItem."Reordering Policy"::Order, false, 0, 0, 0, '');
+        CreateItem(ParentItem, ParentItem."Replenishment System"::"Prod. Order", ParentItem."Reordering Policy"::Order, false, 0, 0, 0, '');
+        CreateRoutingSetup(ItemRoutingHeader);
+        CreateProductionBOMAndCertify(
+            ProductionBOMHeader, ParentItem."Base Unit of Measure", ProductionBOMLine.Type::Item, ChildItem."No.", LibraryRandom.RandInt(5));
+        ParentItem.Validate("Routing No.", ItemRoutingHeader."No.");
+        ParentItem.Validate("Production BOM No.", ProductionBOMHeader."No.");
+        ParentItem.Modify();
+
+        // [GIVEN] A location-specific SKU with a different routing
+        CreateRoutingSetup(SKURoutingHeader);
+        LibraryWarehouse.CreateLocation(Location);
+        LibraryInventory.CreateStockkeepingUnitForLocationAndVariant(StockkeepingUnit, Location.Code, ParentItem."No.", '');
+        StockkeepingUnit.Validate("Routing No.", SKURoutingHeader."No.");
+        StockkeepingUnit.Modify();
+
+        // [GIVEN] A sales order for the parent item at the SKU location
+        LibrarySales.CreateSalesHeader(SalesHeader, SalesHeader."Document Type"::Order, '');
+        CreateSalesLine(SalesHeader, SalesLine, ParentItem."No.", Location.Code, '', LibraryRandom.RandDec(10, 2));
+
+        // [WHEN] Create firm planned production order from the sales order
+        LibraryManufacturing.CreateProductionOrderFromSalesOrder(
+            SalesHeader, ProductionOrder.Status::"Firm Planned", "Create Production Order Type"::ItemOrder);
+
+        // [THEN] The production order header routing number matches the SKU routing
+        FindProductionOrder(ProductionOrder, ParentItem."No.", ProductionOrder."Source Type"::Item);
+        Assert.AreEqual(SKURoutingHeader."No.", ProductionOrder."Routing No.", ProductionRoutingErr);
+
+        // [THEN] The production order line routing number also matches the SKU routing
+        FindProdOrderLine(ProdOrderLine, ProductionOrder.Status, ProductionOrder."No.");
+        Assert.AreEqual(SKURoutingHeader."No.", ProdOrderLine."Routing No.", ProductionRoutingErr);
     end;
 
     local procedure Initialize()

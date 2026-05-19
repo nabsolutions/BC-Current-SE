@@ -4,19 +4,19 @@
 // ------------------------------------------------------------------------------------------------
 namespace Microsoft.Assembly.Test;
 
-using Microsoft.Inventory.Ledger;
-using System.Environment.Configuration;
 using Microsoft.Assembly.Document;
+using Microsoft.Foundation.NoSeries;
+using Microsoft.Foundation.UOM;
+using Microsoft.Inventory.Availability;
 using Microsoft.Inventory.BOM;
 using Microsoft.Inventory.Item;
-using Microsoft.Inventory.Location;
-using Microsoft.Foundation.UOM;
 using Microsoft.Inventory.Journal;
-using Microsoft.Inventory.Availability;
-using Microsoft.Sales.Document;
-using Microsoft.Purchases.Document;
+using Microsoft.Inventory.Ledger;
+using Microsoft.Inventory.Location;
 using Microsoft.Inventory.Setup;
-using Microsoft.Foundation.NoSeries;
+using Microsoft.Purchases.Document;
+using Microsoft.Sales.Document;
+using System.Environment.Configuration;
 
 codeunit 137906 "SCM Assembly Availability"
 {
@@ -562,6 +562,50 @@ codeunit 137906 "SCM Assembly Availability"
         AssemblyOrder.OpenEdit();
         AssemblyOrder.GoToRecord(AssemblyHeader);
         Assert.IsFalse(AssemblyOrder.Lines."Avail. Warning".AsBoolean(), AvailabilityWarningErr);
+        NotificationLifecycleMgt.RecallAllNotifications();
+    end;
+
+    [Test]
+    procedure AvailWarningPersistedToTableAfterStockAddition()
+    var
+        AssemblyHeader: Record "Assembly Header";
+        AssemblyItem: Record Item;
+        AssemblyLine: Record "Assembly Line";
+        BOMComponent: Record "BOM Component";
+        ComponentItem: Record Item;
+        ItemJournalLine: Record "Item Journal Line";
+        AssemblyOrder: TestPage "Assembly Order";
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 624727] Avail. Warning is persisted to Assembly Line table after posting sufficient inventory for the component.
+        Initialize();
+
+        // [GIVEN] Assembly Item "AI" with component "CI" requiring 1 pc per assembly.
+        LibraryInventory.CreateItem(AssemblyItem);
+        AssemblyItem.Validate("Replenishment System", AssemblyItem."Replenishment System"::Assembly);
+        AssemblyItem.Modify(true);
+        LibraryInventory.CreateItem(ComponentItem);
+        LibraryInventory.CreateBOMComponent(
+          BOMComponent, AssemblyItem."No.", BOMComponent.Type::Item, ComponentItem."No.", LibraryRandom.RandIntInRange(1, 1), ComponentItem."Base Unit of Measure");
+
+        // [GIVEN] Assembly order  with no inventory, Avail. Warning is Yes in the table.
+        LibraryAssembly.CreateAssemblyHeader(AssemblyHeader, WorkDate2, AssemblyItem."No.", '', LibraryRandom.RandIntInRange(1, 2), '');
+        FindAssemblyLine(AssemblyLine, AssemblyHeader, ComponentItem."No.");
+        AssemblyLine.UpdateAvailWarning();
+        AssemblyLine.Modify();
+        AssemblyLine.Get(AssemblyLine."Document Type", AssemblyLine."Document No.", AssemblyLine."Line No.");
+        AssemblyLine.TestField("Avail. Warning", true);
+
+        // [WHEN] Post sufficient inventory for "CI" and open the Assembly Order page.
+        LibraryInventory.CreateItemJournalLineInItemTemplate(ItemJournalLine, ComponentItem."No.", '', '', AssemblyLine."Remaining Quantity" + LibraryRandom.RandInt(10));
+        LibraryInventory.PostItemJournalLine(ItemJournalLine."Journal Template Name", ItemJournalLine."Journal Batch Name");
+        AssemblyOrder.OpenEdit();
+        AssemblyOrder.GoToRecord(AssemblyHeader);
+        AssemblyOrder.Close();
+
+        // [THEN] Avail. Warning is No in the Assembly Line table.
+        AssemblyLine.Get(AssemblyLine."Document Type", AssemblyLine."Document No.", AssemblyLine."Line No.");
+        Assert.IsFalse(AssemblyLine."Avail. Warning", AvailabilityWarningErr);
         NotificationLifecycleMgt.RecallAllNotifications();
     end;
 

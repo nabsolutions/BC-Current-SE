@@ -7,7 +7,7 @@ namespace System.TestTools.AITestToolkit;
 using System.TestTools.TestRunner;
 
 /// <summary>
-/// Exposes functions that can be used by the AI tests.
+/// Exposes functions that can be used by the AI evals.
 /// </summary>
 codeunit 149044 "AIT Test Context"
 {
@@ -32,14 +32,34 @@ codeunit 149044 "AIT Test Context"
     /// <summary>
     /// Returns the Test Input value as Test Input Json Codeunit from the input dataset for the current iteration.
     /// </summary>
-    /// <returns>Test Input Json for the current test.</returns>
+    /// <returns>Test Input Json for the current eval.</returns>
     procedure GetInput(): Codeunit "Test Input Json"
     begin
         exit(AITTestContextImpl.GetInput());
     end;
 
     /// <summary>
-    /// Get the Test Setup from the input dataset for the current iteration.
+    /// Get the turn setup from the input dataset for the current iteration.
+    /// </summary>
+    /// <returns>A Test Input Json codeunit for the turn_setup element.</returns>
+    procedure GetTurnSetup(): Codeunit "Test Input Json"
+    begin
+        exit(AITTestContextImpl.GetTurnSetup());
+    end;
+
+    /// <summary>
+    /// Tries to get the turn setup from the input dataset for the current iteration.
+    /// </summary>
+    /// <param name="TurnSetup">Returns the turn_setup Test Input Json codeunit when the element exists.</param>
+    /// <returns>True if the turn_setup element exists for the current turn; false otherwise.</returns>
+    procedure GetTurnSetup(var TurnSetup: Codeunit "Test Input Json"): Boolean
+    begin
+        exit(AITTestContextImpl.GetTurnSetup(TurnSetup));
+    end;
+
+    /// <summary>
+    /// Get the Test Setup from the input dataset for the current iteration using the legacy 'test_setup' element.
+    /// Retained for backward compatibility with datasets that have not migrated to 'turn_setup' — new code should use <see cref="GetTurnSetup"/>.
     /// </summary>
     /// <returns>A Test Input Json codeunit for the test_setup element.</returns>
     procedure GetTestSetup(): Codeunit "Test Input Json"
@@ -57,12 +77,23 @@ codeunit 149044 "AIT Test Context"
     end;
 
     /// <summary>
+    /// Get the Query from the input dataset for the current iteration.
+    /// The query represents the input to the AI agent or evaluation.
+    /// The 'question' element is also supported for backward compatibility, the 'query' syntax is recommended.
+    /// </summary>
+    /// <returns>A Test Input Json codeunit for the query element.</returns>
+    procedure GetQuery(): Codeunit "Test Input Json"
+    begin
+        exit(AITTestContextImpl.GetQuery());
+    end;
+
+    /// <summary>
     /// Get the Question from the input dataset for the current iteration.
     /// </summary>
-    /// <returns>A Test Input Json codeunit for the question element.</returns>
+    /// <returns>A Test Input Json codeunit for the question/query element.</returns>
     procedure GetQuestion(): Codeunit "Test Input Json"
     begin
-        exit(AITTestContextImpl.GetQuestion());
+        exit(AITTestContextImpl.GetQuery());
     end;
 
     /// <summary>
@@ -76,12 +107,22 @@ codeunit 149044 "AIT Test Context"
 
     /// <summary>
     /// Get the Expected Data value as text from the input dataset for the current iteration.
-    /// Expected data is used for internal validation if the test was successful.
+    /// Expected data is used for internal validation if the eval was successful.
     /// </summary>
     /// <returns>Test Input Json for the expected data</returns>
     procedure GetExpectedData(): Codeunit "Test Input Json"
     begin
         exit(AITTestContextImpl.GetExpectedData());
+    end;
+
+    /// <summary>
+    /// Gets the continue on failure flag for the current turn.
+    /// If the flag is not set in the test input, it defaults to false.
+    /// </summary>
+    /// <returns>True if the eval should continue on failure, false otherwise.</returns>
+    procedure GetCanContinueOnFailure(): Boolean
+    begin
+        exit(AITTestContextImpl.GetCanContinueOnFailure());
     end;
 
     /// <summary>
@@ -117,8 +158,8 @@ codeunit 149044 "AIT Test Context"
     end;
 
     /// <summary>
-    /// Adds a message to the current test iteration.
-    /// This is used for multi-turn tests to add messages to the output.
+    /// Adds a message to the current eval iteration.
+    /// This is used for multi-turn evals to add messages to the output.
     /// </summary>
     /// <param name="Content">The content of the message.</param>
     /// <param name="Role">The role of the message (e.g., 'user', 'assistant').</param>
@@ -129,8 +170,8 @@ codeunit 149044 "AIT Test Context"
     end;
 
     /// <summary>
-    /// Adds a message to the current test iteration.
-    /// This is used for multi-turn tests to add messages to the output.
+    /// Adds a message to the current eval iteration.
+    /// This is used for multi-turn evals to add messages to the output.
     /// </summary>
     /// <param name="Content">The content of the message.</param>
     /// <param name="Role">The role of the message (e.g., 'user', 'assistant').</param>
@@ -178,7 +219,7 @@ codeunit 149044 "AIT Test Context"
     end;
 
     /// <summary>
-    /// Sets the accuracy of the test.
+    /// Sets the accuracy of the eval.
     /// </summary>
     /// <param name="Accuracy">The accuracy as a decimal between 0 and 1.</param>
     procedure SetAccuracy(Accuracy: Decimal)
@@ -196,11 +237,48 @@ codeunit 149044 "AIT Test Context"
     end;
 
     /// <summary>
-    /// Integration event that is raised after a test run is completed.
+    /// Sets the token consumption for the method line run. Useful if external calls are made outside of AI toolkit.
     /// </summary>
-    /// <param name="Code">The code of the test run.</param>
-    /// <param name="Version">The version of the test run.</param>
-    /// <param name="Tag">The tag of the test run.</param>
+    /// <param name="TokensUsed">Number of tokens used externally.</param>
+    procedure SetTokenConsumption(TokensUsed: Integer)
+    begin
+        AITTestContextImpl.SetTokenConsumption(TokensUsed);
+    end;
+
+    /// <summary>
+    /// Gets the per-suite setup data as a Test Input Json.
+    /// The consuming test app must have imported a YAML file with the suite_setup token.
+    /// </summary>
+    /// <returns>Test Input Json containing the suite setup data.</returns>
+    procedure GetEvalSuiteSetupDataInput(): Codeunit "Test Input Json"
+    begin
+        exit(AITTestContextImpl.GetEvalSuiteSetupDataInput());
+    end;
+
+    /// <summary>
+    /// Marks the per-suite setup as completed on the test suite record.
+    /// Call this after your suite setup logic has finished successfully.
+    /// </summary>
+    procedure SetEvalSuiteSetupCompleted()
+    begin
+        AITTestContextImpl.SetEvalSuiteSetupCompleted();
+    end;
+
+    /// <summary>
+    /// Checks if the per-suite setup has been marked as done on the test suite record.
+    /// </summary>
+    /// <returns>True if suite setup has been executed.</returns>
+    procedure IsSuiteSetupDone(): Boolean
+    begin
+        exit(AITTestContextImpl.IsSuiteSetupDone());
+    end;
+
+    /// <summary>
+    /// Integration event that is raised after an eval run is completed.
+    /// </summary>
+    /// <param name="Code">The code of the eval run.</param>
+    /// <param name="Version">The version of the eval run.</param>
+    /// <param name="Tag">The tag of the eval run.</param>
     [IntegrationEvent(false, false)]
     internal procedure OnAfterRunComplete(Code: Code[10]; Version: Integer; Tag: Text[20])
     begin

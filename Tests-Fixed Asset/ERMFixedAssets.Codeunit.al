@@ -55,6 +55,7 @@ codeunit 134451 "ERM Fixed Assets"
         AcquireNotificationMsg: Label 'You are ready to acquire the fixed asset.';
         DepreciationBookCodeMustMatchErr: Label 'Depreciation Book Code must match.';
         FixedAssetCountError: Label 'New fixed assets were not created.';
+        DimValueError: Label 'Dimension values are not equal on the copied Fixed Asset.';
         NoSeriesNotConsumedErr: Label 'Number series should not be consumed during preview posting';
         PurchaseInvoicePostedLbl: Label 'Purchase Invoice was posted successfully.';
 
@@ -197,9 +198,6 @@ codeunit 134451 "ERM Fixed Assets"
         CreatePurchLine(PurchLine2, PurchHeader, FixedAsset."No.", DepreciationBook2.Code);
 
         // 2.Exercise: Post Purchase Invoice.
-        LibraryLowerPermissions.SetPurchDocsPost();
-        LibraryLowerPermissions.AddJournalsPost();
-        LibraryLowerPermissions.AddO365FAEdit();
         LibraryPurchase.PostPurchaseDocument(PurchHeader, true, true);
 
         // 3.Verify: Verify FA Ledger Entry.
@@ -1205,6 +1203,134 @@ codeunit 134451 "ERM Fixed Assets"
 
         // [THEN] Number of depreciation days in FA Ledger Entry equals 2
         VerifyFALedgEntryDeprDays(FixedAsset."No.", DepreciationBook.Code, 2);
+    end;
+
+    [Test]
+    [HandlerFunctions('DepreciationCalcConfirmHandler')]
+    [Scope('OnPrem')]
+    procedure UseAccPeriodWithHalfYearConvDeprDaysAt31stDay()
+    var
+        DepreciationBook: Record "Depreciation Book";
+        FADepreciationBook: Record "FA Depreciation Book";
+        FixedAsset: Record "Fixed Asset";
+        FAJournalLine: Record "FA Journal Line";
+        FAJournalBatch: Record "FA Journal Batch";
+        DepreciationStartingDate: Date;
+        DeprUntilDate: Date;
+        Year: Integer;
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 624274] "Use Accounting Period" does not affect depreciation days calculation when "Fiscal Year 365 Days" is OFF, "Use Half-Year Convention" is ON, and posting date falls on the 31st day of a month.
+        Initialize();
+        Year := Date2DMY(WorkDate(), 3);
+
+        // [GIVEN] Accounting periods with fiscal years starting Jan 1 and Jan 1 of the next year
+        DepreciationStartingDate := DMY2Date(1, 1, Year);
+        DeprUntilDate := DMY2Date(31, 7, Year);
+        CreateAccountingPeriodWithNewFiscalYear(DepreciationStartingDate);
+        CreateAccountingPeriodWithNewFiscalYear(CalcDate('<1Y>', DepreciationStartingDate));
+
+        // [GIVEN] Depreciation Book with "Fiscal Year 365 Days" = FALSE and "Use Accounting Period" = ON
+        CreateFixedAssetSetup(DepreciationBook);
+        DepreciationBook.Validate("Fiscal Year 365 Days", false);
+        DepreciationBook.Validate("Use Accounting Period", true);
+        DepreciationBook.Modify(true);
+        UpdateIntegrationInBook(DepreciationBook, false, false, false);
+
+        // [GIVEN] Fixed Asset with FA Depreciation Book: Straight-Line, "Use Half-Year Convention" = ON, starting Jan 1
+        LibraryFixedAsset.CreateFAWithPostingGroup(FixedAsset);
+        LibraryFixedAsset.CreateFADepreciationBook(FADepreciationBook, FixedAsset."No.", DepreciationBook.Code);
+        FADepreciationBook.Validate("FA Posting Group", FixedAsset."FA Posting Group");
+        FADepreciationBook.Validate("Depreciation Method", FADepreciationBook."Depreciation Method"::"Straight-Line");
+        FADepreciationBook.Validate("Depreciation Starting Date", DepreciationStartingDate);
+        FADepreciationBook.Validate("No. of Depreciation Years", 5);
+        FADepreciationBook.Validate("Use Half-Year Convention", true);
+        FADepreciationBook.Modify(true);
+
+        // [GIVEN] Posted Acquisition Cost on Jan 1
+        CreateFAJournalBatch(FAJournalBatch);
+        CreateFAJournalLine(
+            FAJournalLine, FAJournalBatch, FAJournalLine."FA Posting Type"::"Acquisition Cost",
+            FixedAsset."No.", DepreciationBook.Code, LibraryRandom.RandIntInRange(10000, 20000));
+        FAJournalLine.Validate("FA Posting Date", DepreciationStartingDate);
+        FAJournalLine.Validate("Posting Date", DepreciationStartingDate);
+        FAJournalLine.Modify(true);
+        LibraryFixedAsset.PostFAJournalLine(FAJournalLine);
+
+        // [WHEN] Calculate depreciation with posting date = July 31 and post it
+        RunCalculateDepreciationForDate(FixedAsset."No.", DepreciationBook.Code, DeprUntilDate);
+        PostDepreciationWithDocumentNo(DepreciationBook.Code);
+
+        // [THEN] Number of depreciation days equals 210 (30/360 convention), not 212 (actual calendar days)
+        VerifyFALedgEntryDeprDays(FixedAsset."No.", DepreciationBook.Code, 210);
+    end;
+
+    [Test]
+    [Scope('OnPrem')]
+    procedure DeprDaysNotAffectedByUseAccountingPeriod()
+    var
+        DepreciationCalculation: Codeunit "Depreciation Calculation";
+        StartingDate: Date;
+        EndingDate: Date;
+        DeprDaysWithAccPeriod: Integer;
+        DeprDaysWithoutAccPeriod: Integer;
+        Year: Integer;
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 624274] DeprDays returns the same value regardless of "Use Accounting Period" when "Year365Days" is FALSE.
+        Initialize();
+        Year := Date2DMY(WorkDate(), 3);
+
+        // [GIVEN] Date range from January 1 to July 31 (ending on the 31st day of a month)
+        StartingDate := DMY2Date(1, 1, Year);
+        EndingDate := DMY2Date(31, 7, Year);
+
+        // [WHEN] DeprDays is called with UseAccountingPeriod = FALSE
+        DeprDaysWithoutAccPeriod := DepreciationCalculation.DeprDays(StartingDate, EndingDate, false, false);
+
+        // [WHEN] DeprDays is called with UseAccountingPeriod = TRUE
+        DeprDaysWithAccPeriod := DepreciationCalculation.DeprDays(StartingDate, EndingDate, false, true);
+
+        // [THEN] Both results are equal and equal to 210 (30/360 convention)
+        Assert.AreEqual(210, DeprDaysWithoutAccPeriod, WrongDeprDaysErr);
+        Assert.AreEqual(DeprDaysWithoutAccPeriod, DeprDaysWithAccPeriod, WrongDeprDaysErr);
+    end;
+
+    [Test]
+    [Scope('OnPrem')]
+    procedure DeprDaysWithUseAccPeriodEndingOnLastDayOfFeb()
+    var
+        DepreciationCalculation: Codeunit "Depreciation Calculation";
+        TypeHelper: Codeunit "Type Helper";
+        StartingDate: Date;
+        EndingDate: Date;
+        DeprDaysWithAccPeriod: Integer;
+        DeprDaysWithoutAccPeriod: Integer;
+        Year: Integer;
+        LastDayOfFeb: Integer;
+    begin
+        // [FEATURE] [AI test 0.3]
+        // [SCENARIO 624274] DeprDays returns the same value regardless of "Use Accounting Period" when ending date falls on the last day of February.
+        Initialize();
+        Year := Date2DMY(WorkDate(), 3);
+
+        // [GIVEN] Date range from January 1 to the last day of February
+        if TypeHelper.IsLeapYear(DMY2Date(1, 1, Year)) then
+            LastDayOfFeb := 29
+        else
+            LastDayOfFeb := 28;
+        StartingDate := DMY2Date(1, 1, Year);
+        EndingDate := DMY2Date(LastDayOfFeb, 2, Year);
+
+        // [WHEN] DeprDays is called with UseAccountingPeriod = FALSE
+        DeprDaysWithoutAccPeriod := DepreciationCalculation.DeprDays(StartingDate, EndingDate, false, false);
+
+        // [WHEN] DeprDays is called with UseAccountingPeriod = TRUE
+        DeprDaysWithAccPeriod := DepreciationCalculation.DeprDays(StartingDate, EndingDate, false, true);
+
+        // [THEN] Both results are equal and equal to 60 (30/360 convention: 2 months x 30 days, last day of Feb counts as 30)
+        Assert.AreEqual(60, DeprDaysWithoutAccPeriod, WrongDeprDaysErr);
+        Assert.AreEqual(DeprDaysWithoutAccPeriod, DeprDaysWithAccPeriod, WrongDeprDaysErr);
     end;
 
     [Test]
@@ -3593,6 +3719,45 @@ codeunit 134451 "ERM Fixed Assets"
     end;
 
     [Test]
+    [Scope('OnPrem')]
+    procedure CreateMultipleFACardsWithDimensions()
+    var
+        PurchaseHeader: Record "Purchase Header";
+        PurchaseLine: Record "Purchase Line";
+        FixedAsset: Record "Fixed Asset";
+        FixedAsset2: Record "Fixed Asset";
+        DefaultDimension: Record "Default Dimension";
+        DefaultDimension2: Record "Default Dimension";
+    begin
+        // [SCENARIO] Test Copy of dimensions on FA when No. of Fixed Asset Cards is greater than 1.
+        Initialize();
+
+        // [GIVEN] Create Purchase Line
+        LibraryPurchase.CreatePurchHeader(PurchaseHeader, PurchaseHeader."Document Type"::Invoice, CreateVendor());
+
+        // [GIVEN] Create Purchase Line with default dimensions
+        CreatePurchLineWithDefaultDimensions(PurchaseLine, PurchaseHeader, GetDefaultDepreciationBook(), CreateFAPostingGroup(), 2);
+
+        // [WHEN] Post Purchase Header
+        LibraryPurchase.PostPurchaseDocument(PurchaseHeader, true, true);
+        //CreatePostPurchInvoice(PurchaseLine, LibraryRandom.RandInt(5) + 1); // Quantity should be greater than 1.
+
+        // [THEN] Count dimension on initial Fixed Asset
+        FixedAsset.Get(PurchaseLine."No.");
+        DefaultDimension.SetRange("Table ID", DATABASE::"Fixed Asset");
+        DefaultDimension.SetRange("No.", FixedAsset."No.");
+
+        // [THEN] Count dimension on copied Fixed Asset
+        FixedAsset2.SetRange(Description, FixedAsset."No.");
+        FixedAsset2.FindFirst();
+        DefaultDimension2.SetRange("Table ID", DATABASE::"Fixed Asset");
+        DefaultDimension2.SetRange("No.", FixedAsset2."No.");
+
+        // [VERIFY] Verify that dimensions are created
+        Assert.AreEqual(DefaultDimension.Count, DefaultDimension2.Count, DimValueError);
+    end;
+
+    [Test]
     [HandlerFunctions('GLPostingPreviewPageHandler')]
     procedure PreviewPostingDoesNotConsumeNumberSeries()
     var
@@ -3902,6 +4067,19 @@ codeunit 134451 "ERM Fixed Assets"
         LibraryFixedAsset.CreateFAJournalBatch(FAJournalBatch, FAJournalTemplate.Name);
         FAJournalBatch.Validate("No. Series", '');
         FAJournalBatch.Modify(true);
+    end;
+
+    local procedure CreateAccountingPeriodWithNewFiscalYear(StartingDate: Date)
+    var
+        AccountingPeriod: Record "Accounting Period";
+    begin
+        if not AccountingPeriod.Get(StartingDate) then begin
+            AccountingPeriod.Init();
+            AccountingPeriod."Starting Date" := StartingDate;
+            AccountingPeriod.Insert();
+        end;
+        AccountingPeriod."New Fiscal Year" := true;
+        AccountingPeriod.Modify();
     end;
 
     local procedure CreateSalesLine(var SalesLine: Record "Sales Line"; SalesHeader: Record "Sales Header"; FANo: Code[20]; DepreciationBookCode: Code[10])
@@ -4236,6 +4414,20 @@ codeunit 134451 "ERM Fixed Assets"
         CalculateDepreciation.SetTableView(FixedAsset);
         CalculateDepreciation.InitializeRequest(
           DepreciationBookCode, CalcDate('<1D>', WorkDate()), false, 0, CalcDate('<1D>', WorkDate()), FixedAssetNo, FixedAsset.Description, BalAccount);
+        CalculateDepreciation.UseRequestPage(false);
+        CalculateDepreciation.Run();
+    end;
+
+    local procedure RunCalculateDepreciationForDate(FixedAssetNo: Code[20]; DepreciationBookCode: Code[10]; DeprUntilDate: Date)
+    var
+        FixedAsset: Record "Fixed Asset";
+        CalculateDepreciation: Report "Calculate Depreciation";
+    begin
+        Clear(CalculateDepreciation);
+        FixedAsset.SetRange("No.", FixedAssetNo);
+        CalculateDepreciation.SetTableView(FixedAsset);
+        CalculateDepreciation.InitializeRequest(
+            DepreciationBookCode, DeprUntilDate, false, 0, DeprUntilDate, FixedAssetNo, FixedAsset.Description, false);
         CalculateDepreciation.UseRequestPage(false);
         CalculateDepreciation.Run();
     end;
@@ -4702,11 +4894,40 @@ codeunit 134451 "ERM Fixed Assets"
         exit(FixedAsset."No.");
     end;
 
+    local procedure CreatePurchLineWithDefaultDimensions(var PurchaseLine: Record "Purchase Line"; PurchaseHeader: Record "Purchase Header"; DepreciationBook: Code[10]; FAPostingGroup: Code[20]; NoOfFACards: Integer): Code[20]
+    var
+        FixedAsset: Record "Fixed Asset";
+    begin
+        CreateFAWithDefaultDimensions(FixedAsset, DepreciationBook, FAPostingGroup);
+        LibraryPurchase.CreatePurchaseLine(PurchaseLine, PurchaseHeader, PurchaseLine.Type::"Fixed Asset", FixedAsset."No.", 1);
+        UpdatePurchaseLine(PurchaseLine, DepreciationBook, NoOfFACards);
+        exit(FixedAsset."No.");
+    end;
+
     local procedure CreateFA(var FixedAsset: Record "Fixed Asset"; DepreciationBook: Code[10]; FAPostingGroup: Code[20])
+    var
+        DimValue: Record "Dimension Value";
     begin
         Clear(FixedAsset);
         LibraryFixedAsset.CreateFixedAsset(FixedAsset);
         CreateFADepreciationBook(FixedAsset."No.", DepreciationBook, FAPostingGroup);
+
+        LibraryDimension.CreateDimensionValue(DimValue, LibraryERM.GetGlobalDimensionCode(1));
+        FixedAsset.Validate("Global Dimension 1 Code", DimValue.Code);
+        LibraryDimension.CreateDimensionValue(DimValue, LibraryERM.GetGlobalDimensionCode(2));
+        FixedAsset.Validate("Global Dimension 2 Code", DimValue.Code);
+    end;
+
+    local procedure CreateFAWithDefaultDimensions(var FixedAsset: Record "Fixed Asset"; DepreciationBook: Code[10]; FAPostingGroup: Code[20])
+    var
+        DimValue: Record "Dimension Value";
+    begin
+        CreateFA(FixedAsset, DepreciationBook, FAPostingGroup);
+
+        LibraryDimension.CreateDimensionValue(DimValue, LibraryERM.GetGlobalDimensionCode(1));
+        FixedAsset.Validate("Global Dimension 1 Code", DimValue.Code);
+        LibraryDimension.CreateDimensionValue(DimValue, LibraryERM.GetGlobalDimensionCode(2));
+        FixedAsset.Validate("Global Dimension 2 Code", DimValue.Code);
     end;
 
     local procedure UpdatePurchaseLine(var PurchaseLine: Record "Purchase Line"; DepreciationBook: Code[10]; NoOfFixedAssetCards: Integer)
